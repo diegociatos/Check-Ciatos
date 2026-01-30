@@ -11,10 +11,20 @@ export enum TaskStatus {
   ATRASADA = 'ATRASADA'
 }
 
+export enum ConferenciaStatus {
+  AGUARDANDO_CONFERENCIA = 'AGUARDANDO_CONFERENCIA',
+  APROVADO = 'APROVADO',
+  NAO_CUMPRIU = 'NAO_CUMPRIU',
+  CUMPRIU_ERRADO = 'CUMPRIU_ERRADO'
+}
+
 export enum ScoreReason {
   CONCLUSAO_NO_PRAZO = 'CONCLUSAO_NO_PRAZO',
   PENALIDADE_ATRASO = 'PENALIDADE_ATRASO',
-  AJUSTE_MANUAL = 'AJUSTE_MANUAL'
+  AJUSTE_MANUAL = 'AJUSTE_MANUAL',
+  SENHA_ALTERADA = 'SENHA_ALTERADA',
+  NAO_CUMPRIU_APOS_REVISAO = 'NAO_CUMPRIU_APOS_REVISAO',
+  CUMPRIU_ERRADO = 'CUMPRIU_ERRADO'
 }
 
 export interface User {
@@ -23,6 +33,38 @@ export interface User {
   Role: UserRole;
   Ativo: boolean;
   Time: string;
+  Foto?: string;
+  Telefone?: string;
+  DataNascimento?: string;
+  Endereco?: string;
+  Biografia?: string;
+  SenhaDefinida?: boolean;
+  UltimoAcessoFormatado?: string;
+  // Colunas Virtuais de Pontuação (Virtual Columns)
+  PontosPossiveisHoje?: number;
+  PontosPossiveisSemana?: number;
+  PontosPossiveisMes?: number;
+  PontosRealizadosHoje?: number;
+  PontosRealizadosSemana?: number;
+  PontosRealizadosMes?: number;
+}
+
+export interface UserCredentials {
+  Email: string;
+  Senha: string;
+  UltimoAcesso?: string;
+  TentativasFalhadas: number;
+  UltimaFalha?: string;
+}
+
+export interface ScoreLedger {
+  LedgerID: string;
+  Email: string;
+  TaskID: string;
+  DataHora: string;
+  DeltaPontos: number;
+  Motivo: ScoreReason;
+  Observacao: string;
 }
 
 export interface Task {
@@ -32,14 +74,20 @@ export interface Task {
   Pontos: number;
   AssigneeEmail: string;
   CreatedByEmail: string;
-  DueDateTime: string; // ISO string
+  DueDateTime: string;
   Status: TaskStatus;
-  CompletedAt?: string; // ISO string
+  CompletedAt?: string;
   CompletionNote?: string;
-  ProofAttachment?: string; // Base64 or URL
+  ProofAttachment?: string;
   RewardApplied: boolean;
   PenaltyApplied: boolean;
-  TemplateID?: string; // Link to template if recurring
+  TemplateID?: string;
+  EhRecorrente?: boolean;
+  DiasDaSemanaRecorrencia?: string;
+  ConferenciaStatus: ConferenciaStatus;
+  ConferidoPor?: string;
+  ConferidoEm?: string;
+  ObservacaoGestor?: string;
 }
 
 export interface TaskTemplate {
@@ -48,19 +96,9 @@ export interface TaskTemplate {
   Descricao: string;
   Pontos: number;
   AssigneeEmail: string;
-  DiasDaSemana: string; // e.g. "Segunda, Terça" or "Todos"
+  DiasDaSemanaRecorrencia: string;
   Ativo: boolean;
   CreatedByEmail: string;
-}
-
-export interface ScoreLedger {
-  LedgerID: string;
-  Email: string;
-  TaskID: string;
-  DataHora: string; // ISO string
-  DeltaPontos: number;
-  Motivo: ScoreReason;
-  Observacao: string;
 }
 
 export type ViewType = 
@@ -73,11 +111,14 @@ export type ViewType =
   | 'CREATE_TASK'
   | 'CREATED_BY_ME'
   | 'TEAM_PANEL'
+  | 'CHECK_DELIVERIES'
   | 'RANKING'
   | 'LATENCY_REPORT'
   | 'ALL_TASKS'
   | 'MANAGE_USERS'
+  | 'MANAGE_ACCESS'
   | 'MANAGE_TEMPLATES'
   | 'GENERAL_LEDGER'
   | 'MANUAL_ADJUSTMENT'
-  | 'REPORTS';
+  | 'REPORTS'
+  | 'MY_PROFILE';

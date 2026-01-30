@@ -15,7 +15,10 @@ import {
   UserCog, 
   Receipt, 
   Edit3,
-  RefreshCw
+  RotateCw,
+  User as UserIcon,
+  ShieldCheck,
+  ClipboardCheck
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -45,6 +48,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'INÍCIO',
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <Home size={20} /> 
+  },
+  { 
+    label: 'Meus Dados', 
+    view: 'MY_PROFILE', 
+    section: 'INÍCIO',
+    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <UserIcon size={20} /> 
   },
 
   // SEÇÃO: COLABORADOR
@@ -86,18 +96,25 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   
   // SEÇÃO: GESTOR
   { 
-    label: 'Criar Nova Pendência', 
+    label: 'Conferir Entregas', 
+    view: 'CHECK_DELIVERIES', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <ClipboardCheck size={20} /> 
+  },
+  { 
+    label: 'Criar Obrigação', 
     view: 'CREATE_TASK', 
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 
     icon: <PlusCircle size={20} /> 
   },
   { 
-    label: 'Gestão de Recorrências', 
+    label: 'Programar Recorrências', 
     view: 'MANAGE_TEMPLATES', 
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <RefreshCw size={20} /> 
+    icon: <RotateCw size={20} /> 
   },
   { 
     label: 'Pendências que Criei', 
@@ -135,6 +152,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'ADMINISTRADOR',
     role: [UserRole.ADMIN], 
     icon: <UserCog size={20} /> 
+  },
+  { 
+    label: 'Gerenciar Acessos', 
+    view: 'MANAGE_ACCESS', 
+    section: 'ADMINISTRADOR',
+    role: [UserRole.ADMIN], 
+    icon: <ShieldCheck size={20} /> 
   },
   { 
     label: 'Extrato Geral de Pontos', 
