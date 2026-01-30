@@ -1,0 +1,7 @@
+{
+  "name": "Checklist Diário - Grupo Ciatos",
+  "description": "Aplicativo de gestão de tarefas e produtividade com sistema de pontuação, recompensas e penalidades para o Grupo Ciatos.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
