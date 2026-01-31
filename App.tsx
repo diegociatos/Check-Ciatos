@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from './store';
-import { ViewType, UserRole, TaskStatus, TaskPriority, User, Task } from './types';
+import { ViewType, UserRole, TaskStatus, TaskPriority, User, Task, UserStatus } from './types';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -19,18 +19,21 @@ import TemplateManager from './components/TemplateManager';
 import TaskSupervisionView from './components/TaskSupervisionView';
 import ScoreSupervisionView from './components/ScoreSupervisionView';
 import IndividualPerformanceDashboard from './components/IndividualPerformanceDashboard';
+import ManageUsersView from './components/ManageUsersView';
 import { 
-  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users
+  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key
 } from 'lucide-react';
 
 const App: React.FC = () => {
   const { 
-    currentUser, users, login, logout, updateProfile, minhasTarefas, tasks, templates, ledger, 
-    completeTask, auditTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
+    currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser,
+    updateProfile, minhasTarefas, tasks, templates, ledger, 
+    completeTask, auditTask, deleteTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   } = useStore();
 
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
   const [profileForm, setProfileForm] = useState<Partial<User>>({});
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [filterPriority, setFilterPriority] = useState<TaskPriority | 'TODAS'>('TODAS');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,10 +52,86 @@ const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={login} />;
 
+  // FORÇA TROCA DE SENHA NO PRIMEIRO ACESSO
+  if (currentUser.SenhaProvisoria) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
+        <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-8 animate-in zoom-in duration-300">
+           <div className="text-center space-y-4">
+              <div className="h-20 w-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                 <Lock size={40} />
+              </div>
+              <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Primeiro Acesso</h2>
+              <p className="text-sm text-gray-500">Bem-vindo ao Grupo Ciatos! Por segurança, você precisa criar uma nova senha personalizada antes de continuar.</p>
+           </div>
+
+           <div className="space-y-4">
+              <div className="space-y-1">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Key size={12}/> Senha Atual (Provisória)</label>
+                 <input 
+                    type="password"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
+                    value={passwordForm.current}
+                    onChange={e => setPasswordForm({...passwordForm, current: e.target.value})}
+                 />
+              </div>
+              <div className="space-y-1">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Nova Senha</label>
+                 <input 
+                    type="password"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
+                    placeholder="Mínimo 8 caracteres e 1 número"
+                    value={passwordForm.new}
+                    onChange={e => setPasswordForm({...passwordForm, new: e.target.value})}
+                 />
+              </div>
+              <div className="space-y-1">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Confirmar Nova Senha</label>
+                 <input 
+                    type="password"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
+                    value={passwordForm.confirm}
+                    onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})}
+                 />
+              </div>
+           </div>
+
+           <button 
+              onClick={() => {
+                try {
+                   if (passwordForm.new !== passwordForm.confirm) throw new Error("As senhas não conferem.");
+                   changePassword(currentUser.Email, passwordForm.current, passwordForm.new);
+                   alert("Senha alterada com sucesso! Bem-vindo.");
+                   setPasswordForm({ current: '', new: '', confirm: '' });
+                } catch (err: any) {
+                  alert(err.message);
+                }
+              }}
+              className="w-full bg-[#8B1B1F] text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 hover:bg-[#6F0F14] transition-colors"
+           >
+              Salvar e Continuar
+           </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(profileForm);
-    alert('Perfil atualizado com sucesso!');
+    alert('Perfil updated com sucesso!');
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+       if (passwordForm.new !== passwordForm.confirm) throw new Error("As novas senhas não conferem.");
+       changePassword(currentUser.Email, passwordForm.current, passwordForm.new);
+       alert("Senha alterada com sucesso!");
+       setPasswordForm({ current: '', new: '', confirm: '' });
+    } catch (err: any) {
+       alert(err.message);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,10 +172,9 @@ const App: React.FC = () => {
         );
 
       case 'MY_TASKS_TODAY':
-        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD Local
+        const today = new Date().toLocaleDateString('en-CA');
         const isManagerOrAdmin = currentUser.Role === UserRole.GESTOR || currentUser.Role === UserRole.ADMIN;
         
-        // Regra Master: Somente DataLimite = Hoje e Status = Pendente
         let todayPendingTasks = tasks.filter(t => {
           const taskDateStr = new Date(t.DataLimite).toLocaleDateString('en-CA');
           const isToday = taskDateStr === today;
@@ -162,21 +240,6 @@ const App: React.FC = () => {
                  </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
-                       <Filter size={14} /> Prioridade:
-                    </div>
-                    <div className="flex gap-2">
-                       {(['TODAS', TaskPriority.ALTA, TaskPriority.MEDIA, TaskPriority.BAIXA] as const).map(p => (
-                         <button key={p} onClick={() => setFilterPriority(p)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterPriority === p ? 'bg-[#111111] text-white border-[#111111]' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}>
-                           {p === 'TODAS' ? 'Todas' : p}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-
               {owners.length > 0 ? (
                 <div className="space-y-12">
                   {owners.map(email => {
@@ -204,9 +267,12 @@ const App: React.FC = () => {
                         )}
                         <TodayTaskCards 
                           tasks={userTasks} 
+                          allTasks={tasks}
                           onComplete={handleQuickComplete} 
                           onNotify={isManagerOrAdmin ? (taskTitle) => handleNotify(email, taskTitle) : undefined}
+                          onDelete={isManagerOrAdmin ? deleteTask : undefined}
                           showUser={isManagerOrAdmin}
+                          currentUserRole={currentUser.Role}
                         />
                       </div>
                     );
@@ -222,6 +288,21 @@ const App: React.FC = () => {
             </div>
           </div>
         );
+
+      case 'TASK_SUPERVISION':
+        return <TaskSupervisionView tasks={tasks} users={users} onDeleteTask={deleteTask} currentUserRole={currentUser.Role} />;
+
+      case 'MANAGE_USERS':
+        /**
+         * Fixed: Changed undefined baseUsers variable to users from useStore hook.
+         */
+        return <ManageUsersView 
+          users={users} 
+          onAddUser={addUser} 
+          onResetPassword={resetUserPassword} 
+          onToggleStatus={toggleUserStatus} 
+          onDeleteUser={deleteUser} 
+        />;
 
       case 'COMPLETED_TASKS':
         const completed = minhasTarefas.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
@@ -255,9 +336,6 @@ const App: React.FC = () => {
             < MyScoreView ledger={myLedger} user={currentUser} />
           </div>
         );
-
-      case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={tasks} users={users} />;
 
       case 'SCORE_SUPERVISION':
         return <ScoreSupervisionView ledger={ledger} users={users} />;
@@ -295,7 +373,7 @@ const App: React.FC = () => {
 
       case 'MY_PROFILE':
         return (
-          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-[#8B1B1F] p-12 text-white flex flex-col items-center">
                 <div className="relative group">
@@ -312,27 +390,53 @@ const App: React.FC = () => {
                   <Shield size={12} /> {currentUser.Role} • {currentUser.Time}
                 </div>
               </div>
-              <form onSubmit={handleSaveProfile} className="p-10 space-y-8">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><UserIcon size={12} /> Nome Completo</label>
-                    <input className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={profileForm.Nome || ''} onChange={e => setProfileForm({...profileForm, Nome: e.target.value})} />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-10 space-y-12">
+                <form onSubmit={handleSaveProfile} className="space-y-8">
+                  <div className="space-y-6">
+                    <h4 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter pb-2 border-b">Informações Pessoais</h4>
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><Phone size={12} /> Telefone</label>
-                      <input className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={profileForm.Telefone || ''} onChange={e => setProfileForm({...profileForm, Telefone: e.target.value})} />
+                      <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><UserIcon size={12} /> Nome Completo</label>
+                      <input className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={profileForm.Nome || ''} onChange={e => setProfileForm({...profileForm, Nome: e.target.value})} />
                     </div>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><Calendar size={12} /> Data de Nascimento</label>
-                      <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={profileForm.DataNascimento || ''} onChange={e => setProfileForm({...profileForm, DataNascimento: e.target.value})} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><Phone size={12} /> Telefone</label>
+                        <input className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={profileForm.Telefone || ''} onChange={e => setProfileForm({...profileForm, Telefone: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"><Calendar size={12} /> Data de Nascimento</label>
+                        <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={profileForm.DataNascimento || ''} onChange={e => setProfileForm({...profileForm, DataNascimento: e.target.value})} />
+                      </div>
                     </div>
                   </div>
+                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-[35px] font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4">
+                    <Save size={20} /> Salvar Alterações
+                  </button>
+                </form>
+
+                <div className="space-y-8">
+                  <h4 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter pb-2 border-b flex items-center gap-2"><Lock size={18}/> Segurança</h4>
+                  <form onSubmit={handleChangePassword} className="space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Senha Atual</label>
+                        <input type="password" required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={passwordForm.current} onChange={e => setPasswordForm({...passwordForm, current: e.target.value})} />
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nova Senha</label>
+                           <input type="password" required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" placeholder="Mínimo 8 caracteres" value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Confirmar Nova Senha</label>
+                           <input type="password" required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} />
+                        </div>
+                     </div>
+                     <button type="submit" className="w-full border-2 border-[#8B1B1F] text-[#8B1B1F] py-6 rounded-[35px] font-black uppercase tracking-widest hover:bg-[#8B1B1F] hover:text-white transition-all">
+                        Atualizar Senha
+                     </button>
+                  </form>
                 </div>
-                <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-[35px] font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4">
-                  <Save size={20} /> Salvar Alterações
-                </button>
-              </form>
+              </div>
             </div>
           </div>
         );

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TaskTemplate, RecurrenceType, TaskPriority, User } from '../types';
-import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap } from 'lucide-react';
+import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle } from 'lucide-react';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
@@ -9,11 +9,12 @@ interface TemplateManagerProps {
   onAdd: (template: Omit<TaskTemplate, 'ID'>) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onGenerateNow: (id: string) => void;
+  onGenerateNow: (id: string, force?: boolean) => any;
 }
 
 const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
     Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
     Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
@@ -29,6 +30,20 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         ? prev.DiasRecorrencia.filter(d => d !== day)
         : [...prev.DiasRecorrencia, day]
     }));
+  };
+
+  const handleGenerateClick = (id: string) => {
+    const result = onGenerateNow(id);
+    if (result && result.duplicate) {
+      setDuplicateWarning({ templateId: id, title: result.template.Titulo });
+    }
+  };
+
+  const confirmGenerate = () => {
+    if (duplicateWarning) {
+      onGenerateNow(duplicateWarning.templateId, true);
+      setDuplicateWarning(null);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,7 +104,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
               </div>
               
               <button 
-                onClick={() => onGenerateNow(tmpl.ID)}
+                onClick={() => handleGenerateClick(tmpl.ID)}
                 className="w-full bg-[#8B1B1F] text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-[#8B1B1F]/10 hover:bg-[#6F0F14] transition-all"
               >
                 <Zap size={14} className="fill-current" /> Gerar Tarefa Agora (Hoje)
@@ -98,6 +113,37 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
           </div>
         ))}
       </div>
+
+      {/* Modal Alerta Duplicata */}
+      {duplicateWarning && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+             <div className="p-8 text-center space-y-6">
+                <div className="h-20 w-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                   <AlertTriangle size={40} />
+                </div>
+                <div>
+                   <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Atenção: Duplicata Identificada</h3>
+                   <p className="text-sm text-gray-500 mt-2">Já existe uma tarefa com o título <strong>"{duplicateWarning.title}"</strong> para este colaborador hoje. Deseja criar mesmo assim?</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                   <button 
+                     onClick={confirmGenerate}
+                     className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-[#8B1B1F]/20 hover:scale-[1.02] transition-all"
+                   >
+                     Sim, criar novamente
+                   </button>
+                   <button 
+                     onClick={() => setDuplicateWarning(null)}
+                     className="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all"
+                   >
+                     Cancelar
+                   </button>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

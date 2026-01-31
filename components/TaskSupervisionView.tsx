@@ -1,15 +1,18 @@
 
 import React, { useState, useMemo } from 'react';
-import { Task, User, TaskStatus } from '../types';
-import { Search, Calendar, Star, User as UserIcon, CheckCircle, ChevronRight, LayoutDashboard, Filter } from 'lucide-react';
+import { Task, User, TaskStatus, UserRole } from '../types';
+import { Search, Calendar, Star, User as UserIcon, CheckCircle, ChevronRight, LayoutDashboard, Filter, Trash2 } from 'lucide-react';
 
 interface TaskSupervisionViewProps {
   tasks: Task[];
   users: User[];
+  onDeleteTask: (taskId: string) => void;
+  currentUserRole?: UserRole;
 }
 
-const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users }) => {
+const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users, onDeleteTask, currentUserRole }) => {
   const [filterResponsavel, setFilterResponsavel] = useState<string>('TODOS');
+  const isManagerOrAdmin = currentUserRole === UserRole.GESTOR || currentUserRole === UserRole.ADMIN;
 
   const collaborators = users.filter(u => u.Role === 'Colaborador');
 
@@ -68,7 +71,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users 
                 <th className="px-8 py-5 font-black text-gray-400 uppercase tracking-widest">Título da Tarefa</th>
                 <th className="px-8 py-5 font-black text-gray-400 uppercase tracking-widest text-center">Prazo</th>
                 <th className="px-8 py-5 font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-8 py-5 font-black text-gray-400 uppercase tracking-widest text-right">Pontos</th>
+                <th className="px-8 py-5 font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -99,8 +102,19 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users 
                           {task.Status}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-right font-black text-[#8B1B1F]">
-                        {task.PontosValor}
+                      <td className="px-8 py-5 text-right flex items-center justify-end gap-3">
+                        <div className="flex flex-col items-end mr-4">
+                           <span className="font-black text-[#8B1B1F]">{task.PontosValor} pts</span>
+                        </div>
+                        {isManagerOrAdmin && (
+                          <button 
+                            onClick={() => onDeleteTask(task.ID)}
+                            className="p-2 text-[#DC2626] hover:bg-red-50 rounded-xl transition-all"
+                            title="Deletar Tarefa"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );

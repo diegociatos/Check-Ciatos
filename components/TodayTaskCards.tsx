@@ -1,26 +1,39 @@
 
 import React from 'react';
-import { Task, TaskStatus, TaskPriority } from '../types';
+import { Task, TaskStatus, TaskPriority, UserRole } from '../types';
 import { 
   CheckCircle, 
   Clock, 
-  AlertTriangle, 
   Star,
-  ChevronRight,
   ShieldCheck,
   Bell,
-  User as UserIcon
+  User as UserIcon,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 interface TodayTaskCardsProps {
   tasks: Task[];
+  allTasks: Task[]; // Necessário para detecção de duplicatas globais
   onComplete: (taskId: string) => void;
   onNotify?: (taskTitle: string) => void;
+  onDelete?: (taskId: string) => void;
   showUser?: boolean;
+  currentUserRole?: UserRole;
 }
 
-const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({ tasks, onComplete, onNotify, showUser }) => {
+const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({ 
+  tasks, 
+  allTasks,
+  onComplete, 
+  onNotify, 
+  onDelete,
+  showUser, 
+  currentUserRole 
+}) => {
   
+  const isManagerOrAdmin = currentUserRole === UserRole.GESTOR || currentUserRole === UserRole.ADMIN;
+
   const getPriorityBadge = (priority: TaskPriority) => {
     const styles = {
       [TaskPriority.URGENTE]: 'bg-red-50 text-red-700 border-red-100',
@@ -65,19 +78,47 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({ tasks, onComplete, onNo
       {tasks.map((task) => {
         const isOverdue = new Date(task.DataLimite) < new Date() && task.Status === TaskStatus.PENDENTE;
         
+        // Detecção de Duplicata (Mesmo Título, Responsável e Data de hoje)
+        const taskDate = new Date(task.DataLimite).toLocaleDateString('en-CA');
+        const duplicates = allTasks.filter(t => 
+          t.Titulo === task.Titulo && 
+          t.Responsavel === task.Responsavel && 
+          new Date(t.DataLimite).toLocaleDateString('en-CA') === taskDate &&
+          t.ID !== task.ID
+        );
+        const hasDuplicate = duplicates.length > 0;
+
         return (
           <div 
             key={task.ID} 
-            className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+            className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative"
           >
+            {/* Botão Deletar (Apenas Admin/Gestor) */}
+            {isManagerOrAdmin && onDelete && (
+              <button 
+                onClick={() => onDelete(task.ID)}
+                className="absolute top-4 right-4 z-20 p-2 bg-white text-[#DC2626] rounded-xl border border-red-100 shadow-sm hover:bg-red-600 hover:text-white transition-all"
+                title="Deletar Tarefa"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+
             {/* Header do Card */}
             <div className="p-7 flex-1">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex flex-col gap-2">
-                  {getPriorityBadge(task.Prioridade)}
+                  <div className="flex items-center gap-2">
+                    {getPriorityBadge(task.Prioridade)}
+                    {hasDuplicate && (
+                      <div className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1 rounded-full border border-orange-200 uppercase animate-pulse">
+                        <AlertTriangle size={10} /> Duplicata
+                      </div>
+                    )}
+                  </div>
                   {getStatusBadge(task.Status)}
                 </div>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-end pr-8">
                   <div className="flex items-center gap-1 text-yellow-500">
                     <Star size={14} fill="currentColor" />
                     <span className="text-xl font-black tracking-tighter">{task.PontosValor}</span>

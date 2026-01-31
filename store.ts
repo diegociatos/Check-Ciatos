@@ -2,50 +2,40 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, UserCredentials, TaskTemplate, RecurrenceType } from './types';
 
-// Helper para obter a data local no formato YYYY-MM-DD
 const getLocalTodayStr = () => {
   const now = new Date();
-  return now.toLocaleDateString('en-CA'); // Retorna YYYY-MM-DD no fuso local
+  return now.toLocaleDateString('en-CA');
 };
 
-export interface Notification {
-  id: string;
-  to: string;
-  subject: string;
-  body: string;
-  date: string;
-}
-
 const INITIAL_USERS: User[] = [
-  { Email: 'diego.garcia@grupociatos.com.br', Nome: 'Diego Garcia', Role: UserRole.GESTOR, Status: UserStatus.ATIVO, Time: 'Gestão' },
-  { Email: 'controladoria@grupociatos.com.br', Nome: 'Controladoria', Role: UserRole.GESTOR, Status: UserStatus.ATIVO, Time: 'Controladoria' },
-  { Email: 'financeiro@grupociatos.com.br', Nome: 'Financeiro', Role: UserRole.COLABORADOR, Status: UserStatus.ATIVO, Time: 'Financeiro' }
-];
-
-const INITIAL_CREDENTIALS: UserCredentials[] = [
-  { Email: 'diego.garcia@grupociatos.com.br', Senha: '250500', TentativasFalhadas: 0 },
-  { Email: 'controladoria@grupociatos.com.br', Senha: '123456', TentativasFalhadas: 0 },
-  { Email: 'financeiro@grupociatos.com.br', Senha: '123456', TentativasFalhadas: 0 }
-];
-
-const INITIAL_TEMPLATES: TaskTemplate[] = [
-  {
-    ID: 'tmpl-1',
-    Titulo: 'Conciliação Bancária Diária',
-    Descricao: 'Realizar a conferência dos extratos bancários.',
-    Responsavel: 'financeiro@grupociatos.com.br',
-    PontosValor: 50,
-    Prioridade: TaskPriority.ALTA,
-    Recorrencia: RecurrenceType.DIARIA,
-    DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
-    DataInicio: getLocalTodayStr(),
-    Ativa: true
+  { 
+    Email: 'diego.garcia@grupociatos.com.br', 
+    Nome: 'Diego Garcia', 
+    Role: UserRole.ADMIN, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Gestão',
+    Senha: '250500', // Senha corrigida conforme solicitação
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'financeiro@grupociatos.com.br', 
+    Nome: 'Financeiro User', 
+    Role: UserRole.COLABORADOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Financeiro',
+    Senha: '123',
+    SenhaProvisoria: true,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
   }
 ];
 
 export const useStore = () => {
+  // Nota: ciatos_users_v5 para forçar a atualização dos dados iniciais no localStorage
   const [baseUsers, setBaseUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ciatos_users_v3');
+    const saved = localStorage.getItem('ciatos_users_v5');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
@@ -56,17 +46,12 @@ export const useStore = () => {
 
   const [templates, setTemplates] = useState<TaskTemplate[]>(() => {
     const saved = localStorage.getItem('ciatos_templates_v3');
-    return saved ? JSON.parse(saved) : INITIAL_TEMPLATES;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [ledger, setLedger] = useState<ScoreLedger[]>(() => {
     const saved = localStorage.getItem('ciatos_ledger_v3');
     return saved ? JSON.parse(saved) : [];
-  });
-
-  const [credentials, setCredentials] = useState<UserCredentials[]>(() => {
-    const saved = localStorage.getItem('ciatos_credentials_v3');
-    return saved ? JSON.parse(saved) : INITIAL_CREDENTIALS;
   });
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
@@ -117,90 +102,109 @@ export const useStore = () => {
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
   const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
-  useEffect(() => localStorage.setItem('ciatos_users_v3', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_users_v5', JSON.stringify(baseUsers)), [baseUsers]);
   useEffect(() => localStorage.setItem('ciatos_tasks_v3', JSON.stringify(tasks)), [tasks]);
   useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
   useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
-  useEffect(() => localStorage.setItem('ciatos_credentials_v3', JSON.stringify(credentials)), [credentials]);
   useEffect(() => {
     if (currentUserEmail) localStorage.setItem('ciatos_current_user', currentUserEmail);
     else localStorage.removeItem('ciatos_current_user');
   }, [currentUserEmail]);
 
-  // Automação "Bot": Gerar Tarefas Recorrentes (Sem restrições de finais de semana)
-  useEffect(() => {
-    const runRecurrenceAutomationBot = () => {
-      const now = new Date();
-      const todayStr = getLocalTodayStr();
-      const dayOfWeekNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-      const todayDayName = dayOfWeekNames[now.getDay()];
-      const todayDayOfMonth = now.getDate();
-
-      let templatesUpdated = false;
-      const updatedTemplates = [...templates];
-      const newTasks: Task[] = [];
-
-      updatedTemplates.forEach((tmpl, index) => {
-        if (!tmpl.Ativa || todayStr < tmpl.DataInicio) return;
-
-        let shouldCreateToday = false;
-        if (tmpl.Recorrencia === RecurrenceType.DIARIA) {
-          shouldCreateToday = true; // Gera TODOS os dias, inclusive sáb/dom
-        } else if (tmpl.Recorrencia === RecurrenceType.SEMANAL) {
-          if (tmpl.DiasRecorrencia.includes(todayDayName)) shouldCreateToday = true;
-        } else if (tmpl.Recorrencia === RecurrenceType.MENSAL) {
-          if (tmpl.DiaDoMes === todayDayOfMonth) shouldCreateToday = true;
-        }
-
-        if (shouldCreateToday) {
-          const alreadyExists = tasks.some(t => 
-            t.Titulo === tmpl.Titulo && 
-            t.Responsavel === tmpl.Responsavel &&
-            new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
-          );
-
-          if (!alreadyExists) {
-            const dueDateTime = new Date();
-            dueDateTime.setHours(23, 59, 59, 999);
-            
-            newTasks.push({
-              ID: Math.random().toString(36).substr(2, 9),
-              TemplateID: tmpl.ID,
-              Titulo: tmpl.Titulo,
-              Descricao: tmpl.Descricao,
-              Responsavel: tmpl.Responsavel,
-              DataLimite: dueDateTime.toISOString(),
-              Prioridade: tmpl.Prioridade,
-              PontosValor: tmpl.PontosValor,
-              Status: TaskStatus.PENDENTE
-            });
-
-            updatedTemplates[index] = { ...tmpl, UltimaExecucao: now.toISOString() };
-            templatesUpdated = true;
-          }
-        }
-      });
-
-      if (newTasks.length > 0) {
-        setTasks(prev => [...prev, ...newTasks]);
-      }
-      
-      if (templatesUpdated) {
-        setTemplates(updatedTemplates);
-      }
-    };
-
-    runRecurrenceAutomationBot();
-  }, [templates.length]);
-
+  // Auth Functions
   const login = useCallback((email: string, senha?: string) => {
-    const user = users.find(u => u.Email.toLowerCase() === email.toLowerCase());
-    if (!user) throw new Error("Usuário não encontrado.");
+    const userIndex = baseUsers.findIndex(u => u.Email.toLowerCase() === email.toLowerCase());
+    if (userIndex === -1) throw new Error("Usuário não encontrado.");
+    
+    const user = baseUsers[userIndex];
+
+    if (user.Status === UserStatus.BLOQUEADO) {
+      throw new Error("Conta bloqueada por excesso de tentativas. Contate o suporte.");
+    }
+    if (user.Status === UserStatus.INATIVO) {
+      throw new Error("Conta desativada.");
+    }
+
+    if (user.Senha !== senha) {
+      const newAttempts = (user.TentativasFalhadas || 0) + 1;
+      const newStatus = newAttempts >= 5 ? UserStatus.BLOQUEADO : user.Status;
+      
+      const updatedUsers = [...baseUsers];
+      updatedUsers[userIndex] = { ...user, TentativasFalhadas: newAttempts, Status: newStatus };
+      setBaseUsers(updatedUsers);
+      
+      throw new Error(newStatus === UserStatus.BLOQUEADO 
+        ? "Conta bloqueada após 5 tentativas incorretas." 
+        : `Senha incorreta. Tentativa ${newAttempts} de 5.`);
+    }
+
+    // Sucesso
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, TentativasFalhadas: 0, UltimoAcesso: new Date().toISOString() };
+    setBaseUsers(updatedUsers);
     setCurrentUserEmail(user.Email);
     return user;
-  }, [users]);
+  }, [baseUsers]);
 
   const logout = useCallback(() => setCurrentUserEmail(null), []);
+
+  const changePassword = useCallback((email: string, oldPass: string, newPass: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    const user = baseUsers[userIndex];
+    
+    if (user.Senha !== oldPass) throw new Error("Senha atual incorreta.");
+    if (newPass.length < 8 || !/\d/.test(newPass)) throw new Error("A nova senha deve ter no mínimo 8 caracteres e conter pelo menos um número.");
+    if (newPass === oldPass) throw new Error("A nova senha não pode ser igual à antiga.");
+
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, Senha: newPass, SenhaProvisoria: false };
+    setBaseUsers(updatedUsers);
+  }, [baseUsers]);
+
+  const resetUserPassword = useCallback((email: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    if (userIndex === -1) return;
+
+    const tempPass = 'Ciatos@' + Math.floor(1000 + Math.random() * 9000);
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...baseUsers[userIndex], Senha: tempPass, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 };
+    setBaseUsers(updatedUsers);
+    
+    alert(`E-MAIL SIMULADO: Senha resetada para ${email}.\nNova senha provisória: ${tempPass}\nO usuário deverá alterá-la no primeiro acesso.`);
+  }, [baseUsers]);
+
+  const toggleUserStatus = useCallback((email: string) => {
+    setBaseUsers(prev => prev.map(u => {
+      if (u.Email === email) {
+        const nextStatus = u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO;
+        return { ...u, Status: nextStatus };
+      }
+      return u;
+    }));
+  }, []);
+
+  const deleteUser = useCallback((email: string) => {
+    if (!window.confirm(`Deseja realmente deletar o usuário ${email}?`)) return;
+    setBaseUsers(prev => prev.filter(u => u.Email !== email));
+  }, []);
+
+  const addUser = useCallback((userData: Partial<User>) => {
+    if (baseUsers.some(u => u.Email === userData.Email)) throw new Error("Este e-mail já está cadastrado.");
+    
+    const tempPass = 'Ciatos@' + Math.floor(1000 + Math.random() * 9000);
+    const newUser: User = {
+      ...userData as User,
+      Senha: tempPass,
+      SenhaProvisoria: true,
+      DataCriacao: new Date().toISOString(),
+      Status: UserStatus.ATIVO,
+      TentativasFalhadas: 0
+    };
+
+    setBaseUsers(prev => [...prev, newUser]);
+    alert(`E-MAIL SIMULADO: Boas vindas enviado para ${newUser.Email}.\nSenha Provisória: ${tempPass}`);
+  }, [baseUsers]);
+
   const updateProfile = useCallback((updatedData: Partial<User>) => {
     setBaseUsers(prev => prev.map(u => u.Email === currentUserEmail ? { ...u, ...updatedData } : u));
   }, [currentUserEmail]);
@@ -225,6 +229,12 @@ export const useStore = () => {
     }));
   }, []);
 
+  const deleteTask = useCallback((taskId: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
+    setTasks(prev => prev.filter(t => t.ID !== taskId));
+    alert("Tarefa excluída com sucesso.");
+  }, []);
+
   const addTemplate = useCallback((templateData: Omit<TaskTemplate, 'ID'>) => {
     setTemplates(prev => [...prev, { ...templateData, ID: Math.random().toString(36).substr(2, 9) }]);
   }, []);
@@ -232,12 +242,23 @@ export const useStore = () => {
   const toggleTemplate = useCallback((id: string) => setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t)), []);
   const deleteTemplate = useCallback((id: string) => setTemplates(prev => prev.filter(t => t.ID !== id)), []);
 
-  const generateTaskFromTemplate = useCallback((templateId: string) => {
+  const generateTaskFromTemplate = useCallback((templateId: string, force: boolean = false) => {
     const tmpl = templates.find(t => t.ID === templateId);
-    if (!tmpl) return;
+    if (!tmpl) return false;
+
+    const todayStr = getLocalTodayStr();
+    const alreadyExists = tasks.some(t => 
+      t.Titulo === tmpl.Titulo && 
+      t.Responsavel === tmpl.Responsavel &&
+      new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
+    );
+
+    if (alreadyExists && !force) {
+      return { duplicate: true, template: tmpl };
+    }
 
     const now = new Date();
-    const dueDateTime = new Date(); // Hoje (Local)
+    const dueDateTime = new Date(); 
     dueDateTime.setHours(23, 59, 59, 999);
 
     const newTask: Task = {
@@ -254,12 +275,14 @@ export const useStore = () => {
 
     setTasks(prev => [...prev, newTask]);
     setTemplates(prev => prev.map(t => t.ID === templateId ? { ...t, UltimaExecucao: now.toISOString() } : t));
-    alert(`Tarefa "${tmpl.Titulo}" gerada manualmente para HOJE (${dueDateTime.toLocaleDateString('pt-BR')}).`);
-  }, [templates]);
+    alert(`Tarefa "${tmpl.Titulo}" gerada com sucesso.`);
+    return true;
+  }, [templates, tasks]);
 
   return { 
     currentUser, users, tasks, templates, ledger, minhasTarefas, 
-    login, logout, updateProfile, completeTask, auditTask, 
+    login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser,
+    updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
   };
 };

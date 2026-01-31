@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Menu, X, LogOut, User as UserIcon, Bell } from 'lucide-react';
 import { NAVIGATION_ITEMS, NavigationSection } from '../constants';
-import { User, ViewType } from '../types';
-import { Notification } from '../store';
+// Fixed: Notification interface is now imported from types.ts
+import { User, ViewType, Notification } from '../types';
 
 interface LayoutProps {
   currentUser: User;

@@ -7,7 +7,8 @@ export enum UserRole {
 
 export enum UserStatus {
   ATIVO = 'Ativo',
-  INATIVO = 'Inativo'
+  INATIVO = 'Inativo',
+  BLOQUEADO = 'BloqueADO'
 }
 
 export enum TaskPriority {
@@ -53,13 +54,19 @@ export interface User {
   Role: UserRole;
   Status: UserStatus;
   Time: string;
+  // Segurança e Gestão
+  Senha?: string;
+  SenhaProvisoria?: boolean;
+  DataCriacao?: string;
+  UltimoAcesso?: string;
+  TentativasFalhadas?: number;
   // Campos virtuais/calculados
   PontosRealizadosMes?: number;
   PontosPossiveisMes?: number;
   EficienciaMes?: number;
   ScoreConfiabilidade?: number;
   StatusRH?: string;
-  TemAtrasos?: boolean; // Para visualização no Painel do Time
+  TemAtrasos?: boolean;
 }
 
 export interface Task {
@@ -107,6 +114,17 @@ export interface UserCredentials {
   Email: string;
   Senha: string;
   TentativasFalhadas: number;
+}
+
+/**
+ * Added missing Notification interface to resolve compilation error in Layout.tsx
+ */
+export interface Notification {
+  id: string;
+  to: string;
+  subject: string;
+  body: string;
+  date: string;
 }
 
 export type ViewType = 
