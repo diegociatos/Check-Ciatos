@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
-// Fix: Added MessageSquare and Send to the import list from lucide-react
+// Fixed: Using correct imports and field names
 import { Calendar, User, CheckCircle, Image as ImageIcon, X, Send, CheckSquare, Clock, UserCheck, RotateCcw, Trash2, ShieldCheck, ShieldAlert, ShieldEllipsis, MessageSquare } from 'lucide-react';
 
 interface EnrichedTask extends Task {
@@ -55,10 +55,11 @@ const TaskList: React.FC<TaskListProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
       {tasks.length > 0 ? (
         tasks.map((task) => {
-          const isAssignee = task.AssigneeEmail === currentUserEmail;
+          // Fixed: Using correct property name Responsavel
+          const isAssignee = task.Responsavel === currentUserEmail;
           
           return (
-            <div key={task.TaskID} className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300 border-l-[6px] ${
+            <div key={task.ID} className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300 border-l-[6px] ${
               task.StatusCor === 'Green' ? 'border-l-[#2E7D32]' : 
               task.StatusCor === 'Red' ? 'border-l-[#C62828]' : 
               task.StatusCor === 'Orange' ? 'border-l-[#E65100]' : 'border-l-gray-200'
@@ -67,15 +68,16 @@ const TaskList: React.FC<TaskListProps> = ({
                 <div className="flex justify-between items-start">
                    <div className="space-y-1">
                       <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
-                        task.Status === TaskStatus.CONCLUIDA ? 'bg-green-50 text-green-700 border-green-100' :
+                        task.Status === TaskStatus.CONCLUIDO ? 'bg-green-50 text-green-700 border-green-100' :
                         task.Status === TaskStatus.ATRASADA ? 'bg-red-50 text-red-700 border-red-100' : 'bg-blue-50 text-blue-700 border-blue-100'
                       }`}>
                         {task.Status}
                       </span>
-                      {task.Status === TaskStatus.CONCLUIDA && renderConferenciaBadge(task.ConferenciaStatus)}
+                      {task.Status === TaskStatus.CONCLUIDO && renderConferenciaBadge(task.ConferenciaStatus!)}
                    </div>
                    <div className="text-right">
-                      <span className="text-2xl font-black text-[#8B1B1F] tracking-tighter">{task.Pontos} pts</span>
+                      {/* Fixed: Using correct property name PontosValor */}
+                      <span className="text-2xl font-black text-[#8B1B1F] tracking-tighter">{task.PontosValor} pts</span>
                    </div>
                 </div>
 
@@ -89,7 +91,8 @@ const TaskList: React.FC<TaskListProps> = ({
                       <div className="h-8 w-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400"><Clock size={14}/></div>
                       <div>
                          <p className="text-[9px] font-black text-gray-300 uppercase">Prazo de Entrega</p>
-                         <p className="text-xs font-bold text-[#111111]">{new Date(task.DueDateTime).toLocaleString()}</p>
+                         {/* Fixed: Using correct property name DataLimite */}
+                         <p className="text-xs font-bold text-[#111111]">{new Date(task.DataLimite).toLocaleString()}</p>
                       </div>
                    </div>
                    <div className="flex items-center gap-3">
@@ -102,7 +105,7 @@ const TaskList: React.FC<TaskListProps> = ({
                 </div>
               </div>
 
-              {isAssignee && task.Status !== TaskStatus.CONCLUIDA && (
+              {isAssignee && task.Status !== TaskStatus.CONCLUIDO && (
                 <div className="px-8 pb-8">
                   <button 
                     onClick={() => setSelectedTask(task)}
@@ -153,7 +156,7 @@ const TaskList: React.FC<TaskListProps> = ({
                   />
                </div>
                <button 
-                  onClick={() => { onComplete(selectedTask.TaskID, note, proof); setSelectedTask(null); }}
+                  onClick={() => { onComplete(selectedTask.ID, note, proof); setSelectedTask(null); }}
                   className="w-full bg-[#8B1B1F] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#6F0F14] transition-all shadow-xl shadow-[#8B1B1F]/20 flex items-center justify-center gap-3"
                >
                   <Send size={20} /> Enviar Comprovação

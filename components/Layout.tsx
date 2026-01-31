@@ -21,12 +21,10 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
   const filteredNav = NAVIGATION_ITEMS.filter(item => item.role.includes(currentUser.Role));
   const myNotifications = notifications.filter(n => n.to === currentUser.Email);
 
-  // Grouping by section
   const sections: NavigationSection[] = ['INÍCIO', 'COLABORADOR', 'GESTOR', 'ADMINISTRADOR'];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FFFFFF]">
-      {/* Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
@@ -34,16 +32,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
         />
       )}
 
-      {/* Sidebar (Left Menu Style) */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-72 bg-[#F3F3F3] text-[#111111] border-r border-gray-200 transition-transform duration-300 lg:relative lg:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex h-full flex-col">
-          {/* Logo Section */}
           <div className="flex items-center gap-3 p-6 border-b border-gray-200">
             <div className="h-10 w-10 bg-[#8B1B1F] rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden">
-               {/* Brand: Logo */}
                <span className="font-black">GC</span>
             </div>
             <div>
@@ -52,10 +47,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             </div>
           </div>
 
-          {/* User Info (Show User Email in Menu: YES) */}
           <div className="px-6 py-4 flex items-center gap-3 bg-gray-200/30">
-            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-[#111111]">
-              <UserIcon size={16} />
+            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-[#111111] overflow-hidden border-2 border-white shadow-sm">
+              {currentUser.Foto ? (
+                <img src={currentUser.Foto} className="w-full h-full object-cover" alt="User" />
+              ) : (
+                <UserIcon size={20} />
+              )}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-[#111111] truncate">{currentUser.Nome}</p>
@@ -63,7 +61,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             </div>
           </div>
 
-          {/* Navigation (Show View Names: YES) */}
           <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
             {sections.map(section => {
               const sectionItems = filteredNav.filter(item => item.section === section);
@@ -99,7 +96,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             })}
           </nav>
 
-          {/* Footer */}
           <div className="p-4 border-t border-gray-200">
             <button 
               onClick={onLogout}
@@ -112,9 +108,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header (Show Logo in Header: YES) */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button 
@@ -148,7 +142,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                {currentUser.Role}
              </span>
 
-             {/* Notifications Dropdown */}
              {isNotificationsOpen && (
                <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl z-[70] overflow-hidden">
                  <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
@@ -175,7 +168,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FFFFFF]">
           {children}
         </main>

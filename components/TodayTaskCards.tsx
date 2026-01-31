@@ -1,0 +1,143 @@
+
+import React from 'react';
+import { Task, TaskStatus, TaskPriority } from '../types';
+import { 
+  CheckCircle, 
+  Clock, 
+  AlertTriangle, 
+  Star,
+  ChevronRight,
+  ShieldCheck,
+  Bell,
+  User as UserIcon
+} from 'lucide-react';
+
+interface TodayTaskCardsProps {
+  tasks: Task[];
+  onComplete: (taskId: string) => void;
+  onNotify?: (taskTitle: string) => void;
+  showUser?: boolean;
+}
+
+const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({ tasks, onComplete, onNotify, showUser }) => {
+  
+  const getPriorityBadge = (priority: TaskPriority) => {
+    const styles = {
+      [TaskPriority.URGENTE]: 'bg-red-50 text-red-700 border-red-100',
+      [TaskPriority.ALTA]: 'bg-red-50 text-red-600 border-red-100',
+      [TaskPriority.MEDIA]: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+      [TaskPriority.BAIXA]: 'bg-green-50 text-green-700 border-green-100',
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${styles[priority]}`}>
+        {priority}
+      </span>
+    );
+  };
+
+  const getStatusBadge = (status: TaskStatus) => {
+    const styles = {
+      [TaskStatus.PENDENTE]: 'bg-gray-100 text-gray-500 border-gray-200',
+      [TaskStatus.CONCLUIDO]: 'bg-green-100 text-green-700 border-green-200',
+      [TaskStatus.CONFERIDO]: 'bg-purple-100 text-purple-700 border-purple-200',
+      [TaskStatus.ATRASADA]: 'bg-red-100 text-red-800 border-red-200',
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${styles[status]}`}>
+        {status}
+      </span>
+    );
+  };
+
+  if (tasks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center animate-in fade-in duration-700 opacity-60">
+        <div className="h-16 w-16 bg-[#F3F3F3] rounded-full flex items-center justify-center text-gray-300 mb-2">
+          <CheckCircle size={32} strokeWidth={1} />
+        </div>
+        <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Nenhuma tarefa pendente para este grupo</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {tasks.map((task) => {
+        const isOverdue = new Date(task.DataLimite) < new Date() && task.Status === TaskStatus.PENDENTE;
+        
+        return (
+          <div 
+            key={task.ID} 
+            className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+          >
+            {/* Header do Card */}
+            <div className="p-7 flex-1">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col gap-2">
+                  {getPriorityBadge(task.Prioridade)}
+                  {getStatusBadge(task.Status)}
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1 text-yellow-500">
+                    <Star size={14} fill="currentColor" />
+                    <span className="text-xl font-black tracking-tighter">{task.PontosValor}</span>
+                  </div>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">PONTOS</span>
+                </div>
+              </div>
+
+              <h4 className="text-xl font-ciatos font-bold text-[#111111] leading-tight mb-3 min-h-[3.5rem] line-clamp-2">
+                {task.Titulo}
+              </h4>
+              
+              <p className="text-sm text-gray-500 font-medium line-clamp-2 mb-6 h-10">
+                {task.Descricao}
+              </p>
+
+              <div className="flex flex-col gap-2 mt-auto">
+                {showUser && (
+                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                    <UserIcon size={12} /> {task.Responsavel}
+                  </div>
+                )}
+                <div className={`flex items-center gap-2 text-xs font-bold ${isOverdue ? 'text-red-600' : 'text-gray-400'}`}>
+                  <Clock size={16} />
+                  <span>Prazo: {new Date(task.DataLimite).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer / Ação */}
+            <div className="px-7 pb-7 flex gap-2">
+              {task.Status === TaskStatus.PENDENTE ? (
+                <>
+                  <button 
+                    onClick={() => onComplete(task.ID)}
+                    className="flex-1 bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-[#8B1B1F]/20 transition-all hover:scale-[1.02] active:scale-95"
+                  >
+                    <CheckCircle size={16} /> Check / Concluir
+                  </button>
+                  {onNotify && (
+                    <button 
+                      onClick={() => onNotify(task.Titulo)}
+                      className="bg-gray-100 text-[#8B1B1F] p-4 rounded-2xl hover:bg-[#8B1B1F] hover:text-white transition-all shadow-md active:scale-90"
+                      title="Notificar Responsável"
+                    >
+                      <Bell size={18} />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="w-full bg-green-50 text-green-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-green-100">
+                  <ShieldCheck size={18} /> Entrega Realizada
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default TodayTaskCards;

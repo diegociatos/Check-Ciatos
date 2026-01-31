@@ -1,51 +1,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, ScoreReason, TaskTemplate, UserCredentials, ConferenciaStatus } from './types';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, UserCredentials, TaskTemplate, RecurrenceType } from './types';
 
-const INITIAL_USERS: User[] = [
-  { Email: 'admin@ciatos.com.br', Nome: 'Admin Ciatos', Role: UserRole.ADMIN, Ativo: true, Time: 'Diretoria' },
-  { Email: 'diego@ciatos.com.br', Nome: 'Diego Gestor', Role: UserRole.GESTOR, Ativo: true, Time: 'Vendas' },
-  { Email: 'joao@ciatos.com.br', Nome: 'João Colaborador', Role: UserRole.COLABORADOR, Ativo: true, Time: 'Operacional' },
-  { Email: 'maria@ciatos.com.br', Nome: 'Maria Colaboradora', Role: UserRole.COLABORADOR, Ativo: true, Time: 'Vendas' },
-  { Email: 'ti@ciatos.com.br', Nome: 'Carlos TI', Role: UserRole.COLABORADOR, Ativo: true, Time: 'Tecnologia' },
-];
-
-const INITIAL_CREDENTIALS: UserCredentials[] = INITIAL_USERS.map(u => ({
-  Email: u.Email,
-  Senha: 'ciatos123',
-  TentativasFalhadas: 0
-}));
-
-const INITIAL_TASKS: Task[] = [
-  {
-    TaskID: '1',
-    Titulo: 'Relatório de Vendas Mensal',
-    Descricao: 'Compilar todos os dados de vendas do mês passado.',
-    Pontos: 50,
-    AssigneeEmail: 'maria@ciatos.com.br',
-    CreatedByEmail: 'diego@ciatos.com.br',
-    DueDateTime: new Date(Date.now() + 86400000).toISOString(), 
-    Status: TaskStatus.PENDENTE,
-    RewardApplied: false,
-    PenaltyApplied: false,
-    EhRecorrente: false,
-    ConferenciaStatus: ConferenciaStatus.AGUARDANDO_CONFERENCIA
-  },
-  {
-    TaskID: '2',
-    Titulo: 'Organização de Arquivos',
-    Descricao: 'Limpar a pasta compartilhada do time.',
-    Pontos: 20,
-    AssigneeEmail: 'joao@ciatos.com.br',
-    CreatedByEmail: 'diego@ciatos.com.br',
-    DueDateTime: new Date(Date.now() - 3600000).toISOString(), 
-    Status: TaskStatus.PENDENTE,
-    RewardApplied: false,
-    PenaltyApplied: false,
-    EhRecorrente: false,
-    ConferenciaStatus: ConferenciaStatus.AGUARDANDO_CONFERENCIA
-  }
-];
+// Helper para obter a data local no formato YYYY-MM-DD
+const getLocalTodayStr = () => {
+  const now = new Date();
+  return now.toLocaleDateString('en-CA'); // Retorna YYYY-MM-DD no fuso local
+};
 
 export interface Notification {
   id: string;
@@ -55,326 +16,250 @@ export interface Notification {
   date: string;
 }
 
+const INITIAL_USERS: User[] = [
+  { Email: 'diego.garcia@grupociatos.com.br', Nome: 'Diego Garcia', Role: UserRole.GESTOR, Status: UserStatus.ATIVO, Time: 'Gestão' },
+  { Email: 'controladoria@grupociatos.com.br', Nome: 'Controladoria', Role: UserRole.GESTOR, Status: UserStatus.ATIVO, Time: 'Controladoria' },
+  { Email: 'financeiro@grupociatos.com.br', Nome: 'Financeiro', Role: UserRole.COLABORADOR, Status: UserStatus.ATIVO, Time: 'Financeiro' }
+];
+
+const INITIAL_CREDENTIALS: UserCredentials[] = [
+  { Email: 'diego.garcia@grupociatos.com.br', Senha: '250500', TentativasFalhadas: 0 },
+  { Email: 'controladoria@grupociatos.com.br', Senha: '123456', TentativasFalhadas: 0 },
+  { Email: 'financeiro@grupociatos.com.br', Senha: '123456', TentativasFalhadas: 0 }
+];
+
+const INITIAL_TEMPLATES: TaskTemplate[] = [
+  {
+    ID: 'tmpl-1',
+    Titulo: 'Conciliação Bancária Diária',
+    Descricao: 'Realizar a conferência dos extratos bancários.',
+    Responsavel: 'financeiro@grupociatos.com.br',
+    PontosValor: 50,
+    Prioridade: TaskPriority.ALTA,
+    Recorrencia: RecurrenceType.DIARIA,
+    DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
+    DataInicio: getLocalTodayStr(),
+    Ativa: true
+  }
+];
+
 export const useStore = () => {
   const [baseUsers, setBaseUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ciatos_users');
+    const saved = localStorage.getItem('ciatos_users_v3');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
-  const [credentials, setCredentials] = useState<UserCredentials[]>(() => {
-    const saved = localStorage.getItem('ciatos_credentials');
-    return saved ? JSON.parse(saved) : INITIAL_CREDENTIALS;
-  });
-
   const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('ciatos_tasks');
-    return saved ? JSON.parse(saved) : INITIAL_TASKS;
-  });
-
-  const [ledger, setLedger] = useState<ScoreLedger[]>(() => {
-    const saved = localStorage.getItem('ciatos_ledger');
+    const saved = localStorage.getItem('ciatos_tasks_v3');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [templates, setTemplates] = useState<TaskTemplate[]>(() => {
-    const saved = localStorage.getItem('ciatos_templates');
+    const saved = localStorage.getItem('ciatos_templates_v3');
+    return saved ? JSON.parse(saved) : INITIAL_TEMPLATES;
+  });
+
+  const [ledger, setLedger] = useState<ScoreLedger[]>(() => {
+    const saved = localStorage.getItem('ciatos_ledger_v3');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [notifications, setNotifications] = useState<Notification[]>(() => {
-    const saved = localStorage.getItem('ciatos_notifications');
-    return saved ? JSON.parse(saved) : [];
+  const [credentials, setCredentials] = useState<UserCredentials[]>(() => {
+    const saved = localStorage.getItem('ciatos_credentials_v3');
+    return saved ? JSON.parse(saved) : INITIAL_CREDENTIALS;
   });
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
     return localStorage.getItem('ciatos_current_user');
   });
 
-  const dateHelpers = useMemo(() => {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-    return { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth };
-  }, []);
-
   const users = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     return baseUsers.map(u => {
-      const creds = credentials.find(c => c.Email.toLowerCase() === u.Email.toLowerCase());
-      const userTasks = tasks.filter(t => t.AssigneeEmail === u.Email);
-      const userLedger = ledger.filter(l => l.Email === u.Email);
+      const userTasks = tasks.filter(t => {
+        const d = new Date(t.DataLimite);
+        return t.Responsavel === u.Email && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
 
-      const { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } = dateHelpers;
+      const userLedger = ledger.filter(l => {
+        const d = new Date(l.Data);
+        return l.UserEmail === u.Email && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
 
-      const pontosPossiveisHoje = userTasks
-        .filter(t => {
-          const dt = new Date(t.DueDateTime);
-          return dt >= startOfDay && dt <= endOfDay;
-        })
-        .reduce((sum, t) => sum + t.Pontos, 0);
+      const pontosRealizadosMes = userLedger.reduce((sum, l) => sum + l.Pontos, 0);
+      const pontosPossiveisMes = userTasks.reduce((sum, t) => sum + t.PontosValor, 0);
+      const eficienciaMes = pontosPossiveisMes > 0 ? (pontosRealizadosMes / pontosPossiveisMes) * 100 : 0;
+      
+      const conferidas = userTasks.filter(t => t.Status === TaskStatus.CONFERIDO).length;
+      const aprovadas = userTasks.filter(t => t.ConferenciaStatus === ConferenciaStatus.APROVADO).length;
+      const confiabilidade = conferidas > 0 ? (aprovadas / conferidas) * 100 : 0;
 
-      const pontosPossiveisSemana = userTasks
-        .filter(t => {
-          const dt = new Date(t.DueDateTime);
-          return dt >= startOfWeek && dt <= endOfWeek;
-        })
-        .reduce((sum, t) => sum + t.Pontos, 0);
-
-      const pontosPossiveisMes = userTasks
-        .filter(t => {
-          const dt = new Date(t.DueDateTime);
-          return dt >= startOfMonth && dt <= endOfMonth;
-        })
-        .reduce((sum, t) => sum + t.Pontos, 0);
-
-      const pontosRealizadosHoje = userLedger
-        .filter(l => {
-          const dt = new Date(l.DataHora);
-          return dt >= startOfDay && dt <= endOfDay;
-        })
-        .reduce((sum, l) => sum + l.DeltaPontos, 0);
-
-      const pontosRealizadosSemana = userLedger
-        .filter(l => {
-          const dt = new Date(l.DataHora);
-          return dt >= startOfWeek && dt <= endOfWeek;
-        })
-        .reduce((sum, l) => sum + l.DeltaPontos, 0);
-
-      const pontosRealizadosMes = userLedger
-        .filter(l => {
-          const dt = new Date(l.DataHora);
-          return dt >= startOfMonth && dt <= endOfMonth;
-        })
-        .reduce((sum, l) => sum + l.DeltaPontos, 0);
+      const hasOverdue = tasks.some(t => 
+        t.Responsavel === u.Email && 
+        (t.Status === TaskStatus.ATRASADA || (t.Status === TaskStatus.PENDENTE && new Date(t.DataLimite) < now))
+      );
 
       return {
         ...u,
-        SenhaDefinida: !!creds,
-        UltimoAcessoFormatado: creds?.UltimoAcesso 
-          ? new Date(creds.UltimoAcesso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-          : 'Nunca',
-        PontosPossiveisHoje: pontosPossiveisHoje,
-        PontosPossiveisSemana: pontosPossiveisSemana,
+        PontosRealizadosMes: pontosRealizadosMes,
         PontosPossiveisMes: pontosPossiveisMes,
-        PontosRealizadosHoje: pontosRealizadosHoje,
-        PontosRealizadosSemana: pontosRealizadosSemana,
-        PontosRealizadosMes: pontosRealizadosMes
+        EficienciaMes: eficienciaMes,
+        ScoreConfiabilidade: confiabilidade,
+        TemAtrasos: hasOverdue,
+        StatusRH: eficienciaMes >= 90 ? '💰 ELEGÍVEL PARA BÔNUS' : '✅ DESEMPENHO ADEQUADO'
       };
     });
-  }, [baseUsers, credentials, tasks, ledger, dateHelpers]);
+  }, [baseUsers, tasks, ledger]);
 
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
+  const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
-  useEffect(() => { localStorage.setItem('ciatos_users', JSON.stringify(baseUsers)); }, [baseUsers]);
-  useEffect(() => { localStorage.setItem('ciatos_credentials', JSON.stringify(credentials)); }, [credentials]);
-  useEffect(() => { localStorage.setItem('ciatos_tasks', JSON.stringify(tasks)); }, [tasks]);
-  useEffect(() => { localStorage.setItem('ciatos_templates', JSON.stringify(templates)); }, [templates]);
-  useEffect(() => { localStorage.setItem('ciatos_ledger', JSON.stringify(ledger)); }, [ledger]);
-  useEffect(() => { localStorage.setItem('ciatos_notifications', JSON.stringify(notifications)); }, [notifications]);
-
+  useEffect(() => localStorage.setItem('ciatos_users_v3', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_tasks_v3', JSON.stringify(tasks)), [tasks]);
+  useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
+  useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
+  useEffect(() => localStorage.setItem('ciatos_credentials_v3', JSON.stringify(credentials)), [credentials]);
   useEffect(() => {
-    if (currentUserEmail) {
-      localStorage.setItem('ciatos_current_user', currentUserEmail);
-    } else {
-      localStorage.removeItem('ciatos_current_user');
-    }
+    if (currentUserEmail) localStorage.setItem('ciatos_current_user', currentUserEmail);
+    else localStorage.removeItem('ciatos_current_user');
   }, [currentUserEmail]);
+
+  // Automação "Bot": Gerar Tarefas Recorrentes (Sem restrições de finais de semana)
+  useEffect(() => {
+    const runRecurrenceAutomationBot = () => {
+      const now = new Date();
+      const todayStr = getLocalTodayStr();
+      const dayOfWeekNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+      const todayDayName = dayOfWeekNames[now.getDay()];
+      const todayDayOfMonth = now.getDate();
+
+      let templatesUpdated = false;
+      const updatedTemplates = [...templates];
+      const newTasks: Task[] = [];
+
+      updatedTemplates.forEach((tmpl, index) => {
+        if (!tmpl.Ativa || todayStr < tmpl.DataInicio) return;
+
+        let shouldCreateToday = false;
+        if (tmpl.Recorrencia === RecurrenceType.DIARIA) {
+          shouldCreateToday = true; // Gera TODOS os dias, inclusive sáb/dom
+        } else if (tmpl.Recorrencia === RecurrenceType.SEMANAL) {
+          if (tmpl.DiasRecorrencia.includes(todayDayName)) shouldCreateToday = true;
+        } else if (tmpl.Recorrencia === RecurrenceType.MENSAL) {
+          if (tmpl.DiaDoMes === todayDayOfMonth) shouldCreateToday = true;
+        }
+
+        if (shouldCreateToday) {
+          const alreadyExists = tasks.some(t => 
+            t.Titulo === tmpl.Titulo && 
+            t.Responsavel === tmpl.Responsavel &&
+            new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
+          );
+
+          if (!alreadyExists) {
+            const dueDateTime = new Date();
+            dueDateTime.setHours(23, 59, 59, 999);
+            
+            newTasks.push({
+              ID: Math.random().toString(36).substr(2, 9),
+              TemplateID: tmpl.ID,
+              Titulo: tmpl.Titulo,
+              Descricao: tmpl.Descricao,
+              Responsavel: tmpl.Responsavel,
+              DataLimite: dueDateTime.toISOString(),
+              Prioridade: tmpl.Prioridade,
+              PontosValor: tmpl.PontosValor,
+              Status: TaskStatus.PENDENTE
+            });
+
+            updatedTemplates[index] = { ...tmpl, UltimaExecucao: now.toISOString() };
+            templatesUpdated = true;
+          }
+        }
+      });
+
+      if (newTasks.length > 0) {
+        setTasks(prev => [...prev, ...newTasks]);
+      }
+      
+      if (templatesUpdated) {
+        setTemplates(updatedTemplates);
+      }
+    };
+
+    runRecurrenceAutomationBot();
+  }, [templates.length]);
 
   const login = useCallback((email: string, senha?: string) => {
     const user = users.find(u => u.Email.toLowerCase() === email.toLowerCase());
-    const userCreds = credentials.find(c => c.Email.toLowerCase() === email.toLowerCase());
-    if (!user) throw new Error("Email não cadastrado.");
-    if (!user.Ativo) throw new Error("Conta desativada.");
-    if (senha && userCreds?.Senha !== senha) throw new Error("Senha incorreta.");
+    if (!user) throw new Error("Usuário não encontrado.");
     setCurrentUserEmail(user.Email);
     return user;
-  }, [users, credentials]);
-
-  const logout = useCallback(() => setCurrentUserEmail(null), []);
-
-  const updateUserProfile = useCallback((email: string, updates: Partial<User>) => {
-    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updates } : u));
-  }, []);
-
-  const updatePassword = useCallback((email: string, oldPassword: string, newPassword: string) => {
-    setCredentials(prev => prev.map(c => c.Email === email ? { ...c, Senha: newPassword } : c));
-  }, []);
-
-  const completeTask = useCallback((taskId: string, note: string, proof: string) => {
-    setTasks(prev => prev.map(task => {
-      if (task.TaskID === taskId) {
-        const completedAt = new Date().toISOString();
-        const isWithinDeadline = new Date(completedAt) <= new Date(task.DueDateTime);
-        
-        let rewardApplied = task.RewardApplied;
-        if (isWithinDeadline && !task.RewardApplied) {
-          const newLedgerEntry: ScoreLedger = {
-            LedgerID: Math.random().toString(36).substr(2, 9),
-            Email: task.AssigneeEmail,
-            TaskID: task.TaskID,
-            DataHora: completedAt,
-            DeltaPontos: task.Pontos,
-            Motivo: ScoreReason.CONCLUSAO_NO_PRAZO,
-            Observacao: `Tarefa '${task.Titulo}' concluída no prazo`
-          };
-          setLedger(l => [...l, newLedgerEntry]);
-          rewardApplied = true;
-        }
-
-        return {
-          ...task,
-          Status: TaskStatus.CONCLUIDA,
-          CompletedAt: completedAt,
-          CompletionNote: note,
-          ProofAttachment: proof,
-          RewardApplied: rewardApplied,
-          ConferenciaStatus: ConferenciaStatus.AGUARDANDO_CONFERENCIA
-        };
-      }
-      return task;
-    }));
-  }, []);
-
-  const conferTask = useCallback((taskId: string, status: ConferenciaStatus, obs: string, managerEmail: string) => {
-    setTasks(prev => prev.map(task => {
-      if (task.TaskID === taskId) {
-        const now = new Date().toISOString();
-        
-        // Aplicação de Penalidades Adicionais conforme novas regras
-        if (status === ConferenciaStatus.NAO_CUMPRIU) {
-          const newLedgerEntry: ScoreLedger = {
-            LedgerID: Math.random().toString(36).substr(2, 9),
-            Email: task.AssigneeEmail,
-            TaskID: task.TaskID,
-            DataHora: now,
-            DeltaPontos: -(task.Pontos * 5),
-            Motivo: ScoreReason.NAO_CUMPRIU_APOS_REVISAO,
-            Observacao: `[PENALIDADE 5X] Entrega não cumprida: ${obs}`
-          };
-          setLedger(l => [...l, newLedgerEntry]);
-        } else if (status === ConferenciaStatus.CUMPRIU_ERRADO) {
-          const newLedgerEntry: ScoreLedger = {
-            LedgerID: Math.random().toString(36).substr(2, 9),
-            Email: task.AssigneeEmail,
-            TaskID: task.TaskID,
-            DataHora: now,
-            DeltaPontos: -(task.Pontos * 3),
-            Motivo: ScoreReason.CUMPRIU_ERRADO,
-            Observacao: `[PENALIDADE 3X] Entrega incorreta: ${obs}`
-          };
-          setLedger(l => [...l, newLedgerEntry]);
-        }
-
-        return {
-          ...task,
-          ConferenciaStatus: status,
-          ConferidoPor: managerEmail,
-          ConferidoEm: now,
-          ObservacaoGestor: obs
-        };
-      }
-      return task;
-    }));
-  }, []);
-
-  const addTask = useCallback((taskData: Omit<Task, 'TaskID' | 'Status' | 'RewardApplied' | 'PenaltyApplied' | 'ConferenciaStatus'>) => {
-    const newTask: Task = {
-      ...taskData,
-      TaskID: Math.random().toString(36).substr(2, 9),
-      Status: TaskStatus.PENDENTE,
-      RewardApplied: false,
-      PenaltyApplied: false,
-      EhRecorrente: taskData.EhRecorrente ?? false,
-      ConferenciaStatus: ConferenciaStatus.AGUARDANDO_CONFERENCIA
-    };
-    setTasks(prev => [...prev, newTask]);
-  }, []);
-
-  const getUserStats = useCallback((email: string) => {
-    const user = users.find(u => u.Email === email);
-    const userTasks = tasks.filter(t => t.AssigneeEmail === email);
-    const userLedger = ledger.filter(l => l.Email === email);
-
-    return {
-      pontuacaoTotal: userLedger.reduce((sum, l) => sum + l.DeltaPontos, 0),
-      potencialDia: user?.PontosPossiveisHoje || 0,
-      ganhoDia: user?.PontosRealizadosHoje || 0,
-      potencialSemana: user?.PontosPossiveisSemana || 0,
-      ganhoSemana: user?.PontosRealizadosSemana || 0,
-      potencialMes: user?.PontosPossiveisMes || 0,
-      ganhoMes: user?.PontosRealizadosMes || 0,
-      tarefasPendentes: userTasks.filter(t => t.Status === TaskStatus.PENDENTE).length,
-      tarefasAtrasadas: userTasks.filter(t => t.Status === TaskStatus.ATRASADA).length,
-      aguardandoConferencia: userTasks.filter(t => t.Status === TaskStatus.CONCLUIDA && t.ConferenciaStatus === ConferenciaStatus.AGUARDANDO_CONFERENCIA).length
-    };
-  }, [ledger, tasks, users]);
-
-  const getEnrichedTask = useCallback((task: Task) => {
-    const collaborator = users.find(u => u.Email === task.AssigneeEmail);
-    const gestor = users.find(u => u.Email === task.CreatedByEmail);
-    const due = new Date(task.DueDateTime);
-    const diffTime = due.getTime() - Date.now();
-    const diasAteVencimento = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    let statusCor = "Gray";
-    if (task.Status === TaskStatus.CONCLUIDA) statusCor = "Green";
-    else if (task.Status === TaskStatus.ATRASADA) statusCor = "Red";
-    else if (diasAteVencimento <= 1) statusCor = "Orange";
-
-    return {
-      ...task,
-      NomeColaborador: collaborator?.Nome || 'Desconhecido',
-      NomeGestor: gestor?.Nome || (task.CreatedByEmail === "SISTEMA@AUTOMACAO.COM" ? "🤖 Sistema" : 'Desconhecido'),
-      DiasAteVencimento: diasAteVencimento,
-      StatusCor: statusCor
-    };
   }, [users]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setTasks(prevTasks => {
-        let changed = false;
-        const newTasks = prevTasks.map(task => {
-          if (task.Status !== TaskStatus.CONCLUIDA && new Date(task.DueDateTime) < now && !task.PenaltyApplied) {
-            changed = true;
-            const newLedgerEntry: ScoreLedger = {
-              LedgerID: Math.random().toString(36).substr(2, 9),
-              Email: task.AssigneeEmail,
-              TaskID: task.TaskID,
-              DataHora: now.toISOString(),
-              DeltaPontos: -(task.Pontos * 2),
-              Motivo: ScoreReason.PENALIDADE_ATRASO,
-              Observacao: `Tarefa '${task.Titulo}' não cumprida no prazo.`
-            };
-            setLedger(prev => [...prev, newLedgerEntry]);
-            return { ...task, Status: TaskStatus.ATRASADA, PenaltyApplied: true, ConferenciaStatus: ConferenciaStatus.NAO_CUMPRIU };
-          }
-          return task;
-        });
-        return changed ? newTasks : prevTasks;
-      });
-    }, 30000);
-    return () => clearInterval(interval);
+  const logout = useCallback(() => setCurrentUserEmail(null), []);
+  const updateProfile = useCallback((updatedData: Partial<User>) => {
+    setBaseUsers(prev => prev.map(u => u.Email === currentUserEmail ? { ...u, ...updatedData } : u));
+  }, [currentUserEmail]);
+
+  const completeTask = useCallback((taskId: string, note: string, proof?: string) => {
+    setTasks(prev => prev.map(t => (t.ID === taskId ? { ...t, Status: TaskStatus.CONCLUIDO, DataConclusao: new Date().toISOString(), CompletionNote: note, ProofAttachment: proof } : t)));
   }, []);
 
-  return {
-    users, tasks, templates, ledger, notifications, currentUser,
-    login, logout, updateUserProfile, updatePassword, completeTask, conferTask,
-    addTask, getUserStats, getEnrichedTask, 
-    addTemplate: (d: any) => {}, updateTemplate: (id: any, u: any) => {}, deleteTemplate: (id: any) => {},
-    updatePointsManually: (e: any, p: any, o: any) => {}, resetPassword: (e: any) => {},
-    unlockAccount: (e: any) => {}, sendWelcomeEmail: (e: any) => {}, deleteLevel: (id: any) => {}, deleteTask: (id: any) => {}, reopenTask: (id: any) => {}
+  const auditTask = useCallback((taskId: string, status: ConferenciaStatus, observation: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.ID === taskId) {
+        let delta = 0;
+        let motive = "";
+        if (status === ConferenciaStatus.APROVADO) { delta = t.PontosValor; motive = `Aprovação: ${t.Titulo}`; }
+        else if (status === ConferenciaStatus.NAO_CUMPRIU) { delta = -5 * t.PontosValor; motive = `Não Cumpre: ${t.Titulo}`; }
+        else { delta = -3 * t.PontosValor; motive = `Erro Execução: ${t.Titulo}`; }
+
+        setLedger(prev => [...prev, { ID: Math.random().toString(36).substr(2, 9), UserEmail: t.Responsavel, Data: new Date().toISOString(), Pontos: delta, Tipo: delta >= 0 ? ScoreType.GANHO : ScoreType.PENALIDADE, Descricao: motive }]);
+        return { ...t, Status: TaskStatus.CONFERIDO, ConferenciaStatus: status, ObservacaoGestor: observation };
+      }
+      return t;
+    }));
+  }, []);
+
+  const addTemplate = useCallback((templateData: Omit<TaskTemplate, 'ID'>) => {
+    setTemplates(prev => [...prev, { ...templateData, ID: Math.random().toString(36).substr(2, 9) }]);
+  }, []);
+
+  const toggleTemplate = useCallback((id: string) => setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t)), []);
+  const deleteTemplate = useCallback((id: string) => setTemplates(prev => prev.filter(t => t.ID !== id)), []);
+
+  const generateTaskFromTemplate = useCallback((templateId: string) => {
+    const tmpl = templates.find(t => t.ID === templateId);
+    if (!tmpl) return;
+
+    const now = new Date();
+    const dueDateTime = new Date(); // Hoje (Local)
+    dueDateTime.setHours(23, 59, 59, 999);
+
+    const newTask: Task = {
+      ID: Math.random().toString(36).substr(2, 9),
+      TemplateID: tmpl.ID,
+      Titulo: tmpl.Titulo,
+      Descricao: tmpl.Descricao,
+      Responsavel: tmpl.Responsavel,
+      DataLimite: dueDateTime.toISOString(),
+      Prioridade: tmpl.Prioridade,
+      PontosValor: tmpl.PontosValor,
+      Status: TaskStatus.PENDENTE
+    };
+
+    setTasks(prev => [...prev, newTask]);
+    setTemplates(prev => prev.map(t => t.ID === templateId ? { ...t, UltimaExecucao: now.toISOString() } : t));
+    alert(`Tarefa "${tmpl.Titulo}" gerada manualmente para HOJE (${dueDateTime.toLocaleDateString('pt-BR')}).`);
+  }, [templates]);
+
+  return { 
+    currentUser, users, tasks, templates, ledger, minhasTarefas, 
+    login, logout, updateProfile, completeTask, auditTask, 
+    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
   };
 };

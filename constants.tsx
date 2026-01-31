@@ -18,7 +18,14 @@ import {
   RotateCw,
   User as UserIcon,
   ShieldCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  CheckCircle2,
+  TrendingUp,
+  LayoutDashboard,
+  CalendarClock,
+  Eye,
+  FileText,
+  UserCheck
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -66,13 +73,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: <CheckCircle size={20} /> 
   },
   { 
-    label: 'Tarefas Atrasadas', 
-    view: 'OVERDUE_TASKS', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <AlertTriangle size={20} /> 
-  },
-  { 
     label: 'Tarefas Concluídas', 
     view: 'COMPLETED_TASKS', 
     section: 'COLABORADOR',
@@ -86,15 +86,36 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <Star size={20} /> 
   },
-  { 
-    label: 'Regras de Pontuação', 
-    view: 'RULES', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Info size={20} /> 
-  },
   
   // SEÇÃO: GESTOR
+  { 
+    label: 'Supervisão de Tarefas', 
+    view: 'TASK_SUPERVISION', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <Eye size={20} /> 
+  },
+  { 
+    label: 'Supervisão de Pontos', 
+    view: 'SCORE_SUPERVISION', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <FileText size={20} /> 
+  },
+  { 
+    label: 'Performance Individual', 
+    view: 'INDIVIDUAL_PERFORMANCE', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <UserCheck size={20} /> 
+  },
+  { 
+    label: 'Gestão de Performance', 
+    view: 'PERFORMANCE_MANAGEMENT', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <TrendingUp size={20} /> 
+  },
   { 
     label: 'Conferir Entregas', 
     view: 'CHECK_DELIVERIES', 
@@ -103,25 +124,18 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: <ClipboardCheck size={20} /> 
   },
   { 
-    label: 'Criar Obrigação', 
-    view: 'CREATE_TASK', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <PlusCircle size={20} /> 
-  },
-  { 
-    label: 'Programar Recorrências', 
+    label: 'Gerenciar Tarefas Recorrentes', 
     view: 'MANAGE_TEMPLATES', 
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <RotateCw size={20} /> 
+    icon: <CalendarClock size={20} /> 
   },
   { 
-    label: 'Pendências que Criei', 
-    view: 'CREATED_BY_ME', 
+    label: 'Painel de Confiabilidade', 
+    view: 'RELIABILITY_PANEL', 
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <ClipboardList size={20} /> 
+    icon: <CheckCircle2 size={20} /> 
   },
   { 
     label: 'Painel do Time', 
@@ -140,8 +154,15 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
 
   // SEÇÃO: ADMINISTRADOR
   { 
-    label: 'Todas as Tarefas', 
-    view: 'ALL_TASKS', 
+    label: 'Visão Executiva', 
+    view: 'EXECUTIVE_VIEW', 
+    section: 'ADMINISTRADOR',
+    role: [UserRole.ADMIN], 
+    icon: <LayoutDashboard size={20} /> 
+  },
+  { 
+    label: 'Relatório Gerencial RH', 
+    view: 'REPORTS', 
     section: 'ADMINISTRADOR',
     role: [UserRole.ADMIN], 
     icon: <List size={20} /> 
@@ -152,26 +173,5 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'ADMINISTRADOR',
     role: [UserRole.ADMIN], 
     icon: <UserCog size={20} /> 
-  },
-  { 
-    label: 'Gerenciar Acessos', 
-    view: 'MANAGE_ACCESS', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <ShieldCheck size={20} /> 
-  },
-  { 
-    label: 'Extrato Geral de Pontos', 
-    view: 'GENERAL_LEDGER', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <Receipt size={20} /> 
-  },
-  { 
-    label: 'Ajuste Manual de Pontos', 
-    view: 'MANUAL_ADJUSTMENT', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <Edit3 size={20} /> 
   },
 ];
