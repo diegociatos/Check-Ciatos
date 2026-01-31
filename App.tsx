@@ -26,7 +26,7 @@ import {
 
 const App: React.FC = () => {
   const { 
-    currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser,
+    currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, minhasTarefas, tasks, templates, ledger, 
     completeTask, auditTask, deleteTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   } = useStore();
@@ -50,6 +50,38 @@ const App: React.FC = () => {
     }
   }, [currentUser, currentView]);
 
+  // FILTROS HIERÁRQUICOS CENTRAIS
+  const visibleCollaborators = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.Role === UserRole.ADMIN) return users.filter(u => u.Role === UserRole.COLABORADOR);
+    if (currentUser.Role === UserRole.GESTOR) return users.filter(u => u.Role === UserRole.COLABORADOR && u.Gestor === currentUser.Email);
+    return [];
+  }, [users, currentUser]);
+
+  const visibleTasks = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.Role === UserRole.ADMIN) return tasks;
+    if (currentUser.Role === UserRole.GESTOR) {
+      return tasks.filter(t => {
+         const targetUser = users.find(u => u.Email === t.Responsavel);
+         return targetUser?.Gestor === currentUser.Email;
+      });
+    }
+    return tasks.filter(t => t.Responsavel === currentUser.Email);
+  }, [tasks, users, currentUser]);
+
+  const visibleLedger = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.Role === UserRole.ADMIN) return ledger;
+    if (currentUser.Role === UserRole.GESTOR) {
+      return ledger.filter(l => {
+         const targetUser = users.find(u => u.Email === l.UserEmail);
+         return targetUser?.Gestor === currentUser.Email;
+      });
+    }
+    return ledger.filter(l => l.UserEmail === currentUser.Email);
+  }, [ledger, users, currentUser]);
+
   if (!currentUser) return <Login onLogin={login} />;
 
   // FORÇA TROCA DE SENHA NO PRIMEIRO ACESSO
@@ -61,7 +93,7 @@ const App: React.FC = () => {
               <div className="h-20 w-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                  <Lock size={40} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Primeiro Acesso</h2>
+              <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Alterar Senha Obrigatória</h2>
               <p className="text-sm text-gray-500">Bem-vindo ao Grupo Ciatos! Por segurança, você precisa criar uma nova senha personalizada antes de continuar.</p>
            </div>
 
@@ -76,7 +108,7 @@ const App: React.FC = () => {
                  />
               </div>
               <div className="space-y-1">
-                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Nova Senha</label>
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Crie sua nova senha segura</label>
                  <input 
                     type="password"
                     className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
@@ -101,7 +133,7 @@ const App: React.FC = () => {
                 try {
                    if (passwordForm.new !== passwordForm.confirm) throw new Error("As senhas não conferem.");
                    changePassword(currentUser.Email, passwordForm.current, passwordForm.new);
-                   alert("Senha alterada com sucesso! Bem-vindo.");
+                   alert("Senha atualizada! Bem-vindo ao sistema.");
                    setPasswordForm({ current: '', new: '', confirm: '' });
                 } catch (err: any) {
                   alert(err.message);
@@ -167,7 +199,9 @@ const App: React.FC = () => {
             pendingTasksToday={minhasTarefas.filter(t => t.Status === TaskStatus.PENDENTE)} 
             recentLedger={ledger.filter(l => l.UserEmail === currentUser.Email)} 
             onNavigateToTasks={() => setCurrentView('MY_TASKS_TODAY')}
-            tasks={tasks}
+            tasks={visibleTasks}
+            currentUserRole={currentUser.Role}
+            collaborators={visibleCollaborators}
           />
         );
 
@@ -175,22 +209,18 @@ const App: React.FC = () => {
         const today = new Date().toLocaleDateString('en-CA');
         const isManagerOrAdmin = currentUser.Role === UserRole.GESTOR || currentUser.Role === UserRole.ADMIN;
         
-        let todayPendingTasks = tasks.filter(t => {
+        let todayPendingTasks = visibleTasks.filter(t => {
           const taskDateStr = new Date(t.DataLimite).toLocaleDateString('en-CA');
           const isToday = taskDateStr === today;
           const isPending = t.Status === TaskStatus.PENDENTE;
-          const isOwner = t.Responsavel === currentUser.Email;
-          const isAdmin = currentUser.Role === UserRole.ADMIN;
-          
-          if (isManagerOrAdmin || isAdmin) return isToday && isPending;
-          return isOwner && isToday && isPending;
+          return isToday && isPending;
         });
 
         if (filterPriority !== 'TODAS') {
           todayPendingTasks = todayPendingTasks.filter(t => t.Prioridade === filterPriority);
         }
 
-        const completedTodayCount = tasks.filter(t => {
+        const completedTodayCount = visibleTasks.filter(t => {
            if (!t.DataConclusao) return false;
            const completionDateStr = new Date(t.DataConclusao).toLocaleDateString('en-CA');
            return completionDateStr === today && (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
@@ -213,11 +243,11 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Obrigações Corporativas - {new Date().toLocaleDateString('pt-BR')}</span>
                   </div>
                   <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2 font-ciatos">
-                    {isManagerOrAdmin ? 'Painel de Controle Master' : 'Minhas Tarefas de Hoje'}
+                    {isManagerOrAdmin ? (currentUser.Role === UserRole.ADMIN ? 'Painel de Controle Master' : 'Gestão da Minha Equipe') : 'Minhas Tarefas de Hoje'}
                   </h3>
                   <p className="text-white/60 font-medium text-lg">
                     {isManagerOrAdmin 
-                      ? 'Visão consolidada da operação de hoje. Atendimento total (Sáb/Dom inclusive).' 
+                      ? 'Visão consolidada da operação de hoje para os colaboradores sob sua gestão.' 
                       : 'Suas obrigações pendentes para o dia de hoje.'}
                   </p>
                </div>
@@ -231,7 +261,7 @@ const App: React.FC = () => {
                     </div>
                     <div>
                        <h4 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Entregas Realizadas</h4>
-                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Time Grupo Ciatos (Hoje)</p>
+                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{isManagerOrAdmin ? 'Equipe sob Gestão' : 'Pessoal'} (Hoje)</p>
                     </div>
                  </div>
                  <div className="text-right">
@@ -245,9 +275,7 @@ const App: React.FC = () => {
                   {owners.map(email => {
                     const userTasks = groupedTasks[email] || [];
                     const user = users.find(u => u.Email === email);
-                    if (!isManagerOrAdmin && email !== currentUser.Email) return null;
-                    if (isManagerOrAdmin && userTasks.length === 0) return null;
-
+                    
                     return (
                       <div key={email} className="space-y-6">
                         {isManagerOrAdmin && (
@@ -270,7 +298,7 @@ const App: React.FC = () => {
                           allTasks={tasks}
                           onComplete={handleQuickComplete} 
                           onNotify={isManagerOrAdmin ? (taskTitle) => handleNotify(email, taskTitle) : undefined}
-                          onDelete={isManagerOrAdmin ? deleteTask : undefined}
+                          onDelete={currentUser.Role === UserRole.ADMIN ? deleteTask : undefined}
                           showUser={isManagerOrAdmin}
                           currentUserRole={currentUser.Role}
                         />
@@ -290,22 +318,20 @@ const App: React.FC = () => {
         );
 
       case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={tasks} users={users} onDeleteTask={deleteTask} currentUserRole={currentUser.Role} />;
+        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={deleteTask} currentUserRole={currentUser.Role} />;
 
       case 'MANAGE_USERS':
-        /**
-         * Fixed: Changed undefined baseUsers variable to users from useStore hook.
-         */
         return <ManageUsersView 
           users={users} 
           onAddUser={addUser} 
+          onUpdateUser={updateUser}
           onResetPassword={resetUserPassword} 
           onToggleStatus={toggleUserStatus} 
           onDeleteUser={deleteUser} 
         />;
 
       case 'COMPLETED_TASKS':
-        const completed = minhasTarefas.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
+        const completed = visibleTasks.filter(t => (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO) && (currentUser.Role === UserRole.COLABORADOR ? t.Responsavel === currentUser.Email : true));
         completed.sort((a, b) => {
           const dateA = a.DataConclusao ? new Date(a.DataConclusao).getTime() : 0;
           const dateB = b.DataConclusao ? new Date(b.DataConclusao).getTime() : 0;
@@ -320,7 +346,7 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Histórico Profissional</span>
                   </div>
                   <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2 font-ciatos">Tarefas Concluídas</h3>
-                  <p className="text-white/60 font-medium text-lg">Registro de obrigações finalizadas sob sua responsabilidade.</p>
+                  <p className="text-white/60 font-medium text-lg">Registro de obrigações finalizadas sob sua gestão/responsabilidade.</p>
                </div>
             </div>
             <div className="p-4 lg:p-8 space-y-8">
@@ -338,16 +364,16 @@ const App: React.FC = () => {
         );
 
       case 'SCORE_SUPERVISION':
-        return <ScoreSupervisionView ledger={ledger} users={users} />;
+        return <ScoreSupervisionView ledger={visibleLedger} users={users} />;
 
       case 'INDIVIDUAL_PERFORMANCE':
-        return <IndividualPerformanceDashboard users={users} tasks={tasks} ledger={ledger} />;
+        return <IndividualPerformanceDashboard users={users} tasks={visibleTasks} ledger={visibleLedger} collaboratorsList={visibleCollaborators} />;
 
       case 'PERFORMANCE_MANAGEMENT':
-        return <PerformanceDashboard tasks={tasks} users={users} />;
+        return <PerformanceDashboard tasks={visibleTasks} users={users} collaboratorsList={visibleCollaborators} />;
       
       case 'CHECK_DELIVERIES':
-        return <DeliveryChecklist tasks={tasks} onAudit={auditTask} />;
+        return <DeliveryChecklist tasks={visibleTasks} onAudit={auditTask} />;
       
       case 'MANAGE_TEMPLATES':
         return <TemplateManager 
@@ -360,16 +386,16 @@ const App: React.FC = () => {
         />;
 
       case 'RELIABILITY_PANEL':
-        return <ReliabilityPanel users={users} tasks={tasks} />;
+        return <ReliabilityPanel users={users} tasks={visibleTasks} collaboratorsList={visibleCollaborators} />;
       
       case 'TEAM_PANEL':
-        return <TeamPanel users={users} tasks={tasks} />;
+        return <TeamPanel users={users} tasks={visibleTasks} collaboratorsList={visibleCollaborators} />;
       
       case 'RANKING':
-        return <RankingView users={users} tasks={tasks} />;
+        return <RankingView users={users} tasks={visibleTasks} collaboratorsList={visibleCollaborators} />;
 
       case 'REPORTS':
-        return <DecisionReport users={users} />;
+        return <DecisionReport users={users} collaboratorsList={visibleCollaborators} />;
 
       case 'MY_PROFILE':
         return (

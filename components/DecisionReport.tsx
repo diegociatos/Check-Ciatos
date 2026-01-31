@@ -1,26 +1,19 @@
 
 import React from 'react';
 import { User } from '../types';
-import { ShieldCheck, ShieldAlert, ShieldEllipsis, FileText, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 interface DecisionReportProps {
   users: User[];
+  collaboratorsList: User[];
 }
 
-const DecisionReport: React.FC<DecisionReportProps> = ({ users }) => {
-  const collaborators = users.filter(u => u.Role === 'Colaborador');
-
+const DecisionReport: React.FC<DecisionReportProps> = ({ users, collaboratorsList }) => {
   const getDeliveryStatus = (efficiency: number) => {
     if (efficiency > 95) return { label: 'Excelente', color: 'text-green-600 bg-green-50' };
     if (efficiency > 80) return { label: 'Bom', color: 'text-blue-600 bg-blue-50' };
     if (efficiency > 60) return { label: 'Alerta', color: 'text-orange-600 bg-orange-50' };
     return { label: 'Crítico', color: 'text-red-600 bg-red-50' };
-  };
-
-  const getReliabilityState = (score: number) => {
-    if (score > 90) return 'Alta';
-    if (score > 70) return 'Média';
-    return 'Baixa';
   };
 
   const getSuggestedAction = (efficiency: number, reliability: number) => {
@@ -30,21 +23,18 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users }) => {
   };
 
   const handleGenerateReport = () => {
-    alert("Relatório PDF Gerado e enviado para diego.garcia@grupociatos.com.br");
+    alert("Relatório PDF Gerado para os colaboradores sob sua gestão.");
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h3 className="text-2xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Relatório de Decisão Estratégica</h3>
-          <p className="text-sm text-gray-400 font-medium">Cruzamento de produtividade com comportamento para gestão de talentos.</p>
+          <h3 className="text-2xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Relatório Estratégico</h3>
+          <p className="text-sm text-gray-400 font-medium">Cruzamento de dados da sua equipe.</p>
         </div>
-        <button 
-          onClick={handleGenerateReport}
-          className="flex items-center gap-3 bg-[#8B1B1F] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-[#8B1B1F]/20 hover:scale-105 transition-all"
-        >
-          <Download size={18} /> Fechamento Mensal PDF
+        <button onClick={handleGenerateReport} className="flex items-center gap-3 bg-[#8B1B1F] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-[#8B1B1F]/20">
+          <Download size={18} /> Exportar Fechamento
         </button>
       </div>
 
@@ -54,14 +44,12 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users }) => {
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status de Entrega</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Confiabilidade</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Entrega</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ação Sugerida</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {collaborators.map(user => {
-                // Fix: 'EficienciaMes' is already a percentage (0-100) calculated in store.ts
+              {collaboratorsList.map(user => {
                 const efficiency = user.EficienciaMes || 0;
                 const reliability = user.ScoreConfiabilidade || 0;
                 const status = getDeliveryStatus(efficiency);
@@ -74,13 +62,8 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users }) => {
                       <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
                     </td>
                     <td className="px-8 py-6 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent ${status.color}`}>
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border border-transparent ${status.color}`}>
                         {status.label} ({efficiency.toFixed(0)}%)
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span className="text-xs font-bold text-gray-600">
-                        {getReliabilityState(reliability)}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
@@ -91,6 +74,11 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users }) => {
                   </tr>
                 );
               })}
+              {collaboratorsList.length === 0 && (
+                <tr>
+                   <td colSpan={3} className="px-8 py-20 text-center text-gray-300 font-bold italic uppercase text-xs">Sem dados da equipe.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

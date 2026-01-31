@@ -1,16 +1,15 @@
 
 import React from 'react';
 import { User, Task, ConferenciaStatus } from '../types';
-import { ShieldCheck, ArrowUpRight, ArrowDownRight, Minus, MoreVertical } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 
 interface ReliabilityPanelProps {
   users: User[];
   tasks: Task[];
+  collaboratorsList: User[];
 }
 
-const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks }) => {
-  const collaborators = users.filter(u => u.Role === 'Colaborador');
-
+const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, collaboratorsList }) => {
   const getReliabilityColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-100';
     if (score >= 70) return 'text-orange-500 bg-orange-50 border-orange-100';
@@ -22,7 +21,7 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks }) => 
       <div className="p-8 border-b border-gray-50 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Indicadores de Confiabilidade</h3>
-          <p className="text-sm text-gray-400 font-medium">Monitoramento da precisão e qualidade das entregas individuais.</p>
+          <p className="text-sm text-gray-400 font-medium">Monitoramento de precisão da sua equipe.</p>
         </div>
         <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center text-[#8B1B1F]">
            <ShieldCheck size={24} />
@@ -35,16 +34,14 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks }) => 
             <tr className="bg-gray-50/50">
               <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
               <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Conferidas</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Erros/Falhas</th>
               <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Confiabilidade</th>
               <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Tendência</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {collaborators.sort((a,b) => (b.ScoreConfiabilidade || 0) - (a.ScoreConfiabilidade || 0)).map(user => {
+            {collaboratorsList.sort((a,b) => (b.ScoreConfiabilidade || 0) - (a.ScoreConfiabilidade || 0)).map(user => {
               const userTasks = tasks.filter(t => t.Responsavel === user.Email);
               const conferidas = userTasks.filter(t => t.ConferenciaStatus).length;
-              const falhas = userTasks.filter(t => t.ConferenciaStatus === ConferenciaStatus.NAO_CUMPRIU || t.ConferenciaStatus === ConferenciaStatus.CUMPRIU_ERRADO).length;
               const score = user.ScoreConfiabilidade || 0;
 
               return (
@@ -62,9 +59,6 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks }) => 
                   </td>
                   <td className="px-8 py-6 text-center font-bold text-gray-600">{conferidas}</td>
                   <td className="px-8 py-6 text-center">
-                    <span className={`text-xs font-black ${falhas > 0 ? 'text-red-600' : 'text-gray-300'}`}>{falhas}</span>
-                  </td>
-                  <td className="px-8 py-6 text-center">
                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getReliabilityColor(score)}`}>
                       {score.toFixed(1)}%
                     </span>
@@ -79,6 +73,11 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks }) => 
                 </tr>
               );
             })}
+            {collaboratorsList.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-8 py-20 text-center text-gray-300 font-bold italic uppercase text-xs">Sem membros na equipe.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -7,21 +7,20 @@ import { Activity, CheckCircle, AlertTriangle, TrendingUp, Users } from 'lucide-
 interface PerformanceDashboardProps {
   tasks: Task[];
   users: User[];
+  collaboratorsList: User[];
 }
 
-const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, users }) => {
+const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, users, collaboratorsList }) => {
   const today = new Date().toISOString().split('T')[0];
   const todayTasks = tasks.filter(t => t.DataLimite.startsWith(today));
   const completedTasks = tasks.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
   const overdueTasks = tasks.filter(t => t.Status === TaskStatus.PENDENTE && new Date(t.DataLimite) < new Date());
   const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
 
-  const topCollaborators = [...users]
-    .filter(u => u.Role === 'Colaborador')
+  const topCollaborators = [...collaboratorsList]
     .sort((a, b) => (b.PontosRealizadosMes || 0) - (a.PontosRealizadosMes || 0))
     .slice(0, 5);
 
-  // Dados dinâmicos para o gráfico
   const chartData = React.useMemo(() => {
     const days = [];
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
@@ -98,6 +97,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
                 <span className="text-sm font-black text-[#8B1B1F]">{u.PontosRealizadosMes} pts</span>
               </div>
             ))}
+            {topCollaborators.length === 0 && <p className="text-xs text-gray-300 italic text-center py-10">Nenhum dado de performance disponível para sua equipe.</p>}
           </div>
         </div>
       </div>

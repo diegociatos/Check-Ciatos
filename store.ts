@@ -14,8 +14,19 @@ const INITIAL_USERS: User[] = [
     Role: UserRole.ADMIN, 
     Status: UserStatus.ATIVO, 
     Time: 'Gestão',
-    Senha: '250500', // Senha corrigida conforme solicitação
+    Senha: '250500', 
     SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'gestor@grupociatos.com.br', 
+    Nome: 'Gestor de Exemplo', 
+    Role: UserRole.GESTOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Operação',
+    Senha: '123',
+    SenhaProvisoria: true,
     DataCriacao: '2024-01-01',
     TentativasFalhadas: 0
   },
@@ -25,7 +36,8 @@ const INITIAL_USERS: User[] = [
     Role: UserRole.COLABORADOR, 
     Status: UserStatus.ATIVO, 
     Time: 'Financeiro',
-    Senha: '123',
+    Gestor: 'diego.garcia@grupociatos.com.br',
+    Senha: '123456',
     SenhaProvisoria: true,
     DataCriacao: '2024-01-01',
     TentativasFalhadas: 0
@@ -33,9 +45,8 @@ const INITIAL_USERS: User[] = [
 ];
 
 export const useStore = () => {
-  // Nota: ciatos_users_v5 para forçar a atualização dos dados iniciais no localStorage
   const [baseUsers, setBaseUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ciatos_users_v5');
+    const saved = localStorage.getItem('ciatos_users_v7');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
@@ -102,7 +113,7 @@ export const useStore = () => {
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
   const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
-  useEffect(() => localStorage.setItem('ciatos_users_v5', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_users_v7', JSON.stringify(baseUsers)), [baseUsers]);
   useEffect(() => localStorage.setItem('ciatos_tasks_v3', JSON.stringify(tasks)), [tasks]);
   useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
   useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
@@ -165,12 +176,12 @@ export const useStore = () => {
     const userIndex = baseUsers.findIndex(u => u.Email === email);
     if (userIndex === -1) return;
 
-    const tempPass = 'Ciatos@' + Math.floor(1000 + Math.random() * 9000);
+    const tempPass = '123456';
     const updatedUsers = [...baseUsers];
     updatedUsers[userIndex] = { ...baseUsers[userIndex], Senha: tempPass, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 };
     setBaseUsers(updatedUsers);
     
-    alert(`E-MAIL SIMULADO: Senha resetada para ${email}.\nNova senha provisória: ${tempPass}\nO usuário deverá alterá-la no primeiro acesso.`);
+    alert(`E-MAIL SIMULADO: Senha resetada para ${email}.\nNova senha provisória padrão: ${tempPass}\nO usuário deverá alterá-la no primeiro acesso.`);
   }, [baseUsers]);
 
   const toggleUserStatus = useCallback((email: string) => {
@@ -191,7 +202,7 @@ export const useStore = () => {
   const addUser = useCallback((userData: Partial<User>) => {
     if (baseUsers.some(u => u.Email === userData.Email)) throw new Error("Este e-mail já está cadastrado.");
     
-    const tempPass = 'Ciatos@' + Math.floor(1000 + Math.random() * 9000);
+    const tempPass = '123456';
     const newUser: User = {
       ...userData as User,
       Senha: tempPass,
@@ -202,8 +213,12 @@ export const useStore = () => {
     };
 
     setBaseUsers(prev => [...prev, newUser]);
-    alert(`E-MAIL SIMULADO: Boas vindas enviado para ${newUser.Email}.\nSenha Provisória: ${tempPass}`);
+    alert(`E-MAIL SIMULADO: Boas vindas enviado para ${newUser.Email}.\nSenha Provisória Padrão: ${tempPass}`);
   }, [baseUsers]);
+
+  const updateUser = useCallback((email: string, updatedData: Partial<User>) => {
+    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
+  }, []);
 
   const updateProfile = useCallback((updatedData: Partial<User>) => {
     setBaseUsers(prev => prev.map(u => u.Email === currentUserEmail ? { ...u, ...updatedData } : u));
@@ -281,7 +296,7 @@ export const useStore = () => {
 
   return { 
     currentUser, users, tasks, templates, ledger, minhasTarefas, 
-    login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser,
+    login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
   };

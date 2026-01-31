@@ -1,16 +1,16 @@
 
 import React from 'react';
 import { User, Task } from '../types';
-import { Medal, Trophy, Star, TrendingUp, User as UserIcon } from 'lucide-react';
+import { Medal, Trophy, User as UserIcon } from 'lucide-react';
 
 interface RankingViewProps {
   users: User[];
   tasks: Task[];
+  collaboratorsList: User[];
 }
 
-const RankingView: React.FC<RankingViewProps> = ({ users, tasks }) => {
-  const collaborators = users
-    .filter(u => u.Role === 'Colaborador')
+const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsList }) => {
+  const collaborators = collaboratorsList
     .map(u => {
       const efficiency = u.EficienciaMes || 0;
       const taskCount = tasks.filter(t => t.Responsavel === u.Email).length;
@@ -30,10 +30,8 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="bg-[#8B1B1F] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-        <div className="relative z-10">
-          <h3 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Ranking de Eficiência</h3>
-          <p className="text-white/60 font-medium">Reconhecimento baseado no cruzamento de volume e confiabilidade.</p>
-        </div>
+        <h3 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Ranking Equipe</h3>
+        <p className="text-white/60 font-medium">Reconhecimento baseado nos colaboradores sob sua gestão.</p>
         <div className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10">
           <Trophy size={120} />
         </div>
@@ -44,16 +42,15 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Posição</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Pos</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Eficiência Mensal</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Confiabilidade</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Eficiência</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Auditado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {collaborators.map((user, index) => (
-                <tr key={user.Email} className={`group hover:bg-gray-50/50 transition-colors ${index === 0 ? 'bg-yellow-50/20' : ''}`}>
+                <tr key={user.Email} className={`group hover:bg-gray-50/50 transition-colors ${index === 0 ? 'bg-yellow-50/10' : ''}`}>
                   <td className="px-8 py-6 text-center">
                     <div className="flex justify-center items-center h-10 w-10 mx-auto rounded-full bg-white shadow-sm border border-gray-100">
                       {getMedal(index)}
@@ -61,36 +58,28 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks }) => {
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-white overflow-hidden shadow-md ${index === 0 ? 'ring-4 ring-yellow-400 ring-opacity-50' : ''} bg-[#8B1B1F]`}>
-                        {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : <UserIcon size={20} />}
+                      <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white bg-[#8B1B1F]">
+                        {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : <UserIcon size={16} />}
                       </div>
                       <div>
-                        <p className={`text-sm font-black uppercase tracking-tighter ${index === 0 ? 'text-yellow-600' : 'text-[#111111]'}`}>{user.Nome}</p>
+                        <p className="text-sm font-bold text-[#111111]">{user.Nome}</p>
                         <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <span className={`text-xl font-black ${index === 0 ? 'text-yellow-600' : 'text-[#111111]'}`}>{user.efficiency.toFixed(1)}%</span>
+                    <span className="text-xl font-black text-[#111111]">{user.efficiency.toFixed(1)}%</span>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                       <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${user.ScoreConfiabilidade! > 90 ? 'bg-green-500' : user.ScoreConfiabilidade! > 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                            style={{ width: `${user.ScoreConfiabilidade}%` }}
-                          />
-                       </div>
-                       <span className="text-[10px] font-black text-gray-400">{user.ScoreConfiabilidade?.toFixed(0)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-transparent ${user.efficiency > 90 ? 'bg-green-50 text-green-600' : user.efficiency > 70 ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
-                      {user.efficiency > 90 ? 'EXCELENTE' : user.efficiency > 70 ? 'ADEQUADO' : 'ABAIXO DA META'}
-                    </span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase">{user.ScoreConfiabilidade?.toFixed(0)}% Conf.</span>
                   </td>
                 </tr>
               ))}
+              {collaborators.length === 0 && (
+                <tr>
+                   <td colSpan={4} className="px-8 py-20 text-center text-gray-300 font-bold italic uppercase text-xs">Sem ranking disponível.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

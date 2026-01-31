@@ -6,17 +6,17 @@ import { AlertTriangle, Info, CheckCircle2, LayoutDashboard, Target, Activity } 
 interface TeamPanelProps {
   users: User[];
   tasks: Task[];
+  collaboratorsList: User[];
 }
 
-const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
-  const collaborators = users.filter(u => u.Role === 'Colaborador');
-  
-  const inRisk = collaborators.filter(u => (u.ScoreConfiabilidade || 0) < 70);
-  const inAttention = collaborators.filter(u => (u.ScoreConfiabilidade || 0) >= 70 && (u.ScoreConfiabilidade || 0) <= 90);
-  const healthy = collaborators.filter(u => (u.ScoreConfiabilidade || 0) > 90);
+const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks, collaboratorsList }) => {
+  const inRisk = collaboratorsList.filter(u => (u.ScoreConfiabilidade || 0) < 70);
+  const inAttention = collaboratorsList.filter(u => (u.ScoreConfiabilidade || 0) >= 70 && (u.ScoreConfiabilidade || 0) <= 90);
+  const healthy = collaboratorsList.filter(u => (u.ScoreConfiabilidade || 0) > 90);
 
-  const avgReliability = collaborators.reduce((sum, u) => sum + (u.ScoreConfiabilidade || 0), 0) / (collaborators.length || 1);
-  const totalTasksToday = tasks.filter(t => t.DataLimite.startsWith(new Date().toISOString().split('T')[0])).length;
+  const avgReliability = collaboratorsList.reduce((sum, u) => sum + (u.ScoreConfiabilidade || 0), 0) / (collaboratorsList.length || 1);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const totalTasksToday = tasks.filter(t => t.DataLimite.startsWith(todayStr)).length;
 
   const UserMiniCard = ({ user, color }: any) => (
     <div className={`p-4 rounded-2xl border bg-white shadow-sm flex items-center justify-between border-l-4 ${color} hover:shadow-md transition-shadow`}>
@@ -25,15 +25,10 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
           {user.Nome}
         </p>
         <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
-        <div className="mt-2">
-           <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${user.TemAtrasos ? 'bg-red-50 text-red-700 border-red-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
-             {user.TemAtrasos ? 'POSSUI ATRASOS' : 'TUDO EM DIA'}
-           </span>
-        </div>
       </div>
       <div className="text-right">
         <p className="text-sm font-black text-gray-800">{(user.ScoreConfiabilidade || 0).toFixed(0)}%</p>
-        <p className="text-[8px] text-gray-400 uppercase font-black tracking-widest">Confiabilidade</p>
+        <p className="text-[8px] text-gray-400 uppercase font-black tracking-widest">Conf.</p>
       </div>
     </div>
   );
@@ -44,7 +39,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
         <div className="bg-[#8B1B1F] p-6 rounded-[32px] text-white shadow-lg flex flex-col justify-between h-40">
            <LayoutDashboard size={24} className="opacity-50" />
            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Confiabilidade Média</p>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Conf. Média Equipe</p>
               <h4 className="text-3xl font-ciatos font-bold">{avgReliability.toFixed(1)}%</h4>
            </div>
         </div>
@@ -58,15 +53,15 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
         <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col justify-between h-40">
            <Target size={24} className="text-green-600 opacity-50" />
            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Taxa Sucesso Global</p>
-              <h4 className="text-3xl font-ciatos font-bold text-[#111111]">92%</h4>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Time sob Gestão</p>
+              <h4 className="text-3xl font-ciatos font-bold text-[#111111]">{collaboratorsList.length}</h4>
            </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col justify-between h-40">
            <AlertTriangle size={24} className="text-red-600 opacity-50" />
            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Atrasos Críticos</p>
-              <h4 className="text-3xl font-ciatos font-bold text-red-600">{collaborators.filter(u => u.TemAtrasos).length}</h4>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Atrasos Atuais</p>
+              <h4 className="text-3xl font-ciatos font-bold text-red-600">{collaboratorsList.filter(u => u.TemAtrasos).length}</h4>
            </div>
         </div>
       </div>
@@ -79,10 +74,9 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
            </div>
            <div className="space-y-4">
               {inRisk.length > 0 ? inRisk.map(u => <UserMiniCard key={u.Email} user={u} color="border-l-red-600" />) : 
-              <p className="text-xs text-gray-300 font-bold px-4 italic">Nenhum colaborador em risco crítico.</p>}
+              <p className="text-xs text-gray-300 font-bold px-4 italic">Equipe segura.</p>}
            </div>
         </div>
-
         <div className="space-y-6">
            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-2xl border border-orange-100 w-fit">
               <Info size={16} className="text-orange-600" />
@@ -90,10 +84,9 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
            </div>
            <div className="space-y-4">
               {inAttention.length > 0 ? inAttention.map(u => <UserMiniCard key={u.Email} user={u} color="border-l-orange-500" />) : 
-              <p className="text-xs text-gray-300 font-bold px-4 italic">Nenhum colaborador nesta categoria.</p>}
+              <p className="text-xs text-gray-300 font-bold px-4 italic">Tudo sob controle.</p>}
            </div>
         </div>
-
         <div className="space-y-6">
            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-2xl border border-green-100 w-fit">
               <CheckCircle2 size={16} className="text-green-600" />
@@ -101,7 +94,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks }) => {
            </div>
            <div className="space-y-4">
               {healthy.length > 0 ? healthy.map(u => <UserMiniCard key={u.Email} user={u} color="border-l-green-600" />) : 
-              <p className="text-xs text-gray-300 font-bold px-4 italic">Equipe precisa de melhor engajamento.</p>}
+              <p className="text-xs text-gray-300 font-bold px-4 italic">Sem alta performance no momento.</p>}
            </div>
         </div>
       </div>

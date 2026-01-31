@@ -8,7 +8,7 @@ export enum UserRole {
 export enum UserStatus {
   ATIVO = 'Ativo',
   INATIVO = 'Inativo',
-  BLOQUEADO = 'BloqueADO'
+  BLOQUEADO = 'Bloqueado'
 }
 
 export enum TaskPriority {
@@ -54,6 +54,7 @@ export interface User {
   Role: UserRole;
   Status: UserStatus;
   Time: string;
+  Gestor?: string; // Ref para Email do Gestor/Admin
   // Segurança e Gestão
   Senha?: string;
   SenhaProvisoria?: boolean;
