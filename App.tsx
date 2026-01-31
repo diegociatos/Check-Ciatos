@@ -20,6 +20,8 @@ import TaskSupervisionView from './components/TaskSupervisionView';
 import ScoreSupervisionView from './components/ScoreSupervisionView';
 import IndividualPerformanceDashboard from './components/IndividualPerformanceDashboard';
 import ManageUsersView from './components/ManageUsersView';
+import ExecutiveView from './components/ExecutiveView';
+import HRReportView from './components/HRReportView';
 import { 
   User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key
 } from 'lucide-react';
@@ -394,8 +396,11 @@ const App: React.FC = () => {
       case 'RANKING':
         return <RankingView users={users} tasks={visibleTasks} collaboratorsList={visibleCollaborators} />;
 
+      case 'EXECUTIVE_VIEW':
+        return <ExecutiveView tasks={tasks} users={users} />;
+
       case 'REPORTS':
-        return <DecisionReport users={users} collaboratorsList={visibleCollaborators} />;
+        return <HRReportView users={users} />;
 
       case 'MY_PROFILE':
         return (
