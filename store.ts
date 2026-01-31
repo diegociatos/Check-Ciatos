@@ -31,6 +31,18 @@ const INITIAL_USERS: User[] = [
     TentativasFalhadas: 0
   },
   { 
+    Email: 'controladoria@grupociatos.com.br', 
+    Nome: 'Controladoria Ciatos', 
+    Role: UserRole.COLABORADOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Controladoria',
+    Gestor: 'diego.garcia@grupociatos.com.br',
+    Senha: '123456',
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
     Email: 'financeiro@grupociatos.com.br', 
     Nome: 'Financeiro User', 
     Role: UserRole.COLABORADOR, 
@@ -46,7 +58,7 @@ const INITIAL_USERS: User[] = [
 
 export const useStore = () => {
   const [baseUsers, setBaseUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ciatos_users_v7');
+    const saved = localStorage.getItem('ciatos_users_v8');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
@@ -113,7 +125,7 @@ export const useStore = () => {
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
   const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
-  useEffect(() => localStorage.setItem('ciatos_users_v7', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_users_v8', JSON.stringify(baseUsers)), [baseUsers]);
   useEffect(() => localStorage.setItem('ciatos_tasks_v3', JSON.stringify(tasks)), [tasks]);
   useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
   useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
