@@ -25,7 +25,8 @@ import {
   CalendarClock,
   Eye,
   FileText,
-  UserCheck
+  UserCheck,
+  HelpCircle
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -62,6 +63,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'INÍCIO',
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <UserIcon size={20} /> 
+  },
+  { 
+    label: 'Manual de Uso', 
+    view: 'HELP_CENTER', 
+    section: 'INÍCIO',
+    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <HelpCircle size={20} /> 
   },
 
   // SEÇÃO: COLABORADOR

@@ -22,6 +22,7 @@ import IndividualPerformanceDashboard from './components/IndividualPerformanceDa
 import ManageUsersView from './components/ManageUsersView';
 import ExecutiveView from './components/ExecutiveView';
 import HRReportView from './components/HRReportView';
+import HelpCenterView from './components/HelpCenterView';
 import { 
   User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key
 } from 'lucide-react';
@@ -401,6 +402,9 @@ const App: React.FC = () => {
 
       case 'REPORTS':
         return <HRReportView users={users} />;
+
+      case 'HELP_CENTER':
+        return <HelpCenterView currentUser={currentUser} />;
 
       case 'MY_PROFILE':
         return (
