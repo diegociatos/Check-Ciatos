@@ -1,14 +1,14 @@
 
 export enum UserRole {
-  GESTOR = 'Gestor',
-  COLABORADOR = 'Colaborador',
-  ADMIN = 'Admin'
+  GESTOR = 'GESTOR',
+  COLABORADOR = 'COLABORADOR',
+  ADMIN = 'ADMIN'
 }
 
 export enum UserStatus {
-  ATIVO = 'Ativo',
-  INATIVO = 'Inativo',
-  BLOQUEADO = 'Bloqueado'
+  ATIVO = 'ATIVO',
+  INATIVO = 'INATIVO',
+  BLOQUEADO = 'BLOQUEADO'
 }
 
 export enum TaskPriority {
