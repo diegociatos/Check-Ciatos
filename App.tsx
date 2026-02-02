@@ -30,7 +30,7 @@ import {
 const App: React.FC = () => {
   const { 
     currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
-    updateProfile, minhasTarefas, tasks, templates, ledger, 
+    updateProfile, minhasTarefas, tasks, templates, ledger, loading, error,
     completeTask, auditTask, deleteTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   } = useStore();
 
@@ -84,6 +84,46 @@ const App: React.FC = () => {
     }
     return ledger.filter(l => l.UserEmail === currentUser.Email);
   }, [ledger, users, currentUser]);
+
+  // Tela de loading enquanto carrega dados da API
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
+        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-6 animate-in zoom-in duration-300">
+          <div className="text-center space-y-4">
+            <div className="h-20 w-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
+              <CheckCircle size={40} />
+            </div>
+            <h2 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Carregando...</h2>
+            <p className="text-sm text-gray-500">Conectando ao servidor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mensagem de erro de conexão
+  if (error && !currentUser) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
+        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-6 animate-in zoom-in duration-300">
+          <div className="text-center space-y-4">
+            <div className="h-20 w-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
+              <Bell size={40} />
+            </div>
+            <h2 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Erro de Conexão</h2>
+            <p className="text-sm text-gray-500">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-[#8B1B1F] text-white rounded-full hover:bg-[#6B1518] transition"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) return <Login onLogin={login} />;
 
