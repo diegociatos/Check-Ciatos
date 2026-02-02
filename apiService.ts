@@ -1,5 +1,5 @@
 // API Service para Check-Ciatos
-const API_URL = 'http://195.35.16.198/check-ciatos/api';
+const API_URL = 'https://app.planejarpatrimonio.com.br/check-ciatos/api';
 
 // Helper para fazer requests
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
