@@ -23,6 +23,7 @@ export const useStore = () => {
     const loadData = async () => {
       try {
         setLoading(true);
+        console.log('[Check-Ciatos] Carregando dados da API...');
         const [usersData, tasksData, templatesData, ledgerData] = await Promise.all([
           usersApi.getAll(),
           tasksApi.getAll(),
@@ -30,13 +31,16 @@ export const useStore = () => {
           ledgerApi.getAll()
         ]);
         
+        console.log('[Check-Ciatos] Tarefas carregadas:', tasksData.length, tasksData);
+        console.log('[Check-Ciatos] Usuários carregados:', usersData.length);
+        
         setBaseUsers(usersData);
         setTasks(tasksData);
         setTemplates(templatesData);
         setLedger(ledgerData);
         setError(null);
       } catch (err: any) {
-        console.error('Erro ao carregar dados:', err);
+        console.error('[Check-Ciatos] Erro ao carregar dados:', err);
         setError(err.message);
       } finally {
         setLoading(false);
