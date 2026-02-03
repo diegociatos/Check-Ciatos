@@ -14,7 +14,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   const [filterResponsavel, setFilterResponsavel] = useState<string>('TODOS');
   const isManagerOrAdmin = currentUserRole === UserRole.GESTOR || currentUserRole === UserRole.ADMIN;
 
-  const collaborators = users.filter(u => u.Role === 'Colaborador');
+  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR);
 
   const displayedTasks = useMemo(() => {
     let list = [...tasks];
