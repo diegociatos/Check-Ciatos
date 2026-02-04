@@ -1,54 +1,85 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType } from './types';
-import { authApi, usersApi, tasksApi, templatesApi, ledgerApi } from './apiService';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, UserCredentials, TaskTemplate, RecurrenceType } from './types';
 
 const getLocalTodayStr = () => {
   const now = new Date();
   return now.toLocaleDateString('en-CA');
 };
 
+const INITIAL_USERS: User[] = [
+  { 
+    Email: 'diego.garcia@grupociatos.com.br', 
+    Nome: 'Diego Garcia', 
+    Role: UserRole.ADMIN, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Gestão',
+    Senha: '250500', 
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'gestor@grupociatos.com.br', 
+    Nome: 'Gestor de Exemplo', 
+    Role: UserRole.GESTOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Operação',
+    Senha: '123',
+    SenhaProvisoria: true,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'controladoria@grupociatos.com.br', 
+    Nome: 'Controladoria Ciatos', 
+    Role: UserRole.GESTOR, // Alterado para GESTOR
+    Status: UserStatus.ATIVO, 
+    Time: 'Controladoria',
+    Gestor: 'diego.garcia@grupociatos.com.br',
+    Senha: '123456',
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'financeiro@grupociatos.com.br', 
+    Nome: 'Financeiro Ciatos', 
+    Role: UserRole.COLABORADOR, // Mantido como COLABORADOR
+    Status: UserStatus.ATIVO, 
+    Time: 'Financeiro',
+    Gestor: 'controladoria@grupociatos.com.br', // Agora responde à Controladoria
+    Senha: '123456',
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  }
+];
+
 export const useStore = () => {
-  const [baseUsers, setBaseUsers] = useState<User[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [ledger, setLedger] = useState<ScoreLedger[]>([]);
+  const [baseUsers, setBaseUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('ciatos_users_v10');
+    return saved ? JSON.parse(saved) : INITIAL_USERS;
+  });
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const saved = localStorage.getItem('ciatos_tasks_v3');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [templates, setTemplates] = useState<TaskTemplate[]>(() => {
+    const saved = localStorage.getItem('ciatos_templates_v3');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [ledger, setLedger] = useState<ScoreLedger[]>(() => {
+    const saved = localStorage.getItem('ciatos_ledger_v3');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
     return localStorage.getItem('ciatos_current_user');
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Carregar dados da API ao iniciar
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        console.log('[Check-Ciatos] Carregando dados da API...');
-        const [usersData, tasksData, templatesData, ledgerData] = await Promise.all([
-          usersApi.getAll(),
-          tasksApi.getAll(),
-          templatesApi.getAll(),
-          ledgerApi.getAll()
-        ]);
-        
-        console.log('[Check-Ciatos] Tarefas carregadas:', tasksData.length, tasksData);
-        console.log('[Check-Ciatos] Usuários carregados:', usersData.length);
-        
-        setBaseUsers(usersData);
-        setTasks(tasksData);
-        setTemplates(templatesData);
-        setLedger(ledgerData);
-        setError(null);
-      } catch (err: any) {
-        console.error('[Check-Ciatos] Erro ao carregar dados:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
 
   const users = useMemo(() => {
     const now = new Date();
@@ -94,175 +125,189 @@ export const useStore = () => {
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
   const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
+  useEffect(() => localStorage.setItem('ciatos_users_v10', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_tasks_v3', JSON.stringify(tasks)), [tasks]);
+  useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
+  useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
   useEffect(() => {
     if (currentUserEmail) localStorage.setItem('ciatos_current_user', currentUserEmail);
     else localStorage.removeItem('ciatos_current_user');
   }, [currentUserEmail]);
 
   // Auth Functions
-  const login = useCallback(async (email: string, senha?: string) => {
-    try {
-      const user = await authApi.login(email, senha || '');
-      setCurrentUserEmail(user.Email);
-      
-      // Recarregar usuários para pegar o último acesso atualizado
-      const usersData = await usersApi.getAll();
-      setBaseUsers(usersData);
-      
-      return user;
-    } catch (err: any) {
-      throw new Error(err.message);
+  const login = useCallback((email: string, senha?: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email.toLowerCase() === email.toLowerCase());
+    if (userIndex === -1) throw new Error("Usuário não encontrado.");
+    
+    const user = baseUsers[userIndex];
+
+    if (user.Status === UserStatus.BLOQUEADO) {
+      throw new Error("Conta bloqueada por excesso de tentativas. Contate o suporte.");
     }
-  }, []);
+    if (user.Status === UserStatus.INATIVO) {
+      throw new Error("Conta desativada.");
+    }
+
+    if (user.Senha !== senha) {
+      const newAttempts = (user.TentativasFalhadas || 0) + 1;
+      const newStatus = newAttempts >= 5 ? UserStatus.BLOQUEADO : user.Status;
+      
+      const updatedUsers = [...baseUsers];
+      updatedUsers[userIndex] = { ...user, TentativasFalhadas: newAttempts, Status: newStatus };
+      setBaseUsers(updatedUsers);
+      
+      throw new Error(newStatus === UserStatus.BLOQUEADO 
+        ? "Conta bloqueada após 5 tentativas incorretas." 
+        : `Senha incorreta. Tentativa ${newAttempts} de 5.`);
+    }
+
+    // Sucesso
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, TentativasFalhadas: 0, UltimoAcesso: new Date().toISOString() };
+    setBaseUsers(updatedUsers);
+    setCurrentUserEmail(user.Email);
+    return user;
+  }, [baseUsers]);
 
   const logout = useCallback(() => setCurrentUserEmail(null), []);
 
-  const changePassword = useCallback(async (email: string, oldPass: string, newPass: string) => {
-    await authApi.changePassword(email, oldPass, newPass);
+  const changePassword = useCallback((email: string, oldPass: string, newPass: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    const user = baseUsers[userIndex];
     
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
+    if (user.Senha !== oldPass) throw new Error("Senha atual incorreta.");
+    if (newPass.length < 8 || !/\d/.test(newPass)) throw new Error("A nova senha deve ter no mínimo 8 caracteres e conter pelo menos um número.");
+    if (newPass === oldPass) throw new Error("A nova senha não pode ser igual à antiga.");
+
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, Senha: newPass, SenhaProvisoria: false };
+    setBaseUsers(updatedUsers);
+  }, [baseUsers]);
+
+  const resetUserPassword = useCallback((email: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    if (userIndex === -1) return;
+
+    const tempPass = '123456';
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...baseUsers[userIndex], Senha: tempPass, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 };
+    setBaseUsers(updatedUsers);
+    
+    alert(`E-MAIL SIMULADO: Senha resetada para ${email}.\nNova senha provisória padrão: ${tempPass}\nO usuário deverá alterá-la no primeiro acesso.`);
+  }, [baseUsers]);
+
+  const toggleUserStatus = useCallback((email: string) => {
+    setBaseUsers(prev => prev.map(u => {
+      if (u.Email === email) {
+        const nextStatus = u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO;
+        return { ...u, Status: nextStatus };
+      }
+      return u;
+    }));
   }, []);
 
-  const resetUserPassword = useCallback(async (email: string) => {
-    const result = await usersApi.resetPassword(email);
-    alert(`Senha resetada para ${email}.\nNova senha provisória: ${result.senhaProvisoria}\nO usuário deverá alterá-la no primeiro acesso.`);
-    
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
-  }, []);
-
-  const toggleUserStatus = useCallback(async (email: string) => {
-    await usersApi.toggleStatus(email);
-    
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
-  }, []);
-
-  const deleteUser = useCallback(async (email: string) => {
+  const deleteUser = useCallback((email: string) => {
     if (!window.confirm(`Deseja realmente deletar o usuário ${email}?`)) return;
-    
-    await usersApi.delete(email);
-    
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
+    setBaseUsers(prev => prev.filter(u => u.Email !== email));
   }, []);
 
-  const addUser = useCallback(async (userData: Partial<User>) => {
-    const result = await usersApi.create(userData);
-    alert(`Boas vindas enviado para ${result.Email}.\nSenha Provisória: ${result.senhaProvisoria}`);
+  const addUser = useCallback((userData: Partial<User>) => {
+    if (baseUsers.some(u => u.Email === userData.Email)) throw new Error("Este e-mail já está cadastrado.");
     
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
+    const tempPass = '123456';
+    const newUser: User = {
+      ...userData as User,
+      Senha: tempPass,
+      SenhaProvisoria: true,
+      DataCriacao: new Date().toISOString(),
+      Status: UserStatus.ATIVO,
+      TentativasFalhadas: 0
+    };
+
+    setBaseUsers(prev => [...prev, newUser]);
+    alert(`E-MAIL SIMULADO: Boas vindas enviado para ${newUser.Email}.\nSenha Provisória Padrão: ${tempPass}`);
+  }, [baseUsers]);
+
+  const updateUser = useCallback((email: string, updatedData: Partial<User>) => {
+    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
   }, []);
 
-  const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
-    await usersApi.update(email, updatedData);
-    
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
-  }, []);
-
-  const updateProfile = useCallback(async (updatedData: Partial<User>) => {
-    if (!currentUserEmail) return;
-    
-    await usersApi.update(currentUserEmail, updatedData);
-    
-    // Recarregar usuários
-    const usersData = await usersApi.getAll();
-    setBaseUsers(usersData);
+  const updateProfile = useCallback((updatedData: Partial<User>) => {
+    setBaseUsers(prev => prev.map(u => u.Email === currentUserEmail ? { ...u, ...updatedData } : u));
   }, [currentUserEmail]);
 
-  const completeTask = useCallback(async (taskId: string, note: string, proof?: string) => {
-    await tasksApi.complete(taskId, note, proof);
-    
-    // Recarregar tarefas
-    const tasksData = await tasksApi.getAll();
-    setTasks(tasksData);
+  const completeTask = useCallback((taskId: string, note: string, proof?: string) => {
+    setTasks(prev => prev.map(t => (t.ID === taskId ? { ...t, Status: TaskStatus.CONCLUIDO, DataConclusao: new Date().toISOString(), CompletionNote: note, ProofAttachment: proof } : t)));
   }, []);
 
-  const auditTask = useCallback(async (taskId: string, status: ConferenciaStatus, observation: string) => {
-    await tasksApi.audit(taskId, status, observation);
-    
-    // Recarregar tarefas e ledger
-    const [tasksData, ledgerData] = await Promise.all([
-      tasksApi.getAll(),
-      ledgerApi.getAll()
-    ]);
-    setTasks(tasksData);
-    setLedger(ledgerData);
+  const auditTask = useCallback((taskId: string, status: ConferenciaStatus, observation: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.ID === taskId) {
+        let delta = 0;
+        let motive = "";
+        if (status === ConferenciaStatus.APROVADO) { delta = t.PontosValor; motive = `Aprovação: ${t.Titulo}`; }
+        else if (status === ConferenciaStatus.NAO_CUMPRIU) { delta = -5 * t.PontosValor; motive = `Não Cumpre: ${t.Titulo}`; }
+        else { delta = -3 * t.PontosValor; motive = `Erro Execução: ${t.Titulo}`; }
+
+        setLedger(prev => [...prev, { ID: Math.random().toString(36).substr(2, 9), UserEmail: t.Responsavel, Data: new Date().toISOString(), Pontos: delta, Tipo: delta >= 0 ? ScoreType.GANHO : ScoreType.PENALIDADE, Descricao: motive }]);
+        return { ...t, Status: TaskStatus.CONFERIDO, ConferenciaStatus: status, ObservacaoGestor: observation };
+      }
+      return t;
+    }));
   }, []);
 
-  const deleteTask = useCallback(async (taskId: string) => {
+  const deleteTask = useCallback((taskId: string) => {
     if (!window.confirm("Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
-    
-    await tasksApi.delete(taskId);
+    setTasks(prev => prev.filter(t => t.ID !== taskId));
     alert("Tarefa excluída com sucesso.");
-    
-    // Recarregar tarefas
-    const tasksData = await tasksApi.getAll();
-    setTasks(tasksData);
   }, []);
 
-  const addTemplate = useCallback(async (templateData: Omit<TaskTemplate, 'ID'>) => {
-    await templatesApi.create(templateData);
-    
-    // Recarregar templates
-    const templatesData = await templatesApi.getAll();
-    setTemplates(templatesData);
+  const addTemplate = useCallback((templateData: Omit<TaskTemplate, 'ID'>) => {
+    setTemplates(prev => [...prev, { ...templateData, ID: Math.random().toString(36).substr(2, 9) }]);
   }, []);
 
-  const toggleTemplate = useCallback(async (id: string) => {
-    await templatesApi.toggle(id);
-    
-    // Recarregar templates
-    const templatesData = await templatesApi.getAll();
-    setTemplates(templatesData);
-  }, []);
+  const toggleTemplate = useCallback((id: string) => setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t)), []);
+  const deleteTemplate = useCallback((id: string) => setTemplates(prev => prev.filter(t => t.ID !== id)), []);
 
-  const deleteTemplate = useCallback(async (id: string) => {
-    await templatesApi.delete(id);
-    
-    // Recarregar templates
-    const templatesData = await templatesApi.getAll();
-    setTemplates(templatesData);
-  }, []);
+  const generateTaskFromTemplate = useCallback((templateId: string, force: boolean = false) => {
+    const tmpl = templates.find(t => t.ID === templateId);
+    if (!tmpl) return false;
 
-  const generateTaskFromTemplate = useCallback(async (templateId: string, force: boolean = false) => {
-    try {
-      const result = await templatesApi.generate(templateId, force);
-      
-      if (result.duplicate) {
-        return { duplicate: true, template: result.template };
-      }
-      
-      alert(result.message);
-      
-      // Recarregar tarefas e templates
-      const [tasksData, templatesData] = await Promise.all([
-        tasksApi.getAll(),
-        templatesApi.getAll()
-      ]);
-      setTasks(tasksData);
-      setTemplates(templatesData);
-      
-      return true;
-    } catch (err: any) {
-      if (err.message.includes('duplicate')) {
-        return { duplicate: true };
-      }
-      throw err;
+    const todayStr = getLocalTodayStr();
+    const alreadyExists = tasks.some(t => 
+      t.Titulo === tmpl.Titulo && 
+      t.Responsavel === tmpl.Responsavel &&
+      new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
+    );
+
+    if (alreadyExists && !force) {
+      return { duplicate: true, template: tmpl };
     }
-  }, []);
+
+    const now = new Date();
+    const dueDateTime = new Date(); 
+    dueDateTime.setHours(23, 59, 59, 999);
+
+    const newTask: Task = {
+      ID: Math.random().toString(36).substr(2, 9),
+      TemplateID: tmpl.ID,
+      Titulo: tmpl.Titulo,
+      Descricao: tmpl.Descricao,
+      Responsavel: tmpl.Responsavel,
+      DataLimite: dueDateTime.toISOString(),
+      Prioridade: tmpl.Prioridade,
+      PontosValor: tmpl.PontosValor,
+      Status: TaskStatus.PENDENTE
+    };
+
+    setTasks(prev => [...prev, newTask]);
+    setTemplates(prev => prev.map(t => t.ID === templateId ? { ...t, UltimaExecucao: now.toISOString() } : t));
+    alert(`Tarefa "${tmpl.Titulo}" gerada com sucesso.`);
+    return true;
+  }, [templates, tasks]);
 
   return { 
-    currentUser, users, tasks, templates, ledger, minhasTarefas, loading, error,
+    currentUser, users, tasks, templates, ledger, minhasTarefas, 
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
