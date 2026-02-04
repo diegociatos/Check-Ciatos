@@ -9,7 +9,9 @@ import {
   Bell,
   User as UserIcon,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare,
+  History
 } from 'lucide-react';
 
 interface TodayTaskCardsProps {
@@ -49,17 +51,14 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
   };
 
   const getStatusBadge = (status: TaskStatus) => {
-    const styles = {
-      [TaskStatus.PENDENTE]: 'bg-gray-100 text-gray-500 border-gray-200',
-      [TaskStatus.CONCLUIDO]: 'bg-green-100 text-green-700 border-green-200',
-      [TaskStatus.CONFERIDO]: 'bg-purple-100 text-purple-700 border-purple-200',
-      [TaskStatus.ATRASADA]: 'bg-red-100 text-red-800 border-red-200',
-    };
-    return (
-      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${styles[status]}`}>
-        {status}
-      </span>
-    );
+    switch(status) {
+      case TaskStatus.FEITA_ERRADA: return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case TaskStatus.NAO_FEITA: return 'bg-red-100 text-red-800 border-red-200';
+      case TaskStatus.PENDENTE: return 'bg-gray-100 text-gray-500 border-gray-200';
+      case TaskStatus.AGUARDANDO_APROVACAO: return 'bg-blue-100 text-blue-700 border-blue-200';
+      case TaskStatus.APROVADA: return 'bg-green-100 text-green-700 border-green-200';
+      default: return 'bg-gray-50 text-gray-400 border-gray-100';
+    }
   };
 
   if (tasks.length === 0) {
@@ -77,21 +76,12 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {tasks.map((task) => {
         const isOverdue = new Date(task.DataLimite) < new Date() && task.Status === TaskStatus.PENDENTE;
-        
-        // Detecção de Duplicata (Mesmo Título, Responsável e Data de hoje)
-        const taskDate = new Date(task.DataLimite).toLocaleDateString('en-CA');
-        const duplicates = allTasks.filter(t => 
-          t.Titulo === task.Titulo && 
-          t.Responsavel === task.Responsavel && 
-          new Date(t.DataLimite).toLocaleDateString('en-CA') === taskDate &&
-          t.ID !== task.ID
-        );
-        const hasDuplicate = duplicates.length > 0;
+        const isReturn = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
 
         return (
           <div 
             key={task.ID} 
-            className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative"
+            className={`bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative ${isReturn ? 'ring-2 ring-red-100' : ''}`}
           >
             {/* Botão Deletar (Apenas Admin/Gestor) */}
             {isManagerOrAdmin && onDelete && (
@@ -110,13 +100,15 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {getPriorityBadge(task.Prioridade)}
-                    {hasDuplicate && (
-                      <div className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1 rounded-full border border-orange-200 uppercase animate-pulse">
-                        <AlertTriangle size={10} /> Duplicata
+                    {task.Tentativas > 0 && (
+                      <div className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1 rounded-full border border-orange-200 uppercase">
+                        <History size={10} /> {task.Tentativas}ª Tentativa
                       </div>
                     )}
                   </div>
-                  {getStatusBadge(task.Status)}
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusBadge(task.Status)}`}>
+                    {task.Status}
+                  </span>
                 </div>
                 <div className="flex flex-col items-end pr-8">
                   <div className="flex items-center gap-1 text-yellow-500">
@@ -135,6 +127,16 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                 {task.Descricao}
               </p>
 
+              {/* Justificativa do Gestor em caso de Reenvio */}
+              {isReturn && task.JustificativaGestor && (
+                 <div className="mb-6 p-4 bg-red-50 rounded-2xl border border-red-100">
+                    <p className="text-[9px] font-black text-red-700 uppercase flex items-center gap-1 mb-1">
+                       <MessageSquare size={10} /> Motivo do Retorno:
+                    </p>
+                    <p className="text-[11px] text-red-600 font-bold italic leading-relaxed">"{task.JustificativaGestor}"</p>
+                 </div>
+              )}
+
               <div className="flex flex-col gap-2 mt-auto">
                 {showUser && (
                   <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
@@ -150,13 +152,13 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
 
             {/* Footer / Ação */}
             <div className="px-7 pb-7 flex gap-2">
-              {task.Status === TaskStatus.PENDENTE ? (
+              {(task.Status === TaskStatus.PENDENTE || isReturn) ? (
                 <>
                   <button 
                     onClick={() => onComplete(task.ID)}
                     className="flex-1 bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-[#8B1B1F]/20 transition-all hover:scale-[1.02] active:scale-95"
                   >
-                    <CheckCircle size={16} /> Check / Concluir
+                    <CheckCircle size={16} /> {isReturn ? 'Reenviar Entrega' : 'Check / Concluir'}
                   </button>
                   {onNotify && (
                     <button 
@@ -169,8 +171,8 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                   )}
                 </>
               ) : (
-                <div className="w-full bg-green-50 text-green-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-green-100">
-                  <ShieldCheck size={18} /> Entrega Realizada
+                <div className="w-full bg-blue-50 text-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-blue-100">
+                  <ShieldCheck size={18} /> Aguardando Auditoria
                 </div>
               )}
             </div>

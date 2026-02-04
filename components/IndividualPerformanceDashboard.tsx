@@ -26,9 +26,10 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
     return pos !== -1 ? pos + 1 : '--';
   }, [collaboratorsList, selectedEmail]);
 
+  // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA
   const statusData = [
     { name: 'Pendentes', value: userTasks.filter(t => t.Status === TaskStatus.PENDENTE).length },
-    { name: 'Concluídas', value: userTasks.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO).length },
+    { name: 'Concluídas', value: userTasks.filter(t => t.Status === TaskStatus.APROVADA).length },
     { name: 'Atrasadas', value: userTasks.filter(t => t.Status === TaskStatus.ATRASADA).length },
   ];
 

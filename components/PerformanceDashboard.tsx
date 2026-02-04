@@ -13,7 +13,8 @@ interface PerformanceDashboardProps {
 const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, users, collaboratorsList }) => {
   const today = new Date().toISOString().split('T')[0];
   const todayTasks = tasks.filter(t => t.DataLimite.startsWith(today));
-  const completedTasks = tasks.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
+  // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA
+  const completedTasks = tasks.filter(t => t.Status === TaskStatus.APROVADA);
   const overdueTasks = tasks.filter(t => t.Status === TaskStatus.PENDENTE && new Date(t.DataLimite) < new Date());
   const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
 
@@ -31,9 +32,10 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
       const dateStr = d.toISOString().split('T')[0];
       const dayName = dayNames[d.getDay()];
       
+      // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA
       const count = tasks.filter(t => 
         t.DataConclusao?.startsWith(dateStr) && 
-        (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO)
+        (t.Status === TaskStatus.APROVADA)
       ).length;
       
       days.push({ name: dayName, val: count });

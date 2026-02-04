@@ -68,12 +68,12 @@ const TaskList: React.FC<TaskListProps> = ({
                 <div className="flex justify-between items-start">
                    <div className="space-y-1">
                       <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
-                        task.Status === TaskStatus.CONCLUIDO ? 'bg-green-50 text-green-700 border-green-100' :
+                        task.Status === TaskStatus.APROVADA ? 'bg-green-50 text-green-700 border-green-100' :
                         task.Status === TaskStatus.ATRASADA ? 'bg-red-50 text-red-700 border-red-100' : 'bg-blue-50 text-blue-700 border-blue-100'
                       }`}>
                         {task.Status}
                       </span>
-                      {task.Status === TaskStatus.CONCLUIDO && renderConferenciaBadge(task.ConferenciaStatus!)}
+                      {task.Status === TaskStatus.APROVADA && renderConferenciaBadge(task.ConferenciaStatus!)}
                    </div>
                    <div className="text-right">
                       {/* Fixed: Using correct property name PontosValor */}
@@ -105,7 +105,8 @@ const TaskList: React.FC<TaskListProps> = ({
                 </div>
               </div>
 
-              {isAssignee && task.Status !== TaskStatus.CONCLUIDO && (
+              {/* Fix: Mapped CONCLUIDO to combined check for APROVADA and AGUARDANDO_APROVACAO */}
+              {isAssignee && task.Status !== TaskStatus.APROVADA && task.Status !== TaskStatus.AGUARDANDO_APROVACAO && (
                 <div className="px-8 pb-8">
                   <button 
                     onClick={() => setSelectedTask(task)}

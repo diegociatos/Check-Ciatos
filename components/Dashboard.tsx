@@ -41,9 +41,10 @@ const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentL
       const dateStr = d.toISOString().split('T')[0];
       const dayName = dayNames[d.getDay()];
       
+      // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA as per types.ts
       const count = tasks.filter(t => 
         t.DataConclusao?.startsWith(dateStr) && 
-        (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO)
+        (t.Status === TaskStatus.APROVADA)
       ).length;
       
       days.push({ name: dayName, tasks: count, fullDate: dateStr });

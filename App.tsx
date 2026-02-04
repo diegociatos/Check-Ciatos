@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from './store';
-import { ViewType, UserRole, TaskStatus, TaskPriority, User, Task, UserStatus } from './types';
+import { ViewType, UserRole, TaskStatus, TaskPriority, User, Task, UserStatus, ReportFilter } from './types';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -23,14 +23,16 @@ import ManageUsersView from './components/ManageUsersView';
 import ExecutiveView from './components/ExecutiveView';
 import HRReportView from './components/HRReportView';
 import HelpCenterView from './components/HelpCenterView';
+import ReportFiltersView from './components/ReportFiltersView';
+import CollaboratorReportDashboard from './components/CollaboratorReportDashboard';
 import { 
-  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key, Loader2
+  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key
 } from 'lucide-react';
 
 const App: React.FC = () => {
   const { 
     currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
-    updateProfile, minhasTarefas, tasks, templates, ledger, isLoading, syncError,
+    updateProfile, minhasTarefas, tasks, templates, ledger, 
     completeTask, auditTask, deleteTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   } = useStore();
 
@@ -38,6 +40,8 @@ const App: React.FC = () => {
   const [profileForm, setProfileForm] = useState<Partial<User>>({});
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [filterPriority, setFilterPriority] = useState<TaskPriority | 'TODAS'>('TODAS');
+  const [activeReportFilter, setActiveReportFilter] = useState<ReportFilter | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,46 +88,6 @@ const App: React.FC = () => {
     }
     return ledger.filter(l => l.UserEmail === currentUser.Email);
   }, [ledger, users, currentUser]);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
-        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-8 animate-in zoom-in duration-300">
-          <div className="text-center space-y-4">
-            <div className="h-20 w-20 bg-[#8B1B1F]/10 text-[#8B1B1F] rounded-full flex items-center justify-center mx-auto shadow-inner animate-pulse">
-              <Loader2 size={40} className="animate-spin" />
-            </div>
-            <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Carregando...</h2>
-            <p className="text-sm text-gray-500">Conectando ao servidor e carregando dados.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (syncError && !currentUser) {
-    return (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
-        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-8 animate-in zoom-in duration-300">
-          <div className="text-center space-y-4">
-            <div className="h-20 w-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-              <Shield size={40} />
-            </div>
-            <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Erro de Conexão</h2>
-            <p className="text-sm text-gray-500">{syncError}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-6 py-3 bg-[#8B1B1F] text-white rounded-full font-bold hover:bg-[#8B1B1F]/90 transition"
-            >
-              Tentar Novamente
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (!currentUser) return <Login onLogin={login} />;
 
@@ -225,12 +189,17 @@ const App: React.FC = () => {
   };
 
   const handleQuickComplete = (taskId: string) => {
-    completeTask(taskId, "Entrega confirmada via checklist rápido");
+    completeTask(taskId, "Entrega rápida confirmada.");
   };
 
   const handleNotify = (userEmail: string, taskTitle: string) => {
     const user = users.find(u => u.Email === userEmail);
     alert(`Notificação enviada para ${user?.Nome || userEmail}: Lembrete da tarefa "${taskTitle}"`);
+  };
+
+  const handleGenerateReport = (filter: ReportFilter) => {
+    setActiveReportFilter(filter);
+    setCurrentView('PERIOD_REPORT_DASHBOARD');
   };
 
   const renderContent = () => {
@@ -239,7 +208,7 @@ const App: React.FC = () => {
         return (
           <Dashboard 
             score={currentUser.PontosRealizadosMes || 0} 
-            pendingTasksToday={minhasTarefas.filter(t => t.Status === TaskStatus.PENDENTE)} 
+            pendingTasksToday={minhasTarefas.filter(t => t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)} 
             recentLedger={ledger.filter(l => l.UserEmail === currentUser.Email)} 
             onNavigateToTasks={() => setCurrentView('MY_TASKS_TODAY')}
             tasks={visibleTasks}
@@ -248,6 +217,19 @@ const App: React.FC = () => {
           />
         );
 
+      case 'PERIOD_REPORT_FILTERS':
+        return <ReportFiltersView currentUser={currentUser} users={users} onGenerate={handleGenerateReport} />;
+
+      case 'PERIOD_REPORT_DASHBOARD':
+        if (!activeReportFilter) return <ReportFiltersView currentUser={currentUser} users={users} onGenerate={handleGenerateReport} />;
+        return <CollaboratorReportDashboard 
+          filter={activeReportFilter} 
+          tasks={tasks} 
+          ledger={ledger} 
+          users={users} 
+          onBack={() => setCurrentView('PERIOD_REPORT_FILTERS')}
+        />;
+
       case 'MY_TASKS_TODAY':
         const today = new Date().toLocaleDateString('en-CA');
         const isManagerOrAdmin = currentUser.Role === UserRole.GESTOR || currentUser.Role === UserRole.ADMIN;
@@ -255,8 +237,9 @@ const App: React.FC = () => {
         let todayPendingTasks = visibleTasks.filter(t => {
           const taskDateStr = new Date(t.DataLimite).toLocaleDateString('en-CA');
           const isToday = taskDateStr === today;
-          const isPending = t.Status === TaskStatus.PENDENTE;
-          return isToday && isPending;
+          // Mostra tarefas pendentes ou que retornaram por erro/não cumprimento
+          const isActionable = t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA;
+          return isToday && isActionable;
         });
 
         if (filterPriority !== 'TODAS') {
@@ -266,7 +249,7 @@ const App: React.FC = () => {
         const completedTodayCount = visibleTasks.filter(t => {
            if (!t.DataConclusao) return false;
            const completionDateStr = new Date(t.DataConclusao).toLocaleDateString('en-CA');
-           return completionDateStr === today && (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO);
+           return completionDateStr === today && t.Status === TaskStatus.APROVADA;
         }).length;
 
         const groupedTasks = todayPendingTasks.reduce((acc, task) => {
@@ -283,15 +266,13 @@ const App: React.FC = () => {
                <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4 opacity-70">
                     <ListFilter size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Obrigações Corporativas - {new Date().toLocaleDateString('pt-BR')}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Fluxo de Excelência - {new Date().toLocaleDateString('pt-BR')}</span>
                   </div>
                   <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2 font-ciatos">
-                    {isManagerOrAdmin ? (currentUser.Role === UserRole.ADMIN ? 'Painel de Controle Master' : 'Gestão da Minha Equipe') : 'Minhas Tarefas de Hoje'}
+                    {isManagerOrAdmin ? (currentUser.Role === UserRole.ADMIN ? 'Painel Master' : 'Gestão da Equipe') : 'Minhas Obrigações'}
                   </h3>
                   <p className="text-white/60 font-medium text-lg">
-                    {isManagerOrAdmin 
-                      ? 'Visão consolidada da operação de hoje para os colaboradores sob sua gestão.' 
-                      : 'Suas obrigações pendentes para o dia de hoje.'}
+                    Tarefas pendentes e reenvios aguardando sua ação.
                   </p>
                </div>
             </div>
@@ -303,13 +284,13 @@ const App: React.FC = () => {
                        <CheckCircle2 size={24} />
                     </div>
                     <div>
-                       <h4 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Entregas Realizadas</h4>
-                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{isManagerOrAdmin ? 'Equipe sob Gestão' : 'Pessoal'} (Hoje)</p>
+                       <h4 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Entregas Aprovadas</h4>
+                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{isManagerOrAdmin ? 'Equipe' : 'Pessoal'} (Hoje)</p>
                     </div>
                  </div>
                  <div className="text-right">
                     <span className="text-4xl font-black text-green-600 tracking-tighter">{completedTodayCount}</span>
-                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Concluídas Hoje</p>
+                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Aprovadas</p>
                  </div>
               </div>
 
@@ -331,7 +312,7 @@ const App: React.FC = () => {
                                    👤 {user?.Nome || email}
                                 </h4>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                   {userTasks.length} {userTasks.length === 1 ? 'Tarefa pendente' : 'Tarefas pendentes'}
+                                   {userTasks.length} Tarefas em Aberto
                                 </p>
                              </div>
                           </div>
@@ -339,7 +320,7 @@ const App: React.FC = () => {
                         <TodayTaskCards 
                           tasks={userTasks} 
                           allTasks={tasks}
-                          onComplete={handleQuickComplete} 
+                          onComplete={completeTask} 
                           onNotify={isManagerOrAdmin ? (taskTitle) => handleNotify(email, taskTitle) : undefined}
                           onDelete={currentUser.Role === UserRole.ADMIN ? deleteTask : undefined}
                           showUser={isManagerOrAdmin}
@@ -352,30 +333,18 @@ const App: React.FC = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center py-32 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
                   <CheckCircle2 size={64} className="text-gray-100 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-300 uppercase">Tudo em ordem!</h3>
-                  <p className="text-gray-300 text-sm mt-1">Nenhuma tarefa pendente para hoje ({new Date().toLocaleDateString('pt-BR')}).</p>
+                  <h3 className="text-xl font-bold text-gray-300 uppercase">Tudo em conformidade!</h3>
+                  <p className="text-gray-300 text-sm mt-1">Nenhuma pendência ou reenvio para hoje.</p>
                 </div>
               )}
             </div>
           </div>
         );
 
-      case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={deleteTask} currentUserRole={currentUser.Role} />;
-
-      case 'MANAGE_USERS':
-        return <ManageUsersView 
-          users={users} 
-          onAddUser={addUser} 
-          onUpdateUser={updateUser}
-          onResetPassword={resetUserPassword} 
-          onToggleStatus={toggleUserStatus} 
-          onDeleteUser={deleteUser} 
-        />;
-
       case 'COMPLETED_TASKS':
-        const completed = visibleTasks.filter(t => (t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO) && (currentUser.Role === UserRole.COLABORADOR ? t.Responsavel === currentUser.Email : true));
-        completed.sort((a, b) => {
+        // Apenas tarefas APROVADAS
+        const approvedTasks = visibleTasks.filter(t => t.Status === TaskStatus.APROVADA && (currentUser.Role === UserRole.COLABORADOR ? t.Responsavel === currentUser.Email : true));
+        approvedTasks.sort((a, b) => {
           const dateA = a.DataConclusao ? new Date(a.DataConclusao).getTime() : 0;
           const dateB = b.DataConclusao ? new Date(b.DataConclusao).getTime() : 0;
           return dateB - dateA;
@@ -386,14 +355,14 @@ const App: React.FC = () => {
                <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4 opacity-70">
                     <CheckCircle size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Histórico Profissional</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Excelência Comprovada</span>
                   </div>
-                  <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2 font-ciatos">Tarefas Concluídas</h3>
-                  <p className="text-white/60 font-medium text-lg">Registro de obrigações finalizadas sob sua gestão/responsabilidade.</p>
+                  <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2 font-ciatos">Histórico de Aprovadas</h3>
+                  <p className="text-white/60 font-medium text-lg">Registro de todas as tarefas que passaram com sucesso na auditoria.</p>
                </div>
             </div>
             <div className="p-4 lg:p-8 space-y-8">
-              <CompletedTasksView tasks={completed} />
+              <CompletedTasksView tasks={approvedTasks} />
             </div>
           </div>
         );

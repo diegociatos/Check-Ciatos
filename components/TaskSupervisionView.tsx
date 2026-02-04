@@ -93,10 +93,11 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                         {new Date(task.DataLimite).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="px-8 py-5 text-center">
+                        {/* Fix: Mapped CONCLUIDO to AGUARDANDO_APROVACAO and CONFERIDO to APROVADA */}
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${
                           task.Status === TaskStatus.PENDENTE ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                          task.Status === TaskStatus.CONCLUIDO ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                          task.Status === TaskStatus.CONFERIDO ? 'bg-green-50 text-green-600 border-green-100' :
+                          task.Status === TaskStatus.AGUARDANDO_APROVACAO ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                          task.Status === TaskStatus.APROVADA ? 'bg-green-50 text-green-600 border-green-100' :
                           'bg-red-50 text-red-600 border-red-100'
                         }`}>
                           {task.Status}

@@ -3,30 +3,24 @@ import React from 'react';
 import { 
   Home, 
   CheckCircle, 
-  AlertTriangle, 
   CheckCheck, 
   Star, 
-  Info, 
-  PlusCircle, 
-  ClipboardList, 
   Users, 
   BarChart3, 
   List, 
   UserCog, 
-  Receipt, 
-  Edit3,
-  RotateCw,
-  User as UserIcon,
-  ShieldCheck,
-  ClipboardCheck,
-  CheckCircle2,
-  TrendingUp,
-  LayoutDashboard,
-  CalendarClock,
-  Eye,
-  FileText,
-  UserCheck,
-  HelpCircle
+  User as UserIcon, 
+  ShieldCheck, 
+  ClipboardCheck, 
+  CheckCircle2, 
+  TrendingUp, 
+  LayoutDashboard, 
+  CalendarClock, 
+  Eye, 
+  FileText, 
+  UserCheck, 
+  HelpCircle,
+  FileBarChart
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -96,6 +90,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   
   // SEÇÃO: GESTOR
+  { 
+    label: 'Relatório por Colaborador', 
+    view: 'PERIOD_REPORT_FILTERS', 
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <FileBarChart size={20} /> 
+  },
   { 
     label: 'Supervisão de Tarefas', 
     view: 'TASK_SUPERVISION', 

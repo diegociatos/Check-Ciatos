@@ -33,10 +33,13 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete }) => {
   };
 
   const getStatusBadge = (status: TaskStatus) => {
+    // Fix: Updated styles mapping to use valid TaskStatus keys from types.ts
     const styles = {
       [TaskStatus.PENDENTE]: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-      [TaskStatus.CONCLUIDO]: 'bg-green-50 text-green-700 border-green-100',
-      [TaskStatus.CONFERIDO]: 'bg-purple-50 text-purple-700 border-purple-100',
+      [TaskStatus.AGUARDANDO_APROVACAO]: 'bg-blue-50 text-blue-700 border-blue-100',
+      [TaskStatus.APROVADA]: 'bg-green-50 text-green-700 border-green-100',
+      [TaskStatus.FEITA_ERRADA]: 'bg-orange-50 text-orange-700 border-orange-100',
+      [TaskStatus.NAO_FEITA]: 'bg-red-100 text-red-800 border-red-200',
       [TaskStatus.ATRASADA]: 'bg-red-50 text-red-700 border-red-100',
     };
     return (

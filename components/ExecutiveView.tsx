@@ -73,7 +73,8 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
   const completionRate = useMemo(() => {
     const total = filteredTasks.length;
     if (total === 0) return 0;
-    const completed = filteredTasks.filter(t => t.Status === TaskStatus.CONCLUIDO || t.Status === TaskStatus.CONFERIDO).length;
+    // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA
+    const completed = filteredTasks.filter(t => t.Status === TaskStatus.APROVADA).length;
     return (completed / total) * 100;
   }, [filteredTasks]);
 

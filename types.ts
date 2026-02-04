@@ -1,46 +1,68 @@
 
 export enum UserRole {
-  GESTOR = 'GESTOR',
-  COLABORADOR = 'COLABORADOR',
-  ADMIN = 'ADMIN'
+  GESTOR = 'Gestor',
+  COLABORADOR = 'Colaborador',
+  ADMIN = 'Admin'
 }
 
 export enum UserStatus {
-  ATIVO = 'ATIVO',
-  INATIVO = 'INATIVO',
-  BLOQUEADO = 'BLOQUEADO'
+  ATIVO = 'Ativo',
+  INATIVO = 'Inativo',
+  BLOQUEADO = 'Bloqueado'
 }
 
 export enum TaskPriority {
-  BAIXA = 'BAIXA',
-  MEDIA = 'MEDIA',
-  ALTA = 'ALTA',
-  URGENTE = 'URGENTE'
+  BAIXA = 'Baixa',
+  MEDIA = 'Media',
+  ALTA = 'Alta',
+  URGENTE = 'Urgente'
 }
 
 export enum TaskStatus {
-  PENDENTE = 'PENDENTE',
-  CONCLUIDO = 'CONCLUIDO',
-  CONFERIDO = 'CONFERIDO',
-  ATRASADA = 'ATRASADA'
+  PENDENTE = 'Pendente',
+  AGUARDANDO_APROVACAO = 'Aguardando Aprovação',
+  APROVADA = 'Aprovada',
+  FEITA_ERRADA = 'Feita Errada',
+  NAO_FEITA = 'Não Feita',
+  ATRASADA = 'Atrasada'
 }
 
 export enum ConferenciaStatus {
-  APROVADO = 'APROVADO',
-  NAO_CUMPRIU = 'NAO_CUMPRIU',
-  CUMPRIU_ERRADO = 'CUMPRIU_ERRADO'
+  APROVADO = 'Aprovado',
+  NAO_CUMPRIU = 'Nao Cumpriu',
+  CUMPRIU_ERRADO = 'Cumpriu Errado'
 }
 
 export enum ScoreType {
-  GANHO = 'GANHO',
-  PENALIDADE = 'PENALIDADE'
+  GANHO = 'Ganho',
+  PENALIDADE = 'Penalidade'
 }
 
 export enum RecurrenceType {
-  DIARIA = 'DIARIA',
-  SEMANAL = 'SEMANAL',
-  MENSAL = 'MENSAL',
-  NENHUMA = 'NENHUMA'
+  DIARIA = 'Diaria',
+  SEMANAL = 'Semanal',
+  MENSAL = 'Mensal',
+  NENHUMA = 'Nenhuma'
+}
+
+export enum PeriodType {
+  MES = 'Mes',
+  TRIMESTRE = 'Trimestre',
+  SEMESTRE = 'Semestre',
+  ANO = 'Ano'
+}
+
+export interface ReportFilter {
+  ID: string;
+  GestorEmail: string;
+  ColaboradorEmail: string;
+  Periodo: PeriodType;
+  Ano: number;
+  Mes?: number;
+  Trimestre?: 'T1' | 'T2' | 'T3' | 'T4';
+  Semestre?: 'S1' | 'S2';
+  DataInicio: string;
+  DataFim: string;
 }
 
 export interface User {
@@ -55,13 +77,11 @@ export interface User {
   Status: UserStatus;
   Time: string;
   Gestor?: string; // Ref para Email do Gestor/Admin
-  // Segurança e Gestão
   Senha?: string;
   SenhaProvisoria?: boolean;
   DataCriacao?: string;
   UltimoAcesso?: string;
   TentativasFalhadas?: number;
-  // Campos virtuais/calculados
   PontosRealizadosMes?: number;
   PontosPossiveisMes?: number;
   EficienciaMes?: number;
@@ -80,6 +100,8 @@ export interface Task {
   Prioridade: TaskPriority;
   Status: TaskStatus;
   PontosValor: number;
+  Tentativas: number;
+  JustificativaGestor?: string;
   DataConclusao?: string;
   ConferenciaStatus?: ConferenciaStatus;
   ObservacaoGestor?: string;
@@ -95,11 +117,11 @@ export interface TaskTemplate {
   PontosValor: number;
   Prioridade: TaskPriority;
   Recorrencia: RecurrenceType;
-  DiasRecorrencia: string[]; // Lista de dias: ['Seg', 'Ter']
+  DiasRecorrencia: string[]; 
   DiaDoMes?: number;
-  DataInicio: string; // Data inicial para começar a gerar
+  DataInicio: string;
   Ativa: boolean;
-  UltimaExecucao?: string; // Log da última vez que gerou tarefas
+  UltimaExecucao?: string;
 }
 
 export interface ScoreLedger {
@@ -111,15 +133,6 @@ export interface ScoreLedger {
   Descricao: string;
 }
 
-export interface UserCredentials {
-  Email: string;
-  Senha: string;
-  TentativasFalhadas: number;
-}
-
-/**
- * Added missing Notification interface to resolve compilation error in Layout.tsx
- */
 export interface Notification {
   id: string;
   to: string;
@@ -148,4 +161,6 @@ export type ViewType =
   | 'TASK_SUPERVISION'
   | 'SCORE_SUPERVISION'
   | 'INDIVIDUAL_PERFORMANCE'
-  | 'HELP_CENTER';
+  | 'HELP_CENTER'
+  | 'PERIOD_REPORT_FILTERS'
+  | 'PERIOD_REPORT_DASHBOARD';

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (email: string, senha?: string) => Promise<void> | void;
+  onLogin: (email: string, senha?: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -19,9 +19,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      await onLogin(email, password);
+      onLogin(email, password);
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
