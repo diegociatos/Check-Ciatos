@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, AlertCircle, Clock, User, MessageSquare } from 'l
 
 interface DeliveryChecklistProps {
   tasks: Task[];
-  onAudit: (taskId: string, status: ConferenciaStatus, observation: string) => void;
+  onAudit: (taskId: string, status: TaskStatus, observation: string) => void;
 }
 
 const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit }) => {
@@ -13,7 +13,17 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
   const [observation, setObservation] = useState('');
   const [actionType, setActionType] = useState<ConferenciaStatus | null>(null);
 
-  const pendingAudit = tasks.filter(t => t.Status === TaskStatus.CONCLUIDO);
+  const pendingAudit = tasks.filter(t => t.Status === TaskStatus.AGUARDANDO_APROVACAO);
+
+  // Mapeia ConferenciaStatus para TaskStatus
+  const conferenceToTaskStatus = (cs: ConferenciaStatus): TaskStatus => {
+    switch (cs) {
+      case ConferenciaStatus.APROVADO: return TaskStatus.APROVADA;
+      case ConferenciaStatus.NAO_CUMPRIU: return TaskStatus.NAO_FEITA;
+      case ConferenciaStatus.CUMPRIU_ERRADO: return TaskStatus.FEITA_ERRADA;
+      default: return TaskStatus.PENDENTE;
+    }
+  };
 
   const handleAuditAction = () => {
     if (!auditTask || !actionType) return;
@@ -21,7 +31,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
       alert("Observação é obrigatória para penalidades.");
       return;
     }
-    onAudit(auditTask.ID, actionType, observation);
+    onAudit(auditTask.ID, conferenceToTaskStatus(actionType), observation);
     setAuditTask(null);
     setObservation('');
     setActionType(null);
