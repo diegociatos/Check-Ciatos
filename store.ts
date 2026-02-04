@@ -1,140 +1,86 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType } from './types';
-import { authApi, tasksApi, templatesApi, ledgerApi } from './services/api';
 
 const getLocalTodayStr = () => {
   const now = new Date();
   return now.toLocaleDateString('en-CA');
 };
 
-// Normaliza Role para o formato do frontend
-const normalizeRole = (role: string): UserRole => {
-  const upper = role?.toUpperCase();
-  if (upper === 'ADMIN') return UserRole.ADMIN;
-  if (upper === 'GESTOR') return UserRole.GESTOR;
-  return UserRole.COLABORADOR;
-};
-
-// Normaliza Status para o formato do frontend
-const normalizeUserStatus = (status: string): UserStatus => {
-  const upper = status?.toUpperCase();
-  if (upper === 'BLOQUEADO') return UserStatus.BLOQUEADO;
-  if (upper === 'INATIVO') return UserStatus.INATIVO;
-  return UserStatus.ATIVO;
-};
-
-// Normaliza TaskStatus
-const normalizeTaskStatus = (status: string): TaskStatus => {
-  const upper = status?.toUpperCase();
-  if (upper === 'AGUARDANDO_APROVACAO' || upper === 'AGUARDANDO APROVAÇÃO') return TaskStatus.AGUARDANDO_APROVACAO;
-  if (upper === 'APROVADA') return TaskStatus.APROVADA;
-  if (upper === 'FEITA_ERRADA' || upper === 'FEITA ERRADA') return TaskStatus.FEITA_ERRADA;
-  if (upper === 'NAO_FEITA' || upper === 'NÃO FEITA' || upper === 'NAO FEITA') return TaskStatus.NAO_FEITA;
-  if (upper === 'ATRASADA') return TaskStatus.ATRASADA;
-  if (upper === 'CONFERIDO') return TaskStatus.APROVADA; // Legacy
-  if (upper === 'CONCLUIDO') return TaskStatus.AGUARDANDO_APROVACAO; // Legacy
-  return TaskStatus.PENDENTE;
-};
+const INITIAL_USERS: User[] = [
+  { 
+    Email: 'diego.garcia@grupociatos.com.br', 
+    Nome: 'Diego Garcia', 
+    Role: UserRole.ADMIN, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Gestão',
+    Senha: '250500', 
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'gestor@grupociatos.com.br', 
+    Nome: 'Gestor de Exemplo', 
+    Role: UserRole.GESTOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Operação',
+    Senha: '123',
+    SenhaProvisoria: true,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'controladoria@grupociatos.com.br', 
+    Nome: 'Controladoria Ciatos', 
+    Role: UserRole.GESTOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Controladoria',
+    Gestor: 'diego.garcia@grupociatos.com.br',
+    Senha: '123456',
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  },
+  { 
+    Email: 'financeiro@grupociatos.com.br', 
+    Nome: 'Financeiro Ciatos', 
+    Role: UserRole.COLABORADOR, 
+    Status: UserStatus.ATIVO, 
+    Time: 'Financeiro',
+    Gestor: 'controladoria@grupociatos.com.br',
+    Senha: '123456',
+    SenhaProvisoria: false,
+    DataCriacao: '2024-01-01',
+    TentativasFalhadas: 0
+  }
+];
 
 export const useStore = () => {
-  const [baseUsers, setBaseUsers] = useState<User[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [ledger, setLedger] = useState<ScoreLedger[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [baseUsers, setBaseUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('ciatos_users_v10');
+    return saved ? JSON.parse(saved) : INITIAL_USERS;
+  });
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const saved = localStorage.getItem('ciatos_tasks_v4');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [templates, setTemplates] = useState<TaskTemplate[]>(() => {
+    const saved = localStorage.getItem('ciatos_templates_v3');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [ledger, setLedger] = useState<ScoreLedger[]>(() => {
+    const saved = localStorage.getItem('ciatos_ledger_v3');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
     return localStorage.getItem('ciatos_current_user');
   });
 
-  // Carrega dados do backend na inicialização
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Carregar dados em paralelo
-        const [usersData, tasksData, templatesData, ledgerData] = await Promise.all([
-          authApi.getUsers().catch(() => []),
-          tasksApi.getAll().catch(() => []),
-          templatesApi.getAll().catch(() => []),
-          ledgerApi.getAll().catch(() => []),
-        ]);
-
-        // Normalizar usuários
-        setBaseUsers(usersData.map((u: any) => ({
-          Email: u.Email,
-          Nome: u.Nome,
-          Role: normalizeRole(u.Role),
-          Status: normalizeUserStatus(u.Status),
-          Time: u.Time,
-          Gestor: u.Gestor,
-          SenhaProvisoria: u.SenhaProvisoria,
-          DataCriacao: u.DataCriacao,
-          UltimoAcesso: u.UltimoAcesso,
-          TentativasFalhadas: u.TentativasFalhadas || 0,
-        })));
-
-        // Normalizar tarefas
-        setTasks(tasksData.map((t: any) => ({
-          ID: t.ID,
-          TemplateID: t.TemplateID,
-          Titulo: t.Titulo,
-          Descricao: t.Descricao,
-          Responsavel: t.Responsavel,
-          DataLimite: t.DataLimite,
-          Prioridade: t.Prioridade || TaskPriority.MEDIA,
-          PontosValor: t.PontosValor || 10,
-          Status: normalizeTaskStatus(t.Status),
-          DataConclusao: t.DataConclusao,
-          CompletionNote: t.CompletionNote,
-          ProofAttachment: t.ProofAttachment,
-          ConferenciaStatus: t.ConferenciaStatus,
-          ObservacaoGestor: t.ObservacaoGestor,
-          Tentativas: t.Tentativas || 0,
-        })));
-
-        // Normalizar templates
-        setTemplates(templatesData.map((t: any) => ({
-          ID: t.ID,
-          Titulo: t.Titulo,
-          Descricao: t.Descricao,
-          Responsavel: t.Responsavel,
-          Prioridade: t.Prioridade || TaskPriority.MEDIA,
-          PontosValor: t.PontosValor || 10,
-          Recorrencia: t.Recorrencia || RecurrenceType.NENHUMA,
-          DiasRecorrencia: t.DiasRecorrencia || [],
-          DiaDoMes: t.DiaDoMes,
-          DataInicio: t.DataInicio,
-          Ativa: t.Ativa,
-          UltimaExecucao: t.UltimaExecucao,
-        })));
-
-        // Normalizar ledger
-        setLedger(ledgerData.map((l: any) => ({
-          ID: l.ID,
-          UserEmail: l.UserEmail,
-          Data: l.Data,
-          Pontos: l.Pontos,
-          Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
-          Descricao: l.Descricao,
-        })));
-
-        console.log('✅ Dados carregados do backend');
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err);
-        setError('Falha ao carregar dados do servidor');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Calcula usuários com métricas
   const users = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -178,406 +124,179 @@ export const useStore = () => {
   const currentUser = users.find(u => u.Email === currentUserEmail) || null;
   const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
 
-  // Salva usuário atual no localStorage
+  useEffect(() => localStorage.setItem('ciatos_users_v10', JSON.stringify(baseUsers)), [baseUsers]);
+  useEffect(() => localStorage.setItem('ciatos_tasks_v4', JSON.stringify(tasks)), [tasks]);
+  useEffect(() => localStorage.setItem('ciatos_templates_v3', JSON.stringify(templates)), [templates]);
+  useEffect(() => localStorage.setItem('ciatos_ledger_v3', JSON.stringify(ledger)), [ledger]);
   useEffect(() => {
     if (currentUserEmail) localStorage.setItem('ciatos_current_user', currentUserEmail);
     else localStorage.removeItem('ciatos_current_user');
   }, [currentUserEmail]);
 
-  // ==================== AUTH FUNCTIONS ====================
-  const login = useCallback(async (email: string, senha?: string) => {
-    try {
-      const userData = await authApi.login(email, senha || '');
-      
-      const user: User = {
-        Email: userData.Email,
-        Nome: userData.Nome,
-        Role: normalizeRole(userData.Role),
-        Status: normalizeUserStatus(userData.Status),
-        Time: userData.Time,
-        Gestor: userData.Gestor,
-        SenhaProvisoria: userData.SenhaProvisoria,
-        DataCriacao: userData.DataCriacao,
-        UltimoAcesso: userData.UltimoAcesso,
-        TentativasFalhadas: 0,
-      };
-
-      // Atualiza lista de usuários
-      setBaseUsers(prev => {
-        const idx = prev.findIndex(u => u.Email.toLowerCase() === email.toLowerCase());
-        if (idx >= 0) {
-          const updated = [...prev];
-          updated[idx] = user;
-          return updated;
-        }
-        return [...prev, user];
-      });
-
-      setCurrentUserEmail(user.Email);
-      return user;
-    } catch (err: any) {
-      throw new Error(err.message || 'Erro ao fazer login');
+  // Auth Functions
+  const login = useCallback((email: string, senha?: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email.toLowerCase() === email.toLowerCase());
+    if (userIndex === -1) throw new Error("Usuário não encontrado.");
+    const user = baseUsers[userIndex];
+    if (user.Status === UserStatus.BLOQUEADO) throw new Error("Conta bloqueada por excesso de tentativas.");
+    if (user.Status === UserStatus.INATIVO) throw new Error("Conta desativada.");
+    if (user.Senha !== senha) {
+      const newAttempts = (user.TentativasFalhadas || 0) + 1;
+      const updatedUsers = [...baseUsers];
+      updatedUsers[userIndex] = { ...user, TentativasFalhadas: newAttempts, Status: newAttempts >= 5 ? UserStatus.BLOQUEADO : user.Status };
+      setBaseUsers(updatedUsers);
+      throw new Error(`Senha incorreta. Tentativa ${newAttempts} de 5.`);
     }
-  }, []);
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, TentativasFalhadas: 0, UltimoAcesso: new Date().toISOString() };
+    setBaseUsers(updatedUsers);
+    setCurrentUserEmail(user.Email);
+    return user;
+  }, [baseUsers]);
 
   const logout = useCallback(() => setCurrentUserEmail(null), []);
 
-  const changePassword = useCallback(async (email: string, oldPass: string, newPass: string) => {
-    await authApi.changePassword(email, oldPass, newPass);
-    setBaseUsers(prev => prev.map(u => 
-      u.Email === email ? { ...u, SenhaProvisoria: false } : u
-    ));
+  const changePassword = useCallback((email: string, oldPass: string, newPass: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    const user = baseUsers[userIndex];
+    if (user.Senha !== oldPass) throw new Error("Senha atual incorreta.");
+    if (newPass.length < 8 || !/\d/.test(newPass)) throw new Error("A nova senha deve ter no mínimo 8 caracteres e conter pelo menos um número.");
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...user, Senha: newPass, SenhaProvisoria: false };
+    setBaseUsers(updatedUsers);
+  }, [baseUsers]);
+
+  const resetUserPassword = useCallback((email: string) => {
+    const userIndex = baseUsers.findIndex(u => u.Email === email);
+    if (userIndex === -1) return;
+    const updatedUsers = [...baseUsers];
+    updatedUsers[userIndex] = { ...baseUsers[userIndex], Senha: '123456', SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 };
+    setBaseUsers(updatedUsers);
+  }, [baseUsers]);
+
+  const toggleUserStatus = useCallback((email: string) => {
+    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u));
   }, []);
 
-  const resetUserPassword = useCallback(async (email: string) => {
-    try {
-      await authApi.resetPassword(email);
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 } : u
-      ));
-    } catch (err: any) {
-      console.error('Erro ao resetar senha:', err);
-      throw new Error(err.message || 'Erro ao resetar senha');
-    }
+  const deleteUser = useCallback((email: string) => {
+    if (window.confirm(`Deletar ${email}?`)) setBaseUsers(prev => prev.filter(u => u.Email !== email));
   }, []);
 
-  const toggleUserStatus = useCallback(async (email: string) => {
-    try {
-      await authApi.toggleStatus(email);
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u
-      ));
-    } catch (err: any) {
-      console.error('Erro ao alterar status:', err);
-      // Fallback local
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u
-      ));
-    }
-  }, []);
+  const addUser = useCallback((userData: Partial<User>) => {
+    if (baseUsers.some(u => u.Email === userData.Email)) throw new Error("E-mail já cadastrado.");
+    
+    const newUser: User = {
+      ...userData as User,
+      Senha: '123456',
+      SenhaProvisoria: true,
+      DataCriacao: new Date().toISOString().split('T')[0],
+      Status: UserStatus.ATIVO,
+      TentativasFalhadas: 0
+    };
+    
+    setBaseUsers(prev => [...prev, newUser]);
+  }, [baseUsers]);
 
-  const deleteUser = useCallback(async (email: string) => {
-    if (window.confirm(`Deletar ${email}?`)) {
-      try {
-        await authApi.deleteUser(email);
-        setBaseUsers(prev => prev.filter(u => u.Email !== email));
-      } catch (err: any) {
-        console.error('Erro ao deletar usuário:', err);
-        // Fallback local
-        setBaseUsers(prev => prev.filter(u => u.Email !== email));
-      }
-    }
-  }, []);
-
-  const addUser = useCallback(async (userData: Partial<User>) => {
-    try {
-      const newUser = await authApi.createUser({
-        Email: userData.Email,
-        Nome: userData.Nome,
-        Role: userData.Role,
-        Time: userData.Time,
-        Gestor: userData.Gestor,
-      });
-      
-      setBaseUsers(prev => [...prev, {
-        ...newUser,
-        Role: normalizeRole(newUser.Role),
-        Status: normalizeUserStatus(newUser.Status),
-        TentativasFalhadas: 0,
-      }]);
-    } catch (err: any) {
-      throw new Error(err.message || 'Erro ao criar usuário');
-    }
-  }, []);
-
-  const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
-    try {
-      await authApi.updateUser(email, updatedData);
-      setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
-    } catch (err: any) {
-      // Fallback local
-      setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
-    }
+  const updateUser = useCallback((email: string, updatedData: Partial<User>) => {
+    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
   }, []);
 
   const updateProfile = useCallback((updatedData: Partial<User>) => {
-    if (currentUserEmail) {
-      updateUser(currentUserEmail, updatedData);
-    }
-  }, [currentUserEmail, updateUser]);
-
-  // ==================== TASK FUNCTIONS ====================
-  const completeTask = useCallback(async (taskId: string, note: string, proof?: string) => {
-    try {
-      await tasksApi.complete(taskId, note, proof);
-      
-      setTasks(prev => prev.map(t => (t.ID === taskId ? { 
-        ...t, 
-        Status: TaskStatus.AGUARDANDO_APROVACAO, 
-        DataConclusao: new Date().toISOString(), 
-        CompletionNote: note, 
-        ProofAttachment: proof,
-        JustificativaGestor: undefined
-      } : t)));
-    } catch (err: any) {
-      console.error('Erro ao completar tarefa:', err);
-      // Fallback local
-      setTasks(prev => prev.map(t => (t.ID === taskId ? { 
-        ...t, 
-        Status: TaskStatus.AGUARDANDO_APROVACAO, 
-        DataConclusao: new Date().toISOString(), 
-        CompletionNote: note, 
-        ProofAttachment: proof,
-      } : t)));
-    }
-  }, []);
-
-  const auditTask = useCallback(async (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => {
-    // Mapeia TaskStatus para ConferenciaStatus do backend
-    let apiStatus = 'APROVADO';
-    if (status === TaskStatus.FEITA_ERRADA) apiStatus = 'ERRO_EXECUCAO';
-    else if (status === TaskStatus.NAO_FEITA) apiStatus = 'NAO_CUMPRIU';
-
-    try {
-      const result = await tasksApi.audit(taskId, apiStatus, justification);
-      
-      // Atualiza local
-      setTasks(prev => prev.map(t => {
-        if (t.ID === taskId) {
-          return { 
-            ...t, 
-            Status: status, 
-            JustificativaGestor: justification,
-            DataLimite: nextDeadline || t.DataLimite,
-            Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
-            DataConclusao: status === TaskStatus.APROVADA ? t.DataConclusao : undefined 
-          };
-        }
-        return t;
-      }));
-
-      // Recarrega ledger
-      const ledgerData = await ledgerApi.getAll();
-      setLedger(ledgerData.map((l: any) => ({
-        ID: l.ID,
-        UserEmail: l.UserEmail,
-        Data: l.Data,
-        Pontos: l.Pontos,
-        Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
-        Descricao: l.Descricao,
-      })));
-
-    } catch (err: any) {
-      console.error('Erro ao auditar tarefa:', err);
-      // Fallback local
-      setTasks(prev => prev.map(t => {
-        if (t.ID === taskId) {
-          let delta = 0;
-          let motive = "";
-          let type = ScoreType.GANHO;
-
-          if (status === TaskStatus.APROVADA) {
-            delta = t.PontosValor;
-            motive = `Aprovação: ${t.Titulo}`;
-          } else if (status === TaskStatus.FEITA_ERRADA) {
-            delta = -(t.PontosValor * 0.5);
-            motive = `Pena – Erro: ${t.Titulo}`;
-            type = ScoreType.PENALIDADE;
-          } else if (status === TaskStatus.NAO_FEITA) {
-            delta = -(t.PontosValor * 2);
-            motive = `Penalidade – Não Fez: ${t.Titulo}`;
-            type = ScoreType.PENALIDADE;
-          }
-
-          setLedger(prev => [...prev, { 
-            ID: Math.random().toString(36).substr(2, 9), 
-            UserEmail: t.Responsavel, 
-            Data: new Date().toISOString(), 
-            Pontos: delta, 
-            Tipo: type, 
-            Descricao: motive 
-          }]);
-
-          return { 
-            ...t, 
-            Status: status, 
-            JustificativaGestor: justification,
-            DataLimite: nextDeadline || t.DataLimite,
-            Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
-          };
-        }
-        return t;
-      }));
-    }
-  }, []);
-
-  const deleteTask = useCallback(async (taskId: string) => {
-    if (window.confirm("Excluir tarefa?")) {
-      try {
-        await tasksApi.delete(taskId);
-      } catch (err) {
-        console.error('Erro ao deletar no backend:', err);
-      }
-      setTasks(prev => prev.filter(t => t.ID !== taskId));
-    }
-  }, []);
-
-  // ==================== TEMPLATE FUNCTIONS ====================
-  const addTemplate = useCallback(async (templateData: Omit<TaskTemplate, 'ID'>) => {
-    try {
-      const newTemplate = await templatesApi.create({
-        Titulo: templateData.Titulo,
-        Descricao: templateData.Descricao,
-        Responsavel: templateData.Responsavel,
-        Prioridade: templateData.Prioridade,
-        PontosValor: templateData.PontosValor,
-        Recorrencia: templateData.Recorrencia,
-        DiasRecorrencia: templateData.DiasRecorrencia,
-        DiaDoMes: templateData.DiaDoMes,
-        DataInicio: templateData.DataInicio,
-        CriadoPor: currentUserEmail,
-      });
-      
-      setTemplates(prev => [...prev, {
-        ...newTemplate,
-        Ativa: true,
-      }]);
-    } catch (err: any) {
-      console.error('Erro ao criar template:', err);
-      // Fallback local
-      setTemplates(prev => [...prev, { 
-        ...templateData, 
-        ID: Math.random().toString(36).substr(2, 9),
-        Ativa: true,
-      }]);
-    }
+    setBaseUsers(prev => prev.map(u => u.Email === currentUserEmail ? { ...u, ...updatedData } : u));
   }, [currentUserEmail]);
 
-  const toggleTemplate = useCallback(async (id: string) => {
-    try {
-      const result = await templatesApi.toggle(id);
-      setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: result.ativa } : t));
-    } catch (err) {
-      // Fallback local
-      setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t));
-    }
+  // TASK WORKFLOW
+  const completeTask = useCallback((taskId: string, note: string, proof?: string) => {
+    setTasks(prev => prev.map(t => (t.ID === taskId ? { 
+      ...t, 
+      Status: TaskStatus.AGUARDANDO_APROVACAO, 
+      DataConclusao: new Date().toISOString(), 
+      CompletionNote: note, 
+      ProofAttachment: proof,
+      JustificativaGestor: undefined // Limpa feedback anterior se existir
+    } : t)));
   }, []);
 
-  const deleteTemplate = useCallback(async (id: string) => {
-    try {
-      await templatesApi.delete(id);
-    } catch (err) {
-      console.error('Erro ao deletar template:', err);
-    }
-    setTemplates(prev => prev.filter(t => t.ID !== id));
-  }, []);
+  const auditTask = useCallback((taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.ID === taskId) {
+        let delta = 0;
+        let motive = "";
+        let type = ScoreType.GANHO;
 
-  const generateTaskFromTemplate = useCallback(async (templateId: string, force: boolean = false) => {
-    try {
-      const result = await templatesApi.generate(templateId, force);
-      
-      if (result.duplicate) {
-        return { duplicate: true, template: result.template };
-      }
+        if (status === TaskStatus.APROVADA) {
+          delta = t.PontosValor;
+          motive = `Aprovação: ${t.Titulo}`;
+          type = ScoreType.GANHO;
+        } else if (status === TaskStatus.FEITA_ERRADA) {
+          delta = -(t.PontosValor * 0.5);
+          motive = `Pena – Erro: ${t.Titulo}`;
+          type = ScoreType.PENALIDADE;
+        } else if (status === TaskStatus.NAO_FEITA) {
+          delta = -(t.PontosValor * 2);
+          motive = `Penalidade – Não Fez: ${t.Titulo}`;
+          type = ScoreType.PENALIDADE;
+        }
 
-      // Adiciona a tarefa gerada
-      if (result.task) {
-        setTasks(prev => [...prev, {
-          ...result.task,
-          Status: TaskStatus.PENDENTE,
-          Tentativas: 0,
+        setLedger(prev => [...prev, { 
+          ID: Math.random().toString(36).substr(2, 9), 
+          UserEmail: t.Responsavel, 
+          Data: new Date().toISOString(), 
+          Pontos: delta, 
+          Tipo: type, 
+          Descricao: motive 
         }]);
-      }
 
-      // Atualiza última execução do template
-      setTemplates(prev => prev.map(t => 
-        t.ID === templateId ? { ...t, UltimaExecucao: new Date().toISOString() } : t
-      ));
-
-      return true;
-    } catch (err: any) {
-      if (err.message?.includes('409')) {
-        const tmpl = templates.find(t => t.ID === templateId);
-        return { duplicate: true, template: tmpl };
+        return { 
+          ...t, 
+          Status: status, 
+          JustificativaGestor: justification,
+          DataLimite: nextDeadline || t.DataLimite,
+          Tentativas: status !== TaskStatus.APROVADA ? t.Tentativas + 1 : t.Tentativas,
+          DataConclusao: status === TaskStatus.APROVADA ? t.DataConclusao : undefined 
+        };
       }
-      console.error('Erro ao gerar tarefa:', err);
-      
-      // Fallback local
-      const tmpl = templates.find(t => t.ID === templateId);
-      if (!tmpl) return false;
-      
-      const todayStr = getLocalTodayStr();
-      const alreadyExists = tasks.some(t => 
-        t.Titulo === tmpl.Titulo && 
-        t.Responsavel === tmpl.Responsavel && 
-        new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
-      );
-      
-      if (alreadyExists && !force) return { duplicate: true, template: tmpl };
-      
-      const dueDateTime = new Date(); 
-      dueDateTime.setHours(23, 59, 59, 999);
-      
-      const newTask: Task = {
-        ID: Math.random().toString(36).substr(2, 9),
-        TemplateID: tmpl.ID,
-        Titulo: tmpl.Titulo,
-        Descricao: tmpl.Descricao,
-        Responsavel: tmpl.Responsavel,
-        DataLimite: dueDateTime.toISOString(),
-        Prioridade: tmpl.Prioridade,
-        PontosValor: tmpl.PontosValor,
-        Status: TaskStatus.PENDENTE,
-        Tentativas: 0
-      };
-      
-      setTasks(prev => [...prev, newTask]);
-      return true;
-    }
+      return t;
+    }));
+  }, []);
+
+  const deleteTask = useCallback((taskId: string) => {
+    if (window.confirm("Excluir tarefa?")) setTasks(prev => prev.filter(t => t.ID !== taskId));
+  }, []);
+
+  const addTemplate = useCallback((templateData: Omit<TaskTemplate, 'ID'>) => {
+    setTemplates(prev => [...prev, { ...templateData, ID: Math.random().toString(36).substr(2, 9) }]);
+  }, []);
+
+  const toggleTemplate = useCallback((id: string) => setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t)), []);
+  const deleteTemplate = useCallback((id: string) => setTemplates(prev => prev.filter(t => t.ID !== id)), []);
+
+  const generateTaskFromTemplate = useCallback((templateId: string, force: boolean = false) => {
+    const tmpl = templates.find(t => t.ID === templateId);
+    if (!tmpl) return false;
+    const todayStr = getLocalTodayStr();
+    const alreadyExists = tasks.some(t => t.Titulo === tmpl.Titulo && t.Responsavel === tmpl.Responsavel && new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr);
+    if (alreadyExists && !force) return { duplicate: true, template: tmpl };
+    const dueDateTime = new Date(); 
+    dueDateTime.setHours(23, 59, 59, 999);
+    const newTask: Task = {
+      ID: Math.random().toString(36).substr(2, 9),
+      TemplateID: tmpl.ID,
+      Titulo: tmpl.Titulo,
+      Descricao: tmpl.Descricao,
+      Responsavel: tmpl.Responsavel,
+      DataLimite: dueDateTime.toISOString(),
+      Prioridade: tmpl.Prioridade,
+      PontosValor: tmpl.PontosValor,
+      Status: TaskStatus.PENDENTE,
+      Tentativas: 0
+    };
+    setTasks(prev => [...prev, newTask]);
+    return true;
   }, [templates, tasks]);
 
-  // Função para recarregar dados
-  const refreshData = useCallback(async () => {
-    try {
-      const [tasksData, ledgerData] = await Promise.all([
-        tasksApi.getAll(),
-        ledgerApi.getAll(),
-      ]);
-
-      setTasks(tasksData.map((t: any) => ({
-        ID: t.ID,
-        TemplateID: t.TemplateID,
-        Titulo: t.Titulo,
-        Descricao: t.Descricao,
-        Responsavel: t.Responsavel,
-        DataLimite: t.DataLimite,
-        Prioridade: t.Prioridade || TaskPriority.MEDIA,
-        PontosValor: t.PontosValor || 10,
-        Status: normalizeTaskStatus(t.Status),
-        DataConclusao: t.DataConclusao,
-        CompletionNote: t.CompletionNote,
-        ProofAttachment: t.ProofAttachment,
-        ConferenciaStatus: t.ConferenciaStatus,
-        ObservacaoGestor: t.ObservacaoGestor,
-        Tentativas: t.Tentativas || 0,
-      })));
-
-      setLedger(ledgerData.map((l: any) => ({
-        ID: l.ID,
-        UserEmail: l.UserEmail,
-        Data: l.Data,
-        Pontos: l.Pontos,
-        Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
-        Descricao: l.Descricao,
-      })));
-    } catch (err) {
-      console.error('Erro ao atualizar dados:', err);
-    }
-  }, []);
-
   return { 
-    currentUser, users, tasks, templates, ledger, minhasTarefas,
-    loading, error, refreshData,
+    currentUser, users, tasks, templates, ledger, minhasTarefas, 
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 

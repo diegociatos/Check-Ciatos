@@ -154,6 +154,7 @@ export type ViewType =
   | 'EXECUTIVE_VIEW'
   | 'MY_PROFILE'
   | 'MY_TASKS_TODAY'
+  | 'UPCOMING_TASKS'
   | 'RELIABILITY_PANEL'
   | 'TEAM_PANEL'
   | 'MANAGE_USERS'

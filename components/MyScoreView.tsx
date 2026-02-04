@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ScoreLedger, ScoreType, User } from '../types';
-import { Trophy, Star, Calendar, ArrowUpCircle, ArrowDownCircle, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { Trophy, Star, Calendar, ArrowUpCircle, ArrowDownCircle, TrendingUp, BarChart3, Activity, Target } from 'lucide-react';
 
 interface MyScoreViewProps {
   ledger: ScoreLedger[];
@@ -17,43 +17,22 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
   startOfWeek.setDate(now.getDate() - now.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
 
-  // Cálculos dos Cards
+  // Cálculos solicitados
+  const pontosConquistados = user.PontosRealizadosMes || 0;
+  const maximoPontosMes = user.PontosPossiveisMes || 0;
+  const progressPercentage = maximoPontosMes > 0 ? (pontosConquistados / maximoPontosMes) * 100 : 0;
+
   const totalScore = ledger.reduce((acc, curr) => acc + curr.Pontos, 0);
-  
   const pointsToday = ledger
     .filter(entry => entry.Data.startsWith(todayStr))
     .reduce((acc, curr) => acc + curr.Pontos, 0);
 
-  const pointsThisWeek = ledger
-    .filter(entry => new Date(entry.Data) >= startOfWeek)
-    .reduce((acc, curr) => acc + curr.Pontos, 0);
-
-  const pointsThisMonth = user.PontosRealizadosMes || 0;
-
-  // Lógica do Termômetro
-  const realized = user.PontosRealizadosMes || 0;
-  const possible = user.PontosPossiveisMes || 0;
-  const performance = possible > 0 ? (realized / possible) * 100 : 0;
-  
-  const getPerformanceColor = (p: number) => {
-    if (p > 80) return 'bg-green-500';
-    if (p >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getPerformanceTextColor = (p: number) => {
-    if (p > 80) return 'text-green-600';
-    if (p >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  // Últimos 10 lançamentos
   const recentLedger = [...ledger]
     .sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime())
     .slice(0, 10);
 
-  const StatCard = ({ title, value, icon: Icon, colorClass, isCurrency = false }: any) => (
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-full">
+  const StatCard = ({ title, value, icon: Icon, colorClass }: any) => (
+    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-full font-ciatos">
       <div className="flex items-center justify-between mb-4">
         <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">{title}</span>
         <div className={`p-2 rounded-xl bg-[#F3F3F3] ${colorClass.split(' ')[0].replace('text-', 'bg-').replace('600', '100')}`}>
@@ -70,15 +49,52 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto font-ciatos">
       {/* Header da View */}
       <div className="flex flex-col gap-1">
-        <h2 className="text-3xl font-ciatos font-bold text-[#6F0F14] uppercase tracking-tighter">Minha Pontuação</h2>
-        <p className="text-sm text-gray-400 font-medium">Extrato de pontos ganhos e penalidades</p>
+        <h2 className="text-3xl font-bold text-[#6F0F14] uppercase tracking-tighter">Minha Pontuação</h2>
+        <p className="text-sm text-gray-400 font-medium">Extrato de pontos ganhos e potencial de carreira.</p>
       </div>
 
-      {/* Grid de Cards Superiores */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* PAINEL DE METAS (GAMIFICAÇÃO) */}
+      <div className="bg-white p-8 rounded-[40px] border-2 border-[#8B1B1F]/10 shadow-xl overflow-hidden relative group">
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+           <Target size={120} className="text-[#8B1B1F]" />
+        </div>
+        <div className="relative z-10 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-[#8B1B1F] uppercase tracking-tighter flex items-center gap-2">
+                <Target size={20} /> POTENCIAL DE GANHO MENSAL
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Você conquistou <strong className="text-[#8B1B1F]">{pontosConquistados}</strong> de um total de <strong className="text-[#111111]">{maximoPontosMes}</strong> possíveis.
+              </p>
+            </div>
+            <div className="text-right">
+               <span className="text-4xl font-black text-[#8B1B1F] tracking-tighter">{progressPercentage.toFixed(1)}%</span>
+               <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Garantido</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-[#F3F3F3] rounded-full overflow-hidden border border-gray-100">
+              <div 
+                className="h-full bg-[#8B1B1F] transition-all duration-1000 ease-out rounded-full shadow-lg"
+                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+               <span>Início do Mês</span>
+               <span className="text-[#8B1B1F]">Meta: Excelência Operacional</span>
+               <span>Meta 100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de Cards Secundários */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard 
           title="PONTUAÇÃO TOTAL" 
           value={totalScore} 
@@ -92,63 +108,17 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
           colorClass={pointsToday >= 0 ? 'text-green-600' : 'text-red-600'} 
         />
         <StatCard 
-          title="PONTOS ESTA SEMANA" 
-          value={pointsThisWeek} 
-          icon={Calendar} 
-          colorClass={pointsThisWeek >= 0 ? 'text-green-600' : 'text-red-600'} 
-        />
-        <StatCard 
-          title="PONTOS ESTE MÊS" 
-          value={pointsThisMonth} 
+          title="CONQUISTADO NO MÊS" 
+          value={pontosConquistados} 
           icon={BarChart3} 
-          colorClass={pointsThisMonth >= 0 ? 'text-green-600' : 'text-red-600'} 
+          colorClass="text-blue-600" 
         />
-      </div>
-
-      {/* Termômetro de Desempenho */}
-      <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-             <div className="p-3 bg-[#8B1B1F]/5 rounded-2xl text-[#8B1B1F]">
-                <TrendingUp size={24} />
-             </div>
-             <div>
-                <h3 className="text-xl font-ciatos font-bold text-[#6F0F14] uppercase tracking-tighter">Desempenho do Mês</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Aproveitamento de Pontos Disponíveis</p>
-             </div>
-          </div>
-          <div className="text-right">
-             <span className={`text-4xl font-black tracking-tighter ${getPerformanceTextColor(performance)}`}>
-               {possible > 0 ? `${performance.toFixed(1)}%` : '---'}
-             </span>
-          </div>
-        </div>
-
-        {possible > 0 ? (
-          <div className="space-y-4">
-            <div className="h-6 w-full bg-[#F3F3F3] rounded-full overflow-hidden border border-gray-100 shadow-inner">
-              <div 
-                className={`h-full transition-all duration-1000 ease-out rounded-full shadow-lg ${getPerformanceColor(performance)}`}
-                style={{ width: `${Math.min(performance, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
-               <span>0%</span>
-               <span>Meta: 80%+</span>
-               <span>100%</span>
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center bg-[#F3F3F3] rounded-3xl border-2 border-dashed border-gray-200">
-             <p className="text-gray-400 font-black uppercase text-xs tracking-widest">Sem tarefas atribuídas neste período</p>
-          </div>
-        )}
       </div>
 
       {/* Tabela de Extrato Recente */}
       <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
-          <h3 className="text-xl font-ciatos font-bold text-[#6F0F14] uppercase tracking-tighter">Extrato Recente</h3>
+          <h3 className="text-xl font-bold text-[#6F0F14] uppercase tracking-tighter">Extrato Recente</h3>
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Últimos 10 Lançamentos</span>
         </div>
 
