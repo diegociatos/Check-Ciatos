@@ -57,10 +57,34 @@ const INITIAL_USERS: User[] = [
   }
 ];
 
+// Migração para corrigir valores de Role antigos (minúsculo -> maiúsculo)
+const migrateUserRoles = (users: User[]): User[] => {
+  const roleMapping: Record<string, UserRole> = {
+    'Colaborador': UserRole.COLABORADOR,
+    'colaborador': UserRole.COLABORADOR,
+    'Gestor': UserRole.GESTOR,
+    'gestor': UserRole.GESTOR,
+    'Admin': UserRole.ADMIN,
+    'admin': UserRole.ADMIN,
+    'COLABORADOR': UserRole.COLABORADOR,
+    'GESTOR': UserRole.GESTOR,
+    'ADMIN': UserRole.ADMIN,
+  };
+  
+  return users.map(user => ({
+    ...user,
+    Role: roleMapping[user.Role] || user.Role
+  }));
+};
+
 export const useStore = () => {
   const [baseUsers, setBaseUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('ciatos_users_v10');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return migrateUserRoles(parsed);
+    }
+    return INITIAL_USERS;
   });
 
   const [tasks, setTasks] = useState<Task[]>(() => {
