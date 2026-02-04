@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ScoreLedger, User, ScoreType, UserRole } from '../types';
+import { ScoreLedger, User, ScoreType } from '../types';
 import { Calendar, User as UserIcon, ArrowUpCircle, ArrowDownCircle, Search, Star, ChevronRight, LayoutDashboard } from 'lucide-react';
 
 interface ScoreSupervisionViewProps {
@@ -12,7 +12,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR);
+  const collaborators = users.filter(u => u.Role === 'Colaborador');
 
   const filteredCollaborators = useMemo(() => {
     return collaborators.filter(c => 

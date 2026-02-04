@@ -1,55 +1,53 @@
 
 export enum UserRole {
-  GESTOR = 'GESTOR',
-  COLABORADOR = 'COLABORADOR',
-  ADMIN = 'ADMIN'
+  GESTOR = 'Gestor',
+  COLABORADOR = 'Colaborador',
+  ADMIN = 'Admin'
 }
 
 export enum UserStatus {
-  ATIVO = 'ATIVO',
-  INATIVO = 'INATIVO',
-  BLOQUEADO = 'BLOQUEADO'
+  ATIVO = 'Ativo',
+  INATIVO = 'Inativo',
+  BLOQUEADO = 'Bloqueado'
 }
 
 export enum TaskPriority {
-  BAIXA = 'BAIXA',
-  MEDIA = 'MEDIA',
-  ALTA = 'ALTA',
-  URGENTE = 'URGENTE'
+  BAIXA = 'Baixa',
+  MEDIA = 'Media',
+  ALTA = 'Alta',
+  URGENTE = 'Urgente'
 }
 
 export enum TaskStatus {
-  PENDENTE = 'PENDENTE',
-  CONCLUIDO = 'CONCLUIDO',
-  CONFERIDO = 'CONFERIDO',
-  ATRASADA = 'ATRASADA',
-  AGUARDANDO_APROVACAO = 'AGUARDANDO_APROVACAO',
-  APROVADA = 'APROVADA',
-  FEITA_ERRADA = 'FEITA_ERRADA',
-  NAO_FEITA = 'NAO_FEITA'
+  PENDENTE = 'Pendente',
+  AGUARDANDO_APROVACAO = 'Aguardando Aprovação',
+  APROVADA = 'Aprovada',
+  FEITA_ERRADA = 'Feita Errada',
+  NAO_FEITA = 'Não Feita',
+  ATRASADA = 'Atrasada'
 }
 
 export enum ConferenciaStatus {
-  APROVADO = 'APROVADO',
-  NAO_CUMPRIU = 'NAO_CUMPRIU',
-  CUMPRIU_ERRADO = 'CUMPRIU_ERRADO'
+  APROVADO = 'Aprovado',
+  NAO_CUMPRIU = 'Nao Cumpriu',
+  CUMPRIU_ERRADO = 'Cumpriu Errado'
 }
 
 export enum ScoreType {
-  GANHO = 'GANHO',
-  PENALIDADE = 'PENALIDADE'
+  GANHO = 'Ganho',
+  PENALIDADE = 'Penalidade'
 }
 
 export enum RecurrenceType {
-  DIARIA = 'DIARIA',
-  SEMANAL = 'SEMANAL',
-  MENSAL = 'MENSAL',
-  NENHUMA = 'NENHUMA'
+  DIARIA = 'Diaria',
+  SEMANAL = 'Semanal',
+  MENSAL = 'Mensal',
+  NENHUMA = 'Nenhuma'
 }
 
 export enum PeriodType {
-  MES = 'MES',
-  TRIMESTRE = 'TRIMESTRE',
+  MES = 'Mes',
+  TRIMESTRE = 'Trimestre',
   SEMESTRE = 'Semestre',
   ANO = 'Ano'
 }
