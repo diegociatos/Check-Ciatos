@@ -24,13 +24,13 @@ import ExecutiveView from './components/ExecutiveView';
 import HRReportView from './components/HRReportView';
 import HelpCenterView from './components/HelpCenterView';
 import { 
-  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key
+  User as UserIcon, Camera, Phone, Calendar, MapPin, AlignLeft, Save, Shield, Mail, CheckCircle, Clock, ListFilter, ArrowUpDown, Filter, Star, CalendarClock, Bell, CheckCircle2, Users, Lock, ShieldCheck, Key, Loader2
 } from 'lucide-react';
 
 const App: React.FC = () => {
   const { 
     currentUser, users, login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
-    updateProfile, minhasTarefas, tasks, templates, ledger, 
+    updateProfile, minhasTarefas, tasks, templates, ledger, isLoading, syncError,
     completeTask, auditTask, deleteTask, addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   } = useStore();
 
@@ -84,6 +84,46 @@ const App: React.FC = () => {
     }
     return ledger.filter(l => l.UserEmail === currentUser.Email);
   }, [ledger, users, currentUser]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
+        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-8 animate-in zoom-in duration-300">
+          <div className="text-center space-y-4">
+            <div className="h-20 w-20 bg-[#8B1B1F]/10 text-[#8B1B1F] rounded-full flex items-center justify-center mx-auto shadow-inner animate-pulse">
+              <Loader2 size={40} className="animate-spin" />
+            </div>
+            <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Carregando...</h2>
+            <p className="text-sm text-gray-500">Conectando ao servidor e carregando dados.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (syncError && !currentUser) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#8B1B1F] font-ciatos">
+        <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden p-10 space-y-8 animate-in zoom-in duration-300">
+          <div className="text-center space-y-4">
+            <div className="h-20 w-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <Shield size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-[#111111] uppercase tracking-tighter">Erro de Conexão</h2>
+            <p className="text-sm text-gray-500">{syncError}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-6 py-3 bg-[#8B1B1F] text-white rounded-full font-bold hover:bg-[#8B1B1F]/90 transition"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) return <Login onLogin={login} />;
 
