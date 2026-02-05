@@ -4,14 +4,15 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import { Task, TaskStatus, ScoreLedger, ScoreType, UserRole, User } from '../types';
-// Fixed: Added Star to imports from lucide-react to fix compilation error on line 142
-import { Trophy, Clock, CheckCircle2, ChevronRight, Users, Target, Activity, Star } from 'lucide-react';
+import { getTodayStr } from '../store';
+// Added Star to imports from lucide-react
+import { Trophy, Clock, CheckCircle2, ChevronRight, Users, Target, Activity, Star, CalendarDays } from 'lucide-react';
 
 interface DashboardProps {
   score: number;
   pendingTasksToday: Task[];
   recentLedger: ScoreLedger[];
-  onNavigateToTasks: () => void;
+  onNavigateToTasks: (view?: any) => void;
   tasks: Task[];
   currentUserRole: UserRole;
   collaborators: User[];
@@ -19,12 +20,19 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentLedger, onNavigateToTasks, tasks, currentUserRole, collaborators }) => {
   const isManagerOrAdmin = currentUserRole === UserRole.GESTOR || currentUserRole === UserRole.ADMIN;
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayStr();
 
   // Estatísticas de Equipe (Show_If Gestor/Admin)
-  const teamPendingToday = tasks.filter(t => t.DataLimite.startsWith(todayStr) && t.Status === TaskStatus.PENDENTE).length;
+  const teamPendingToday = tasks.filter(t => t.DataLimite_Date === todayStr && t.Status === TaskStatus.PENDENTE).length;
+  
+  // Estatísticas de Futuro
+  const myFutureTasksCount = tasks.filter(t => 
+    t.DataLimite_Date! > todayStr && 
+    (t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)
+  ).length;
+
   const teamCompletedToday = tasks.filter(t => t.DataConclusao?.startsWith(todayStr)).length;
-  const teamTotalToday = tasks.filter(t => t.DataLimite.startsWith(todayStr)).length;
+  const teamTotalToday = tasks.filter(t => t.DataLimite_Date === todayStr).length;
   const teamCompletionRate = teamTotalToday > 0 ? (teamCompletedToday / teamTotalToday) * 100 : 0;
   
   const top3Performers = [...collaborators]
@@ -41,7 +49,6 @@ const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentL
       const dateStr = d.toISOString().split('T')[0];
       const dayName = dayNames[d.getDay()];
       
-      // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA as per types.ts
       const count = tasks.filter(t => 
         t.DataConclusao?.startsWith(dateStr) && 
         (t.Status === TaskStatus.APROVADA)
@@ -53,7 +60,7 @@ const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentL
   }, [tasks]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-ciatos">
       {/* Top Stats - Adaptativo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {currentUserRole === UserRole.COLABORADOR ? (
@@ -67,13 +74,22 @@ const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentL
                 <h3 className="text-2xl font-bold text-[#111111]">{score} pts</h3>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-[#8B1B1F]/20 transition-all" onClick={() => onNavigateToTasks('MY_TASKS_TODAY')}>
               <div className="h-14 w-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
                 <Clock size={30} />
               </div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendentes Hoje</p>
                 <h3 className="text-2xl font-bold text-[#111111]">{pendingTasksToday.length}</h3>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-[#8B1B1F]/20 transition-all" onClick={() => onNavigateToTasks('UPCOMING_TASKS')}>
+              <div className="h-14 w-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <CalendarDays size={30} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Planejadas Futuro</p>
+                <h3 className="text-2xl font-bold text-[#111111]">{myFutureTasksCount}</h3>
               </div>
             </div>
           </>
@@ -163,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ score, pendingTasksToday, recentL
               <h3 className="text-xl font-bold mb-3 uppercase tracking-tighter">Ações Corporativas</h3>
               <p className="text-white/60 mb-6 text-sm font-medium">No Grupo Ciatos, a excelência operacional é garantida pela auditoria rigorosa de cada obrigação.</p>
               <button 
-                onClick={onNavigateToTasks}
+                onClick={() => onNavigateToTasks(isManagerOrAdmin ? 'TASK_SUPERVISION' : 'MY_TASKS_TODAY')}
                 className="w-full bg-white text-[#8B1B1F] py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-gray-100 transition-all shadow-lg active:scale-95"
               >
                 {isManagerOrAdmin ? 'Gerenciar Minha Equipe' : 'Ver Minhas Obrigações Hoje'}

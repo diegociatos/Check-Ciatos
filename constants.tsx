@@ -22,7 +22,8 @@ import {
   HelpCircle,
   FileBarChart,
   Zap,
-  LineChart
+  LineChart,
+  CalendarDays
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -82,6 +83,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'COLABORADOR',
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <CheckCircle size={20} /> 
+  },
+  { 
+    label: 'Planejamento Futuro', 
+    view: 'UPCOMING_TASKS', 
+    section: 'COLABORADOR',
+    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <CalendarDays size={20} /> 
   },
   { 
     label: 'Tarefas Concluídas', 

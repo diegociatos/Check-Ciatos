@@ -2,8 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import { User, Task, ScoreLedger, TaskStatus, ScoreType } from '../types.ts';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell, Legend } from 'recharts';
+import { getTodayStr } from '../store.ts';
 // Added CheckCircle2 to imports from lucide-react
-import { User as UserIcon, ShieldCheck, Trophy, Target, TrendingUp, Search, Star, AlertTriangle, XCircle, Info, ArrowDownCircle, CheckCircle2 } from 'lucide-react';
+import { User as UserIcon, ShieldCheck, Trophy, Target, TrendingUp, Search, Star, AlertTriangle, XCircle, Info, ArrowDownCircle, CheckCircle2, CalendarClock, Clock } from 'lucide-react';
 
 interface IndividualPerformanceDashboardProps {
   users: User[];
@@ -20,6 +21,8 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
   const userTasks = useMemo(() => tasks.filter(t => t.Responsavel === selectedEmail), [tasks, selectedEmail]);
   const userLedger = useMemo(() => ledger.filter(l => l.UserEmail === selectedEmail), [ledger, selectedEmail]);
   
+  const today = getTodayStr();
+
   const metrics = useMemo(() => {
     const total = userTasks.length;
     const aprovadas = userTasks.filter(t => t.Status === TaskStatus.APROVADA).length;
@@ -43,6 +46,12 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
     return pos !== -1 ? pos + 1 : '--';
   }, [collaboratorsList, selectedEmail]);
 
+  const futureTasks = useMemo(() => {
+    return userTasks
+      .filter(t => t.DataLimite_Date! > today && t.Status !== TaskStatus.APROVADA)
+      .sort((a, b) => a.DataLimite_Date!.localeCompare(b.DataLimite_Date!));
+  }, [userTasks, today]);
+
   const barData = [
     { name: 'Pontuação', Real: metrics.pontosAlcancados, Máximo: metrics.pontosPossiveis }
   ];
@@ -63,7 +72,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 font-ciatos">
+    <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Header Seletor */}
       <div className="bg-[#8B1B1F] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -181,6 +190,60 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                  </div>
               </div>
             </div>
+          </div>
+
+          {/* Agenda de Futuro */}
+          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+             <div className="flex items-center justify-between mb-8">
+                <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-3">
+                   <CalendarClock size={24} className="text-[#8B1B1F]" /> Agenda de Futuro (Planejamento)
+                </h4>
+                <div className="bg-[#8B1B1F]/5 px-4 py-2 rounded-2xl border border-[#8B1B1F]/10">
+                   <span className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                     {futureTasks.reduce((acc, t) => acc + t.PontosValor, 0)} Pts em Planejamento
+                   </span>
+                </div>
+             </div>
+
+             <div className="space-y-4">
+                {futureTasks.length > 0 ? (
+                   futureTasks.map(task => (
+                     <div key={task.ID} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
+                        <div className="flex items-center gap-4">
+                           <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 group-hover:text-[#8B1B1F] transition-colors">
+                              <Clock size={20} />
+                           </div>
+                           <div>
+                              <p className="text-sm font-bold text-[#111111]">{task.Titulo}</p>
+                              <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                                Prazo: {task.DataLimite_Date!.split('-').reverse().join('/')}
+                              </p>
+                           </div>
+                        </div>
+                        <div className="mt-4 md:mt-0 flex items-center gap-6">
+                           <div className="text-right">
+                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</p>
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                task.Status === TaskStatus.FEITA_ERRADA ? 'text-yellow-600' : 
+                                task.Status === TaskStatus.NAO_FEITA ? 'text-red-600' : 'text-blue-600'
+                              }`}>
+                                {task.Status}
+                              </span>
+                           </div>
+                           <div className="text-right border-l border-gray-200 pl-6">
+                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Valor</p>
+                              <span className="text-sm font-black text-[#111111]">{task.PontosValor} Pts</span>
+                           </div>
+                        </div>
+                     </div>
+                   ))
+                ) : (
+                   <div className="py-12 text-center bg-gray-50/50 rounded-[32px] border-2 border-dashed border-gray-100">
+                      <CalendarClock size={40} className="mx-auto text-gray-200 mb-3" />
+                      <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Nenhuma tarefa planejada para as próximas datas.</p>
+                   </div>
+                )}
+             </div>
           </div>
         </>
       ) : (

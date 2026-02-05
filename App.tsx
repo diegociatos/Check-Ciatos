@@ -114,7 +114,7 @@ const App: React.FC = () => {
         const myUpcoming = visibleTasks.filter(t => 
           t.Responsavel === currentUser.Email && 
           t.DataLimite_Date! > today &&
-          t.Status === TaskStatus.PENDENTE
+          (t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)
         );
         return (
           <UpcomingTasksView 
