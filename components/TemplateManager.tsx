@@ -202,7 +202,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável Operacional</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular Colaborador...</option>
-                        {users.filter(u => u.Role === UserRole.COLABORADOR).map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                        {users.filter(u => u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR).map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
                       </select>
                     </div>
                     <div className="space-y-1">

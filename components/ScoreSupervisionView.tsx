@@ -12,7 +12,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR);
+  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR);
 
   const filteredCollaborators = useMemo(() => {
     return collaborators.filter(c => 

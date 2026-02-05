@@ -14,7 +14,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   const [filterResponsavel, setFilterResponsavel] = useState<string>('TODOS');
 
   const collaborators = useMemo(() => {
-    return users.filter(u => u.Role === UserRole.COLABORADOR);
+    return users.filter(u => u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR);
   }, [users]);
 
   // Estrutura de Agrupamento: [Responsavel] -> [DataLimite_Date] -> Task[]
