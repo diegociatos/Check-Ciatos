@@ -29,7 +29,8 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
 
     filtered.forEach(task => {
       const resp = task.Responsavel;
-      const date = task.DataLimite_Date || 'Sem Data';
+      // Usa DataLimite_Date ou extrai a data de DataLimite
+      const date = task.DataLimite_Date || (task.DataLimite ? task.DataLimite.split('T')[0] : 'Sem Data');
 
       if (!structure[resp]) structure[resp] = {};
       if (!structure[resp][date]) structure[resp][date] = [];
@@ -127,7 +128,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                       </div>
                                       <div className="flex items-center gap-1.5 text-[9px] font-black text-[#8B1B1F] uppercase tracking-widest">
                                          <Target size={10} className="opacity-50" />
-                                         Execução: {task.DataLimite_Date!.split('-').reverse().join('/')}
+                                         Execução: {(task.DataLimite_Date || task.DataLimite?.split('T')[0] || 'Sem Data').split('-').reverse().join('/')}
                                       </div>
                                    </div>
                                  </div>
