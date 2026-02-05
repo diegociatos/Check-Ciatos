@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
-// Fixed: Using correct imports and field names
-import { Calendar, User, CheckCircle, Image as ImageIcon, X, Send, CheckSquare, Clock, UserCheck, RotateCcw, Trash2, ShieldCheck, ShieldAlert, ShieldEllipsis, MessageSquare } from 'lucide-react';
+import { Calendar, User, CheckCircle, Image as ImageIcon, X, Send, CheckSquare, Clock, UserCheck, RotateCcw, Trash2, ShieldCheck, ShieldAlert, ShieldEllipsis, MessageSquare, AlertCircle } from 'lucide-react';
 
 interface EnrichedTask extends Task {
   NomeColaborador: string;
@@ -55,8 +54,8 @@ const TaskList: React.FC<TaskListProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
       {tasks.length > 0 ? (
         tasks.map((task) => {
-          // Fixed: Using correct property name Responsavel
           const isAssignee = task.Responsavel === currentUserEmail;
+          const isRejected = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
           
           return (
             <div key={task.ID} className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300 border-l-[6px] ${
@@ -69,6 +68,7 @@ const TaskList: React.FC<TaskListProps> = ({
                    <div className="space-y-1">
                       <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
                         task.Status === TaskStatus.APROVADA ? 'bg-green-50 text-green-700 border-green-100' :
+                        isRejected ? 'bg-red-50 text-red-700 border-red-100' : 
                         task.Status === TaskStatus.ATRASADA ? 'bg-red-50 text-red-700 border-red-100' : 'bg-blue-50 text-blue-700 border-blue-100'
                       }`}>
                         {task.Status}
@@ -76,7 +76,6 @@ const TaskList: React.FC<TaskListProps> = ({
                       {task.Status === TaskStatus.APROVADA && renderConferenciaBadge(task.ConferenciaStatus!)}
                    </div>
                    <div className="text-right">
-                      {/* Fixed: Using correct property name PontosValor */}
                       <span className="text-2xl font-black text-[#8B1B1F] tracking-tighter">{task.PontosValor} pts</span>
                    </div>
                 </div>
@@ -91,38 +90,31 @@ const TaskList: React.FC<TaskListProps> = ({
                       <div className="h-8 w-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400"><Clock size={14}/></div>
                       <div>
                          <p className="text-[9px] font-black text-gray-300 uppercase">Prazo de Entrega</p>
-                         {/* Fixed: Using correct property name DataLimite */}
                          <p className="text-xs font-bold text-[#111111]">{new Date(task.DataLimite).toLocaleString()}</p>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400"><UserCheck size={14}/></div>
-                      <div>
-                         <p className="text-[9px] font-black text-gray-300 uppercase">Gestor Responsável</p>
-                         <p className="text-xs font-bold text-[#111111]">{task.NomeGestor}</p>
                       </div>
                    </div>
                 </div>
               </div>
 
-              {/* Fix: Mapped CONCLUIDO to combined check for APROVADA and AGUARDANDO_APROVACAO */}
+              {/* Justificativa de Rejeição */}
+              {isRejected && task.JustificativaGestor && (
+                <div className="px-8 py-5 bg-red-50 border-t border-red-100 flex items-start gap-3">
+                   <AlertCircle size={16} className="text-red-600 mt-0.5 shrink-0" />
+                   <div>
+                      <p className="text-[9px] font-black text-red-700 uppercase mb-1">Motivo do Retorno:</p>
+                      <p className="text-[11px] text-red-800 font-bold italic">"{task.JustificativaGestor}"</p>
+                   </div>
+                </div>
+              )}
+
               {isAssignee && task.Status !== TaskStatus.APROVADA && task.Status !== TaskStatus.AGUARDANDO_APROVACAO && (
-                <div className="px-8 pb-8">
+                <div className="px-8 pb-8 mt-2">
                   <button 
                     onClick={() => setSelectedTask(task)}
                     className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-[#6F0F14] transition-all shadow-xl shadow-[#8B1B1F]/20 flex items-center justify-center gap-3"
                   >
-                    <CheckSquare size={20} /> Concluir Entrega
+                    <CheckSquare size={20} /> {isRejected ? 'Refazer Tarefa' : 'Concluir Entrega'}
                   </button>
-                </div>
-              )}
-
-              {task.ObservacaoGestor && (
-                <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 italic">
-                   <p className="text-[10px] font-black text-[#8B1B1F] uppercase mb-1 flex items-center gap-1">
-                      <MessageSquare size={10}/> Feedback Auditoria:
-                   </p>
-                   <p className="text-[11px] text-gray-500 font-medium leading-relaxed">"{task.ObservacaoGestor}"</p>
                 </div>
               )}
             </div>

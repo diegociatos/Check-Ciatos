@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Task, TaskStatus } from '../types';
-import { CheckCircle, XCircle, AlertCircle, Clock, User, Send, Calendar, ShieldCheck, History, MessageSquare } from 'lucide-react';
+import { getTodayStr } from '../store';
+import { CheckCircle, XCircle, AlertCircle, Clock, User, Send, Calendar, ShieldCheck, History, MessageSquare, AlertTriangle, Eye, Info, Check } from 'lucide-react';
 
 interface DeliveryChecklistProps {
   tasks: Task[];
@@ -13,19 +14,24 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
   const [justification, setJustification] = useState('');
   const [nextDeadline, setNextDeadline] = useState('');
   const [actionType, setActionType] = useState<TaskStatus | null>(null);
+  const [viewNoteTask, setViewNoteTask] = useState<Task | null>(null);
 
+  const todayStr = getTodayStr();
   const pendingAudit = tasks.filter(t => t.Status === TaskStatus.AGUARDANDO_APROVACAO);
 
   const handleAuditAction = () => {
     if (!auditTask || !actionType) return;
     
-    // Validação de Obrigatoriedade conforme solicitado pelo RH
-    if (actionType !== TaskStatus.APROVADA) {
-      if (!justification.trim()) return alert("A justificativa técnica é obrigatória para reprovações.");
-      if (!nextDeadline) return alert("É obrigatório definir um novo prazo para o reenvio.");
+    if (actionType !== TaskStatus.APROVADA && !justification.trim()) {
+      return alert("A justificativa técnica é obrigatória para reprovações.");
     }
 
-    onAudit(auditTask.ID, actionType, justification, nextDeadline);
+    const isAnticipated = auditTask.DataLimite_Date! > todayStr;
+    if (actionType !== TaskStatus.APROVADA && !isAnticipated && !nextDeadline) {
+      return alert("É obrigatório definir um novo prazo para o cumprimento de tarefas vencidas.");
+    }
+
+    onAudit(auditTask.ID, actionType, justification, isAnticipated ? undefined : nextDeadline);
     setAuditTask(null);
     setJustification('');
     setNextDeadline('');
@@ -45,146 +51,182 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
       <div className="flex flex-col gap-2">
          <h3 className="text-3xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Conferir Entregas</h3>
-         <p className="text-sm text-gray-400 font-medium">Validação técnica e controle de qualidade das obrigações da equipe.</p>
+         <p className="text-sm text-gray-400 font-medium italic">Auditoria técnica e feedback de performance.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {pendingAudit.length > 0 ? (
-          pendingAudit.map(task => (
-            <div key={task.ID} className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300">
-               <div className="p-8 flex-1 space-y-6">
-                  <div className="flex justify-between items-start">
-                     <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                        Aguardando Auditoria
-                     </div>
-                     <span className="text-2xl font-black text-[#8B1B1F] tracking-tighter">{task.PontosValor} pts</span>
-                  </div>
-                  
-                  <div>
-                     <h4 className="text-xl font-bold text-[#111111] leading-tight mb-2">{task.Titulo}</h4>
-                     <div className="flex items-center gap-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                        <User size={12} /> {task.Responsavel}
-                     </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Nota do Colaborador:</p>
-                    <p className="text-xs text-gray-600 italic">"{task.CompletionNote || 'Sem comentários adicionais.'}"</p>
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-gray-50">
-                     <div className="flex items-center gap-3">
-                        <Clock size={16} className="text-green-600" />
-                        <div>
-                           <p className="text-[9px] font-black text-gray-400 uppercase">Concluído em</p>
-                           <p className="text-xs font-bold text-[#111111]">
-                             {task.DataConclusao ? new Date(task.DataConclusao).toLocaleString() : 'Não registrado'}
-                           </p>
+      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left table-fixed">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-gray-100">
+              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-1/4">Colaborador</th>
+              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Obrigação Concluída</th>
+              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-40">Data Entrega</th>
+              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Pts</th>
+              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right w-64">Decisão Auditoria</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {pendingAudit.length > 0 ? (
+              pendingAudit.map(task => {
+                const hasNote = task.CompletionNote && task.CompletionNote.trim().length > 0;
+                return (
+                  <tr key={task.ID} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 bg-[#8B1B1F] rounded-lg flex items-center justify-center text-white text-[10px] font-black">
+                          {task.Responsavel.charAt(0).toUpperCase()}
                         </div>
-                     </div>
-                     <div className="flex items-center gap-3">
-                        <History size={16} className="text-blue-500" />
-                        <div>
-                           <p className="text-[9px] font-black text-gray-400 uppercase">Histórico</p>
-                           <p className="text-xs font-bold text-[#111111]">{task.Tentativas + 1}ª Tentativa de entrega</p>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-[#111111] uppercase truncate">{task.Responsavel.split('@')[0]}</span>
+                          <span className="text-[8px] text-gray-400 font-bold italic">Auditoria {task.Tentativas + 1}</span>
                         </div>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="p-6 bg-gray-50 border-t border-gray-100 grid grid-cols-3 gap-2">
-                  <button 
-                    onClick={() => { setAuditTask(task); setActionType(TaskStatus.APROVADA); }}
-                    className="flex flex-col items-center gap-1 p-3 bg-white border border-green-100 rounded-2xl hover:bg-green-600 hover:text-white transition-all group"
-                  >
-                    <CheckCircle size={18} className="text-green-600 group-hover:text-white" />
-                    <span className="text-[8px] font-black uppercase">Aprovar</span>
-                  </button>
-                  <button 
-                    onClick={() => { setAuditTask(task); setActionType(TaskStatus.FEITA_ERRADA); }}
-                    className="flex flex-col items-center gap-1 p-3 bg-white border border-yellow-100 rounded-2xl hover:bg-yellow-500 hover:text-white transition-all group"
-                  >
-                    <AlertCircle size={18} className="text-yellow-500 group-hover:text-white" />
-                    <span className="text-[8px] font-black uppercase text-center">Feita Errada</span>
-                  </button>
-                  <button 
-                    onClick={() => { setAuditTask(task); setActionType(TaskStatus.NAO_FEITA); }}
-                    className="flex flex-col items-center gap-1 p-3 bg-white border border-red-100 rounded-2xl hover:bg-red-600 hover:text-white transition-all group"
-                  >
-                    <XCircle size={18} className="text-red-600 group-hover:text-white" />
-                    <span className="text-[8px] font-black uppercase text-center">Não Feita</span>
-                  </button>
-               </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full py-24 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
-             <ShieldCheck size={64} className="mx-auto text-gray-100 mb-4" />
-             <p className="text-gray-300 font-black uppercase text-xs tracking-widest">Nenhuma tarefa aguardando sua auditoria.</p>
-          </div>
-        )}
+                      </div>
+                    </td>
+                    <td className="px-8 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-bold text-[#111111] truncate">{task.Titulo}</span>
+                          {task.DataLimite_Date! > todayStr && (
+                            <span className="text-[8px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded w-fit uppercase">Antecipada</span>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => setViewNoteTask(task)}
+                          className={`p-1.5 rounded-lg shadow-sm transition-all ${hasNote ? 'bg-[#8B1B1F] text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-[#8B1B1F]'}`}
+                          title={hasNote ? "Ver Relato do Colaborador" : "Sem observações"}
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs font-bold text-gray-600">{new Date(task.DataConclusao!).toLocaleDateString()}</span>
+                        <span className="text-[9px] text-gray-400 font-bold uppercase">
+                          {new Date(task.DataConclusao!).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-center">
+                      <span className="text-sm font-black text-[#8B1B1F]">{task.PontosValor}</span>
+                    </td>
+                    <td className="px-8 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                         <button 
+                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.APROVADA); }}
+                           className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                         >
+                           Aprovar
+                         </button>
+                         <button 
+                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.FEITA_ERRADA); }}
+                           className="px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-yellow-100 hover:bg-yellow-500 hover:text-white transition-all shadow-sm"
+                         >
+                           Erro
+                         </button>
+                         <button 
+                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.NAO_FEITA); }}
+                           className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                         >
+                           Falta
+                         </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-24 text-center text-gray-300 uppercase font-black text-xs">Aguardando novas entregas para auditoria.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal de Auditoria Corporativa */}
+      {/* MODAL DE NOTA DO COLABORADOR (OLHINHO) */}
+      {viewNoteTask && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+           <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+              <div className="p-8 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <MessageSquare size={20} className="text-[#8B1B1F]" />
+                    <h3 className="text-lg font-bold uppercase tracking-tighter">Nota da Execução</h3>
+                 </div>
+                 <button onClick={() => setViewNoteTask(null)} className="text-gray-400">✕</button>
+              </div>
+              <div className="p-10 space-y-6 text-center">
+                 <div className="bg-[#8B1B1F]/5 p-8 rounded-[32px] border border-[#8B1B1F]/10">
+                    <p className="text-[10px] font-black text-[#8B1B1F] uppercase mb-4 tracking-widest">O que o colaborador disse:</p>
+                    <p className="text-lg text-gray-700 italic leading-relaxed font-medium">
+                       {viewNoteTask.CompletionNote ? `"${viewNoteTask.CompletionNote}"` : "Nenhum relato técnico enviado."}
+                    </p>
+                 </div>
+                 <button 
+                   onClick={() => setViewNoteTask(null)}
+                   className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                 >
+                   <Check size={16} /> Fechar Visualização
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL DE DECISÃO */}
       {auditTask && actionType && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className={`p-8 border-b border-white/10 flex items-center justify-between text-white ${getActionColor(actionType)}`}>
                <div className="flex items-center gap-3">
-                  {actionType === TaskStatus.APROVADA ? <CheckCircle size={24}/> : <AlertCircle size={24}/>}
-                  <h3 className="text-xl font-bold uppercase tracking-tighter">Decisão de Auditoria</h3>
+                  {actionType === TaskStatus.APROVADA ? <ShieldCheck size={24}/> : <AlertCircle size={24}/>}
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">
+                    {actionType === TaskStatus.APROVADA ? 'Aprovar Entrega' : actionType === TaskStatus.FEITA_ERRADA ? 'Sinalizar Erro' : 'Sinalizar Falta'}
+                  </h3>
                </div>
                <button onClick={() => setAuditTask(null)} className="text-white/70 hover:text-white">✕</button>
             </div>
             
             <div className="p-8 space-y-6">
-               <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                  <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Tarefa em análise:</p>
-                  <p className="text-sm font-bold text-[#111111]">{auditTask.Titulo}</p>
-               </div>
-
                {actionType === TaskStatus.APROVADA ? (
                  <div className="text-center py-4 space-y-4">
-                    <p className="text-sm text-gray-500 font-medium">Ao aprovar, o colaborador receberá <strong className="text-green-600">+{auditTask.PontosValor} pontos</strong> integralmente.</p>
-                    <div className="h-1 bg-green-100 rounded-full w-24 mx-auto" />
+                    <div className="h-16 w-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                       <ShieldCheck size={32} />
+                    </div>
+                    <p className="text-sm text-gray-500 font-medium italic">
+                      Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong> e creditar {auditTask.PontosValor} pts?
+                    </p>
                  </div>
                ) : (
                  <div className="space-y-6">
                     <div className="space-y-2">
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                         <MessageSquare size={12} /> Justificativa da Gestão (Obrigatório)
-                       </label>
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Justificativa do Retorno (Obrigatório)</label>
                        <textarea 
                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#8B1B1F]/10 outline-none min-h-[100px]"
-                         placeholder="Descreva o motivo técnico do retorno da tarefa..."
+                         placeholder="O colaborador verá esta mensagem para corrigir a entrega..."
                          value={justification}
                          onChange={(e) => setJustification(e.target.value)}
                        />
                     </div>
                     
-                    <div className="space-y-2">
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                         <Calendar size={12} /> Novo Prazo para Entrega (Obrigatório)
-                       </label>
-                       <input 
-                         type="datetime-local"
-                         className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none border-2 border-[#8B1B1F]/10 focus:border-[#8B1B1F]"
-                         value={nextDeadline}
-                         onChange={(e) => setNextDeadline(e.target.value)}
-                       />
-                    </div>
-
-                    <div className="bg-red-50 p-4 rounded-2xl flex items-start gap-3 border border-red-100">
-                       <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
-                       <div>
-                         <p className="text-[10px] font-black text-red-700 uppercase">Impacto no Score</p>
-                         <p className="text-xs text-red-600 font-bold leading-tight">
-                           {actionType === TaskStatus.FEITA_ERRADA 
-                             ? `Pena -0.5x: O colaborador perderá ${auditTask.PontosValor * 0.5} pts.` 
-                             : `Penalidade -2x: O colaborador perderá ${auditTask.PontosValor * 2} pts por inexecução.`}
+                    {auditTask.DataLimite_Date! <= todayStr ? (
+                      <div className="space-y-2 animate-in slide-in-from-top-2">
+                         <label className="block text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Definir Novo Prazo para Correção</label>
+                         <input 
+                           type="date"
+                           className="w-full bg-white border-2 border-[#8B1B1F]/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-[#8B1B1F]"
+                           value={nextDeadline}
+                           onChange={(e) => setNextDeadline(e.target.value)}
+                         />
+                      </div>
+                    ) : (
+                      <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 flex gap-4 animate-in slide-in-from-top-2">
+                         <Info size={20} className="text-blue-500 shrink-0" />
+                         <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
+                            <strong>Antecipação Detectada:</strong> Como o prazo original ainda é futuro ({auditTask.DataLimite_Date!.split('-').reverse().join('/')}), a data não será alterada. O colaborador poderá refazer o check a qualquer momento até o prazo expirar.
                          </p>
-                       </div>
-                    </div>
+                      </div>
+                    )}
                  </div>
                )}
 
@@ -192,7 +234,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                   onClick={handleAuditAction}
                   className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 ${getActionColor(actionType)} hover:brightness-90 hover:scale-[1.01] active:scale-95`}
                >
-                  <Send size={20} /> Finalizar Decisão
+                  <Send size={20} /> Confirmar Decisão
                </button>
             </div>
           </div>

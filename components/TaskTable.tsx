@@ -1,12 +1,19 @@
 
 import React from 'react';
 import { Task, TaskStatus, TaskPriority } from '../types';
+import { getTodayStr } from '../store';
 import { 
   CheckCircle2, 
   Clock, 
   AlertTriangle, 
   ShieldCheck,
-  XCircle
+  XCircle,
+  Trophy,
+  Check,
+  CalendarDays,
+  ArrowRight,
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react';
 
 interface TaskTableProps {
@@ -16,20 +23,8 @@ interface TaskTableProps {
 }
 
 const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon = true }) => {
-  
-  // Função auxiliar para obter a data de hoje no fuso de São Paulo
-  const getTodaySaoPaulo = () => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-  };
+  const todayStr = getTodayStr();
 
-  const todayStr = getTodaySaoPaulo();
-
-  // Mapeamento de prioridade para ordenação (Urgente > Baixa)
   const priorityScore = React.useMemo(() => ({
     [TaskPriority.URGENTE]: 4,
     [TaskPriority.ALTA]: 3,
@@ -37,162 +32,138 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
     [TaskPriority.BAIXA]: 1,
   }), []);
 
-  // Agrupamento por Data com tipagem explícita
   const groupedTasks: Record<string, Task[]> = React.useMemo(() => {
     const groups = tasks.reduce((acc, task) => {
-      // Ajuste para garantir que a data da tarefa também respeite o fuso ao ser exibida
-      const dateObj = new Date(task.DataLimite);
-      const dateLabel = new Intl.DateTimeFormat('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(dateObj);
+      const dateOnly = task.DataLimite_Date!; 
+      const [year, month, day] = dateOnly.split('-');
+      const formattedDate = `${day}/${month}/${year}`;
 
-      if (!acc[dateLabel]) acc[dateLabel] = [];
-      acc[dateLabel].push(task);
+      const label = dateOnly === todayStr ? `HOJE - ${formattedDate}` : `PRÓXIMOS DIAS - ${formattedDate}`;
+
+      if (!acc[label]) acc[label] = [];
+      acc[label].push(task);
       return acc;
     }, {} as Record<string, Task[]>);
 
-    // Ordenação dentro dos grupos: Prioridade (Desc) e Data (Asc)
-    Object.keys(groups).forEach(date => {
-      groups[date].sort((a, b) => {
+    Object.keys(groups).forEach(label => {
+      groups[label].sort((a, b) => {
         const pDiff = priorityScore[b.Prioridade] - priorityScore[a.Prioridade];
         if (pDiff !== 0) return pDiff;
-        return new Date(a.DataLimite).getTime() - new Date(b.DataLimite).getTime();
+        return a.ID.localeCompare(b.ID);
       });
     });
 
-    // Ordenar as chaves (datas) para que as mais próximas venham primeiro
-    const sortedKeys = Object.keys(groups).sort((a, b) => {
-      const dateA = a.split('/').reverse().join('-');
-      const dateB = b.split('/').reverse().join('-');
-      return dateA.localeCompare(dateB);
-    });
-
-    const sortedGroups: Record<string, Task[]> = {};
-    sortedKeys.forEach(key => {
-      sortedGroups[key] = groups[key];
-    });
-
-    return sortedGroups;
-  }, [tasks, priorityScore]);
-
-  const getPriorityStyle = (priority: TaskPriority) => {
-    switch (priority) {
-      case TaskPriority.URGENTE: return 'text-red-700 font-black';
-      case TaskPriority.ALTA: return 'text-red-500 font-bold';
-      case TaskPriority.MEDIA: return 'text-blue-600 font-bold';
-      default: return 'text-gray-400 font-medium';
-    }
-  };
-
-  const getRowBackground = (status: TaskStatus) => {
-    if (status === TaskStatus.FEITA_ERRADA) return 'bg-yellow-50/70 hover:bg-yellow-100/80';
-    if (status === TaskStatus.NAO_FEITA) return 'bg-red-50/70 hover:bg-red-100/80';
-    return 'bg-white hover:bg-gray-50/80';
-  };
+    return groups;
+  }, [tasks, priorityScore, todayStr]);
 
   const getStatusIcon = (status: TaskStatus) => {
     switch(status) {
-      case TaskStatus.APROVADA: return <ShieldCheck size={18} className="text-green-600" />;
-      case TaskStatus.AGUARDANDO_APROVACAO: return <Clock size={18} className="text-blue-500" />;
-      case TaskStatus.FEITA_ERRADA: return <AlertTriangle size={18} className="text-yellow-600" />;
-      case TaskStatus.NAO_FEITA: return <XCircle size={18} className="text-red-600" />;
-      default: return <div className="h-4 w-4 rounded-full border-2 border-gray-200" />;
+      case TaskStatus.APROVADA: return <ShieldCheck size={20} className="text-green-600" />;
+      case TaskStatus.AGUARDANDO_APROVACAO: return <Clock size={20} className="text-blue-500" />;
+      case TaskStatus.FEITA_ERRADA: return <AlertTriangle size={20} className="text-yellow-600" />;
+      case TaskStatus.NAO_FEITA: return <XCircle size={20} className="text-red-600" />;
+      default: return <div className="h-5 w-5 rounded-full border-2 border-gray-200" />;
     }
   };
 
   return (
-    <div className="space-y-8 font-ciatos">
-      {Object.keys(groupedTasks).length > 0 ? (
-        Object.entries(groupedTasks).map(([date, items]) => {
-          const isToday = date === todayStr;
+    <div className="space-y-12 font-ciatos">
+      {Object.entries(groupedTasks).map(([label, items]) => (
+        <div key={label} className="space-y-6">
+          <div className="flex items-center gap-4 px-2">
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#8B1B1F]">
+              {label}
+            </span>
+            <div className="h-px flex-1 bg-[#8B1B1F]/20 shadow-sm"></div>
+          </div>
           
-          return (
-            <div key={date} className="space-y-3">
-              <div className="flex items-center gap-3 px-4">
-                <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${isToday ? 'text-[#8B1B1F]' : 'text-gray-400'}`}>
-                  {isToday ? `Hoje • ${date}` : date}
-                </span>
-                <div className={`h-px flex-1 ${isToday ? 'bg-[#8B1B1F]/20' : 'bg-gray-100'}`}></div>
-              </div>
-              
-              <div className={`bg-white rounded-[24px] border ${isToday ? 'border-[#8B1B1F]/10 shadow-md' : 'border-gray-100 shadow-sm'} overflow-hidden`}>
-                <table className="w-full text-left table-fixed">
-                  <thead>
-                    <tr className="bg-gray-50/30 border-b border-gray-100">
-                      <th className="w-12 px-4 py-3 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                      <th className="w-24 px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Prazo</th>
-                      <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Título da Tarefa</th>
-                      <th className="w-24 px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Prioridade</th>
-                      <th className="w-20 px-4 py-3 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Pts</th>
-                      <th className="w-32 px-4 py-3 text-right text-[9px] font-black text-gray-400 uppercase tracking-widest">Ação Inline</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {items.map((task) => (
-                      <tr key={task.ID} className={`transition-colors duration-150 ${getRowBackground(task.Status)} group`}>
-                        <td className="px-4 py-2.5 text-center">
-                          <div className="flex justify-center">
-                            {getStatusIcon(task.Status)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className="text-[11px] font-bold text-gray-500">
-                            {new Intl.DateTimeFormat('pt-BR', {
-                              timeZone: 'America/Sao_Paulo',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }).format(new Date(task.DataLimite))}
+          <div className="grid grid-cols-1 gap-5">
+            {items.map((task) => {
+              const dataSolicitacao = task.DataGeracao ? new Date(task.DataGeracao).toLocaleDateString('pt-BR') : 'Manual';
+              const dataExecucao = task.DataLimite_Date!.split('-').reverse().join('/');
+              const isRejected = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
+
+              return (
+                <div 
+                  key={task.ID} 
+                  className={`bg-white rounded-[24px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-6 lg:p-7 flex flex-col group ${isRejected ? 'border-l-4 border-l-red-500' : ''}`}
+                >
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="shrink-0">
+                      <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 group-hover:bg-[#8B1B1F]/5">
+                        {getStatusIcon(task.Status)}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xl font-bold text-[#111111] leading-tight font-ciatos truncate group-hover:text-[#8B1B1F]">
+                          {task.Titulo}
+                        </h4>
+                        {isRejected && (
+                          <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded-full border border-red-100 uppercase tracking-widest">
+                            Retorno de Auditoria
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex flex-col">
-                            <span className="text-[13px] font-bold text-[#111111] line-clamp-1 group-hover:text-[#8B1B1F] transition-colors">
-                              {task.Titulo}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className={`text-[10px] uppercase tracking-tighter ${getPriorityStyle(task.Prioridade)}`}>
-                            {task.Prioridade}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-center">
-                          <span className="text-xs font-black text-[#8B1B1F]">
-                            {task.PontosValor}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-right">
-                          {(task.Status === TaskStatus.PENDENTE || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA) ? (
-                            <button 
-                              onClick={() => onComplete(task.ID)}
-                              className="bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-1.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 ml-auto"
-                            >
-                              <CheckCircle2 size={12} /> Check
-                            </button>
-                          ) : (
-                            <div className="flex items-center justify-end gap-1.5 text-[9px] font-bold text-gray-400 uppercase italic">
-                              {task.Status === TaskStatus.APROVADA ? <ShieldCheck size={14} className="text-green-600"/> : <Clock size={14} className="text-blue-500"/>}
-                              {task.Status}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <div className="py-24 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
-          <CheckCircle2 size={48} className="mx-auto text-gray-100 mb-4" />
-          <p className="text-gray-300 font-black uppercase text-xs tracking-widest">Fila de tarefas vazia.</p>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex flex-col">
+                          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Solicitada em</p>
+                          <p className="text-xs font-bold text-gray-600">{dataSolicitacao}</p>
+                        </div>
+                        <ArrowRight size={12} className="text-gray-200" />
+                        <div className="flex flex-col">
+                          <p className="text-[8px] font-black text-[#8B1B1F] uppercase tracking-widest">Executar em (Prazo)</p>
+                          <p className="text-sm font-black text-[#111111]">{dataExecucao}</p>
+                        </div>
+                        <div className="h-6 w-px bg-gray-100 hidden sm:block"></div>
+                        <div className="flex items-center gap-1.5 bg-yellow-50 px-2 py-1 rounded-lg">
+                          <Trophy size={14} className="text-yellow-600" />
+                          <span className="text-[10px] font-black text-yellow-700">{task.PontosValor} PTS</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 w-full md:w-auto">
+                      {(task.Status === TaskStatus.PENDENTE || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA) ? (
+                        <button 
+                          onClick={() => onComplete(task.ID)}
+                          className="w-full md:w-auto bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-4 px-8 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95"
+                        >
+                          <Check size={18} strokeWidth={3} /> {isRejected ? 'REFAZER E ENVIAR' : 'CONCLUIR'}
+                        </button>
+                      ) : (
+                        <div className="px-6 py-4 bg-gray-50 rounded-2xl border border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                          {task.Status === TaskStatus.APROVADA ? <ShieldCheck size={16} className="text-green-600"/> : <Clock size={16} className="text-blue-500"/>}
+                          {task.Status}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* BLOCO DE FEEDBACK DO GESTOR */}
+                  {isRejected && task.JustificativaGestor && (
+                    <div className="mt-6 p-5 bg-red-50/50 rounded-2xl border border-dashed border-red-200 flex items-start gap-4 animate-in slide-in-from-top-2">
+                      <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-red-600 shadow-sm border border-red-100">
+                        <AlertCircle size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-red-700 uppercase tracking-widest mb-1 flex items-center gap-2">
+                          <MessageSquare size={12} /> Nota de Auditoria do Gestor:
+                        </p>
+                        <p className="text-sm font-bold text-red-800 italic leading-relaxed">
+                          "{task.JustificativaGestor}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };

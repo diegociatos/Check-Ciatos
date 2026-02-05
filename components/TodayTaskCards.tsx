@@ -75,7 +75,14 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {tasks.map((task) => {
-        const isOverdue = new Date(task.DataLimite) < new Date() && task.Status === TaskStatus.PENDENTE;
+        const todayStr = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date());
+
+        const isOverdue = task.DataLimite_Date! < todayStr && task.Status === TaskStatus.PENDENTE;
         const isReturn = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
 
         return (
@@ -145,7 +152,7 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                 )}
                 <div className={`flex items-center gap-2 text-xs font-bold ${isOverdue ? 'text-red-600' : 'text-gray-400'}`}>
                   <Clock size={16} />
-                  <span>Prazo: {new Date(task.DataLimite).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>Prazo: {task.DataLimite_Date!.split('-').reverse().join('/')}</span>
                 </div>
               </div>
             </div>

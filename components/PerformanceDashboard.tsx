@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Task, TaskStatus, User } from '../types';
+import { getTodayStr } from '../store';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity, CheckCircle, AlertTriangle, TrendingUp, Users } from 'lucide-react';
 
@@ -11,11 +12,11 @@ interface PerformanceDashboardProps {
 }
 
 const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, users, collaboratorsList }) => {
-  const today = new Date().toISOString().split('T')[0];
-  const todayTasks = tasks.filter(t => t.DataLimite.startsWith(today));
+  const today = getTodayStr();
+  const todayTasks = tasks.filter(t => t.DataLimite_Date === today);
   // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA
   const completedTasks = tasks.filter(t => t.Status === TaskStatus.APROVADA);
-  const overdueTasks = tasks.filter(t => t.Status === TaskStatus.PENDENTE && new Date(t.DataLimite) < new Date());
+  const overdueTasks = tasks.filter(t => t.Status === TaskStatus.PENDENTE && t.DataLimite_Date! < today);
   const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
 
   const topCollaborators = [...collaboratorsList]
@@ -26,10 +27,17 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
     const days = [];
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
     
+    const now = new Date();
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(d);
+      
       const dayName = dayNames[d.getDay()];
       
       // Fix: Mapped CONCLUIDO/CONFERIDO to APROVADA

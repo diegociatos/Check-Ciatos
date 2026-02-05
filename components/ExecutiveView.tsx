@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole } from '../types';
+import { getTodayStr, toDateOnly } from '../store';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
@@ -27,25 +28,30 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
 
   const gestores = users.filter(u => u.Role === UserRole.GESTOR || u.Role === UserRole.ADMIN);
 
-  // Filtro de Período
+  // Filtro de Período respeitando America/Sao_Paulo
   const filterByPeriod = (date: string | undefined) => {
     if (!date) return false;
-    const d = new Date(date);
-    const now = new Date();
+    const taskDateStr = toDateOnly(date);
+    const todayStr = getTodayStr();
     
     if (selectedPeriod === 'Hoje') {
-      return d.toDateString() === now.toDateString();
+      return taskDateStr === todayStr;
     }
     
     if (selectedPeriod === 'Esta Semana') {
+      const now = new Date();
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
-      return d >= startOfWeek;
+      
+      const tDate = new Date(taskDateStr + 'T12:00:00'); // Midday to avoid boundary shifts
+      return tDate >= startOfWeek;
     }
     
     if (selectedPeriod === 'Este Mês') {
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const now = new Date();
+      const parts = taskDateStr.split('-');
+      return parseInt(parts[1]) === (now.getMonth() + 1) && parseInt(parts[0]) === now.getFullYear();
     }
     
     return true;
@@ -80,10 +86,10 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
 
   // Card 2: Alerta de Crise
   const overdueTotal = useMemo(() => {
-    const now = new Date();
+    const today = getTodayStr();
     return tasks.filter(t => 
       t.Status === TaskStatus.PENDENTE && 
-      new Date(t.DataLimite) < now &&
+      t.DataLimite_Date! < today &&
       (selectedGestor === 'TODOS' || users.find(u => u.Email === t.Responsavel)?.Gestor === selectedGestor)
     ).length;
   }, [tasks, selectedGestor, users]);
@@ -104,10 +110,17 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
   const chartData = useMemo(() => {
     const days = [];
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+    const now = new Date();
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(d);
+
       const count = tasks.filter(t => 
         t.DataConclusao?.startsWith(dateStr) && 
         (selectedGestor === 'TODOS' || users.find(u => u.Email === t.Responsavel)?.Gestor === selectedGestor)

@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TaskTemplate, RecurrenceType, TaskPriority, User } from '../types';
-import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle } from 'lucide-react';
+import { getTodayStr, toDateOnly } from '../store';
+import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft } from 'lucide-react';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
@@ -15,13 +16,59 @@ interface TemplateManagerProps {
 const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
+  
+  const today = getTodayStr();
+  
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
     Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
     Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
-    DiaDoMes: 1, DataInicio: new Date().toLocaleDateString('en-CA'), Ativa: true
+    DiaDoMes: 1, DataInicio: today, Ativa: true
   });
 
-  const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  const previewDataExecucao = useMemo(() => {
+    // Se for DATA ESPECÍFICA, a data é exatamente o que estiver em DataInicio
+    if (formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA) {
+      return toDateOnly(formData.DataInicio).split('-').reverse().join('/');
+    }
+
+    const parts = today.split('-');
+    const spToday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+
+    // Se é Semanal, busca o próximo dia habilitado
+    if (formData.Recorrencia === RecurrenceType.SEMANAL) {
+      const daysMap: Record<string, number> = { 'Dom': 0, 'Seg': 1, 'Ter': 2, 'Qua': 3, 'Qui': 4, 'Sex': 5, 'Sab': 6 };
+      const selectedDays = formData.DiasRecorrencia.map(d => daysMap[d]);
+      
+      if (selectedDays.length === 0) return 'Selecione os dias';
+
+      let nextDate = new Date(spToday);
+      let found = false;
+      for (let i = 0; i < 8; i++) {
+        if (selectedDays.includes(nextDate.getDay())) {
+          found = true;
+          break;
+        }
+        nextDate.setDate(nextDate.getDate() + 1);
+      }
+      return nextDate.toLocaleDateString('pt-BR');
+    }
+
+    // Se é Data Fixa, o dia de execução é o DiaDoMes informado (Repetitivo mensal)
+    if ((formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.POR_DATA_FIXA) && formData.DiaDoMes) {
+      const targetDay = formData.DiaDoMes;
+      let nextDate = new Date(spToday.getFullYear(), spToday.getMonth(), targetDay);
+      if (spToday.getDate() > targetDay) {
+        nextDate.setMonth(nextDate.getMonth() + 1);
+      }
+      return nextDate.toLocaleDateString('pt-BR');
+    }
+    
+    if (formData.Recorrencia === RecurrenceType.DIARIA) return spToday.toLocaleDateString('pt-BR');
+    
+    const startParts = formData.DataInicio.split('-');
+    const startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+    return startDate.toLocaleDateString('pt-BR');
+  }, [formData.Recorrencia, formData.DiaDoMes, formData.DataInicio, formData.DiasRecorrencia, today]);
 
   const toggleDay = (day: string) => {
     setFormData(prev => ({
@@ -39,186 +86,186 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
     }
   };
 
-  const confirmGenerate = () => {
-    if (duplicateWarning) {
-      onGenerateNow(duplicateWarning.templateId, true);
-      setDuplicateWarning(null);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.Titulo || !formData.Responsavel) return alert("Preencha os campos obrigatórios.");
+    
+    // Validações por tipo
+    if (formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA && !formData.DataInicio) {
+        return alert("Por favor, selecione a data de execução específica.");
+    }
+    if (formData.Recorrencia === RecurrenceType.SEMANAL && formData.DiasRecorrencia.length === 0) {
+        return alert("Selecione ao menos um dia da semana para recorrência semanal.");
+    }
+
     onAdd(formData);
     setIsModalOpen(false);
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-ciatos font-bold text-[#6F0F14] uppercase">Modelos de Recorrência</h3>
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Status do Bot: <span className="text-green-600">ATIVADO (Execução Diária Sem Restrições)</span></p>
+          <h3 className="text-2xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Modelos de Recorrência</h3>
+          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Gestão de Automação de Obrigações</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#8B1B1F] text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase shadow-xl hover:scale-105 transition-all">
+        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#8B1B1F] text-white px-6 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition-all">
           <Plus size={18} /> Novo Modelo
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {templates.map(tmpl => (
-          <div key={tmpl.ID} className={`bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow ${!tmpl.Ativa ? 'opacity-50' : ''}`}>
+          <div key={tmpl.ID} className={`bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow ${!tmpl.Ativa ? 'opacity-50' : ''}`}>
             <div>
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-[10px] font-black text-[#8B1B1F] bg-[#8B1B1F]/5 px-3 py-1 rounded-full border border-[#8B1B1F]/10 uppercase">{tmpl.Recorrencia}</span>
+              <div className="flex justify-between items-start mb-6">
+                <span className="text-[9px] font-black text-[#8B1B1F] bg-[#8B1B1F]/5 px-3 py-1.5 rounded-full border border-[#8B1B1F]/10 uppercase tracking-widest">
+                  {tmpl.Recorrencia}
+                </span>
                 <div className="flex gap-1">
-                  <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Pausar/Ativar"><RotateCw size={16} /></button>
-                  <button onClick={() => onDelete(tmpl.ID)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Excluir"><Trash2 size={16} /></button>
+                  <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl" title="Pausar/Ativar"><RotateCw size={16} /></button>
+                  <button onClick={() => onDelete(tmpl.ID)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl" title="Excluir"><Trash2 size={16} /></button>
                 </div>
               </div>
-              <h4 className="font-bold text-[#111111] mb-2">{tmpl.Titulo}</h4>
-              <p className="text-xs text-gray-400 mb-4 line-clamp-2">{tmpl.Descricao}</p>
-              <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest space-y-2">
-                <div className="flex items-center gap-2"><UserIcon size={12}/> {users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}</div>
-                <div className="flex items-center gap-2"><Calendar size={12}/> Início: {new Date(tmpl.DataInicio).toLocaleDateString('pt-BR')}</div>
-                {(tmpl.Recorrencia === RecurrenceType.SEMANAL || tmpl.Recorrencia === RecurrenceType.DIARIA) && (
-                   <div className="flex items-center gap-2"><CheckSquare size={12}/> {tmpl.DiasRecorrencia.join(', ')}</div>
-                )}
-                {tmpl.Recorrencia === RecurrenceType.MENSAL && <div className="flex items-center gap-2"><CheckSquare size={12}/> Dia {tmpl.DiaDoMes}</div>}
-                
-                {tmpl.UltimaExecucao && (
-                   <div className="flex items-center gap-2 text-blue-600 pt-2 border-t border-gray-50">
-                     <Clock size={12}/> 
-                     <span>Última Geração: {new Date(tmpl.UltimaExecucao).toLocaleString()}</span>
+              <h4 className="text-lg font-bold text-[#111111] mb-2 leading-tight">{tmpl.Titulo}</h4>
+              
+              <div className="space-y-3 pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  <UserIcon size={14} className="text-gray-300" />
+                  <span>{users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}</span>
+                </div>
+                {tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? (
+                   <div className="flex items-center gap-3 text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                     <Calendar size={14} className="text-blue-300" />
+                     <span>Data Única: {toDateOnly(tmpl.DataInicio).split('-').reverse().join('/')}</span>
+                   </div>
+                ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
+                   <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                     <RotateCw size={14} className="text-[#8B1B1F]/30" />
+                     <span>Semanal: {tmpl.DiasRecorrencia.join(', ')}</span>
+                   </div>
+                ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) && (
+                   <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                     <CalendarDays size={14} className="text-[#8B1B1F]/30" />
+                     <span>Execução: Todo dia {tmpl.DiaDoMes}</span>
                    </div>
                 )}
               </div>
             </div>
             
-            <div className="mt-6 pt-4 border-t border-gray-50 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-black text-[#8B1B1F]">{tmpl.PontosValor} pts</span>
-                <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${tmpl.Ativa ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}>
-                  {tmpl.Ativa ? 'ATIVO' : 'PAUSADO'}
-                </span>
-              </div>
-              
+            <div className="mt-8 pt-6 border-t border-gray-50">
               <button 
                 onClick={() => handleGenerateClick(tmpl.ID)}
-                className="w-full bg-[#8B1B1F] text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-[#8B1B1F]/10 hover:bg-[#6F0F14] transition-all"
+                className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#6F0F14] transition-all"
               >
-                <Zap size={14} className="fill-current" /> Gerar Tarefa Agora (Hoje)
+                <Zap size={14} className="fill-current" /> Gerar Manualmente Agora
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal Alerta Duplicata */}
-      {duplicateWarning && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-             <div className="p-8 text-center space-y-6">
-                <div className="h-20 w-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                   <AlertTriangle size={40} />
-                </div>
-                <div>
-                   <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Atenção: Duplicata Identificada</h3>
-                   <p className="text-sm text-gray-500 mt-2">Já existe uma tarefa com o título <strong>"{duplicateWarning.title}"</strong> para este colaborador hoje. Deseja criar mesmo assim?</p>
-                </div>
-                <div className="flex flex-col gap-3">
-                   <button 
-                     onClick={confirmGenerate}
-                     className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-[#8B1B1F]/20 hover:scale-[1.02] transition-all"
-                   >
-                     Sim, criar novamente
-                   </button>
-                   <button 
-                     onClick={() => setDuplicateWarning(null)}
-                     className="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all"
-                   >
-                     Cancelar
-                   </button>
-                </div>
-             </div>
-          </div>
-        </div>
-      )}
-
       {isModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50">
-               <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase">Novo Modelo de Tarefa</h3>
-               <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500"><X size={24}/></button>
+            <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+               <h3 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Configurar Novo Modelo</h3>
+               <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+               
+               <div className="bg-[#8B1B1F]/5 p-6 rounded-3xl border border-[#8B1B1F]/10 space-y-4">
+                  <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-[0.2em] mb-2">
+                    <Calendar size={14} /> Fluxo de Datas Previsto
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitação (Hoje)</p>
+                      <p className="text-sm font-black text-[#111111]">{today.split('-').reverse().join('/')}</p>
+                    </div>
+                    <ArrowRightLeft size={16} className="text-[#8B1B1F] opacity-30" />
+                    <div className="flex-1 text-right">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Execução (Prazo)</p>
+                      <p className="text-sm font-black text-[#8B1B1F]">{previewDataExecucao}</p>
+                    </div>
+                  </div>
+               </div>
+
                <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título da Tarefa</label>
-                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título da Tarefa Corporativa</label>
+                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável</label>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável Operacional</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
-                        <option value="">Selecione...</option>
+                        <option value="">Vincular Colaborador...</option>
                         {users.filter(u => u.Role === 'Colaborador').map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data de Início</label>
-                      <input type="date" required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.DataInicio} onChange={e => setFormData({...formData, DataInicio: e.target.value})} />
+                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                        {formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? "Data de Execução" : "Data de Início"}
+                      </label>
+                      <input type="date" required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-bold outline-none focus:border-[#8B1B1F]" value={formData.DataInicio} onChange={e => setFormData({...formData, DataInicio: e.target.value})} />
                     </div>
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recorrência</label>
-                      <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Recorrencia} onChange={e => setFormData({...formData, Recorrencia: e.target.value as RecurrenceType})}>
-                        <option value={RecurrenceType.DIARIA}>Diária (Seg-Dom)</option>
-                        <option value={RecurrenceType.SEMANAL}>Semanal (Personalizado)</option>
-                        <option value={RecurrenceType.MENSAL}>Mensal (Dia fixo)</option>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo de Recorrência</label>
+                      <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-black uppercase outline-none" value={formData.Recorrencia} onChange={e => setFormData({...formData, Recorrencia: e.target.value as RecurrenceType})}>
+                        <option value={RecurrenceType.DIARIA}>Diária</option>
+                        <option value={RecurrenceType.SEMANAL}>Semanal</option>
+                        <option value={RecurrenceType.POR_DATA_FIXA}>Por Data Fixa (Mensal)</option>
+                        <option value={RecurrenceType.DATA_ESPECIFICA}>Data Específica (Única)</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pontuação</label>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pontuação (Mérito)</label>
                       <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.PontosValor} onChange={e => setFormData({...formData, PontosValor: parseInt(e.target.value)})} />
                     </div>
                   </div>
 
-                  {(formData.Recorrencia === RecurrenceType.SEMANAL || formData.Recorrencia === RecurrenceType.DIARIA) && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dias da Semana (Todos Disponíveis)</label>
-                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                        {diasSemana.map(day => (
-                          <button 
-                            key={day} 
-                            type="button" 
-                            onClick={() => toggleDay(day)} 
-                            className={`px-2 py-3 rounded-xl text-[10px] font-black uppercase transition-all border flex items-center justify-center ${
-                              formData.DiasRecorrencia.includes(day) 
-                                ? 'bg-[#8B1B1F] text-white border-[#8B1B1F] shadow-lg shadow-[#8B1B1F]/20' 
-                                : 'bg-white text-gray-400 border-gray-100 hover:bg-gray-50'
+                  {/* Seletor de Dias da Semana para Semanal */}
+                  {formData.Recorrencia === RecurrenceType.SEMANAL && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Escolha os Dias da Semana *</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(day => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => toggleDay(day)}
+                            className={`h-11 w-11 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${
+                              formData.DiasRecorrencia.includes(day)
+                                ? 'bg-[#8B1B1F] border-[#8B1B1F] text-white shadow-md'
+                                : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-[#8B1B1F]/30'
                             }`}
                           >
-                            {day}
+                            {day.charAt(0)}
                           </button>
                         ))}
                       </div>
-                      <p className="text-[9px] text-gray-400 italic">O Grupo Ciatos opera em regime total. Selecione inclusive Sáb e Dom se necessário.</p>
                     </div>
                   )}
 
-                  {formData.Recorrencia === RecurrenceType.MENSAL && (
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dia do Mês (1-31)</label>
-                      <input type="number" min="1" max="31" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.DiaDoMes} onChange={e => setFormData({...formData, DiaDoMes: parseInt(e.target.value)})} />
+                  {/* Mostra Dia do Mês apenas se for Mensal ou Data Fixa Repetitiva */}
+                  {(formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.POR_DATA_FIXA) && (
+                    <div className="space-y-1 animate-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Dia do Mês para Execução (1 a 31) *</label>
+                      <input type="number" min="1" max="31" required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-black outline-none" placeholder="Ex: 10" value={formData.DiaDoMes} onChange={e => setFormData({...formData, DiaDoMes: parseInt(e.target.value)})} />
                     </div>
                   )}
                </div>
-               <button type="submit" className="w-full bg-[#8B1B1F] text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 hover:bg-[#6F0F14] transition-colors">
-                  <Save size={20} /> Salvar Modelo de Entrega
-               </button>
+
+               <div className="pt-6 border-t border-gray-100">
+                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-3xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
+                    <Save size={20} /> Salvar Modelo de Recorrência
+                  </button>
+               </div>
             </form>
           </div>
         </div>

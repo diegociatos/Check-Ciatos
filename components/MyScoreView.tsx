@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ScoreLedger, ScoreType, User } from '../types';
+import { getTodayStr } from '../store';
 import { Trophy, Star, Calendar, ArrowUpCircle, ArrowDownCircle, TrendingUp, BarChart3, Activity, Target } from 'lucide-react';
 
 interface MyScoreViewProps {
@@ -9,14 +10,8 @@ interface MyScoreViewProps {
 }
 
 const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getTodayStr();
   
-  // Lógica de Datas para Filtros
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
-
   // Cálculos solicitados
   const pontosConquistados = user.PontosRealizadosMes || 0;
   const maximoPontosMes = user.PontosPossiveisMes || 0;

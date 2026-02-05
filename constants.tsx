@@ -20,7 +20,9 @@ import {
   FileText, 
   UserCheck, 
   HelpCircle,
-  FileBarChart
+  FileBarChart,
+  Zap,
+  LineChart
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -50,6 +52,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'INÍCIO',
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <Home size={20} /> 
+  },
+  { 
+    label: 'Performance Mensal', 
+    view: 'MONTHLY_PERFORMANCE', 
+    section: 'INÍCIO',
+    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <LineChart size={20} /> 
   },
   { 
     label: 'Meus Dados', 
@@ -168,6 +177,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     section: 'ADMINISTRADOR',
     role: [UserRole.ADMIN], 
     icon: <LayoutDashboard size={20} /> 
+  },
+  { 
+    label: 'Logs de Automação', 
+    view: 'BOT_HISTORY', 
+    section: 'ADMINISTRADOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN], 
+    icon: <Zap size={20} /> 
   },
   { 
     label: 'Relatório Gerencial RH', 

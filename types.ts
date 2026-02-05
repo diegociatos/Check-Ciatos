@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   GESTOR = 'Gestor',
   COLABORADOR = 'Colaborador',
@@ -42,7 +43,9 @@ export enum RecurrenceType {
   DIARIA = 'Diaria',
   SEMANAL = 'Semanal',
   MENSAL = 'Mensal',
-  NENHUMA = 'Nenhuma'
+  ANUAL = 'Anual',
+  POR_DATA_FIXA = 'Por Data Fixa',
+  DATA_ESPECIFICA = 'Data Especifica'
 }
 
 export enum PeriodType {
@@ -50,6 +53,22 @@ export enum PeriodType {
   TRIMESTRE = 'Trimestre',
   SEMESTRE = 'Semestre',
   ANO = 'Ano'
+}
+
+export interface BotLog {
+  ID: string;
+  ModeloId: string;
+  TaskID: string;
+  Responsavel: string;
+  DataLimite: string;
+  Timestamp: string;
+  Status: 'SUCCESS' | 'FAILURE';
+  TemplateTitle: string;
+  RowsAdded: number;
+  GeneratedIDs: string[];
+  ErrorDetail?: string;
+  ActionParams?: Record<string, any>;
+  Resultado: string;
 }
 
 export interface ReportFilter {
@@ -93,10 +112,14 @@ export interface User {
 export interface Task {
   ID: string;
   TemplateID?: string;
+  OrigemModelo?: string; // ID ou Rownumber do modelo original
   Titulo: string;
   Descricao: string;
   Responsavel: string;
-  DataLimite: string;
+  DataGeracao: string; // DateTime (NOW())
+  DataLimite: string; // Data (DATE puro)
+  DataLimite_Date?: string; // Coluna Virtual: DATE([DataLimite])
+  DataCriacao: string; // Mantido para compatibilidade legado
   Prioridade: TaskPriority;
   Status: TaskStatus;
   PontosValor: number;
@@ -109,6 +132,7 @@ export interface Task {
   CompletionNote?: string;
 }
 
+// Added DataInicio to TaskTemplate interface to support template generation logic
 export interface TaskTemplate {
   ID: string;
   Titulo: string;
@@ -119,7 +143,7 @@ export interface TaskTemplate {
   Recorrencia: RecurrenceType;
   DiasRecorrencia: string[]; 
   DiaDoMes?: number;
-  DataInicio: string;
+  DataInicio?: string;
   Ativa: boolean;
   UltimaExecucao?: string;
 }
@@ -164,4 +188,6 @@ export type ViewType =
   | 'INDIVIDUAL_PERFORMANCE'
   | 'HELP_CENTER'
   | 'PERIOD_REPORT_FILTERS'
-  | 'PERIOD_REPORT_DASHBOARD';
+  | 'PERIOD_REPORT_DASHBOARD'
+  | 'BOT_HISTORY'
+  | 'MONTHLY_PERFORMANCE';
