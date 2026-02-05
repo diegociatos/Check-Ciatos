@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { TaskTemplate, RecurrenceType, TaskPriority, User } from '../types';
+import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole } from '../types';
 import { getTodayStr, toDateOnly } from '../store';
 import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft } from 'lucide-react';
 
@@ -202,7 +202,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável Operacional</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular Colaborador...</option>
-                        {users.filter(u => u.Role === 'Colaborador').map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                        {users.filter(u => u.Role === UserRole.COLABORADOR).map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
                       </select>
                     </div>
                     <div className="space-y-1">
