@@ -40,6 +40,7 @@ export enum ScoreType {
 }
 
 export enum RecurrenceType {
+  NENHUMA = 'Nenhuma',
   DIARIA = 'Diaria',
   SEMANAL = 'Semanal',
   MENSAL = 'Mensal',

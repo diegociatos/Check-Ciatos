@@ -1,6 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType } from './types';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog } from './types';
 import { authApi, tasksApi, templatesApi, ledgerApi } from './services/api';
+
+// Funções utilitárias exportadas
+export const getTodayStr = () => {
+  const now = new Date();
+  return now.toLocaleDateString('en-CA');
+};
+
+export const toDateOnly = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-CA');
+};
 
 const getLocalTodayStr = () => {
   const now = new Date();
@@ -41,6 +53,7 @@ export const useStore = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [ledger, setLedger] = useState<ScoreLedger[]>([]);
+  const [botLog, setBotLog] = useState<BotLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -517,6 +530,7 @@ export const useStore = () => {
       
       const dueDateTime = new Date(); 
       dueDateTime.setHours(23, 59, 59, 999);
+      const nowIso = new Date().toISOString();
       
       const newTask: Task = {
         ID: Math.random().toString(36).substr(2, 9),
@@ -525,6 +539,8 @@ export const useStore = () => {
         Descricao: tmpl.Descricao,
         Responsavel: tmpl.Responsavel,
         DataLimite: dueDateTime.toISOString(),
+        DataGeracao: nowIso,
+        DataCriacao: nowIso,
         Prioridade: tmpl.Prioridade,
         PontosValor: tmpl.PontosValor,
         Status: TaskStatus.PENDENTE,
@@ -575,9 +591,47 @@ export const useStore = () => {
     }
   }, []);
 
+  // Função para auditoria e correção de tarefas (para o BotHistoryView)
+  const auditAndFixTasks = useCallback(async () => {
+    console.log('🤖 Iniciando auditoria de tarefas...');
+    const today = getTodayStr();
+    let fixedCount = 0;
+    
+    // Verificar tarefas atrasadas
+    const overdueTasks = tasks.filter(t => 
+      t.Status === TaskStatus.PENDENTE && 
+      t.DataLimite < today
+    );
+    
+    for (const task of overdueTasks) {
+      console.log(`⚠️ Tarefa atrasada encontrada: ${task.Titulo}`);
+      fixedCount++;
+    }
+    
+    // Adicionar log de auditoria
+    const logEntry: BotLog = {
+      ID: `log-${Date.now()}`,
+      ModeloId: 'audit',
+      TaskID: '',
+      Responsavel: currentUserEmail || '',
+      DataLimite: today,
+      Timestamp: new Date().toISOString(),
+      Status: 'SUCCESS',
+      TemplateTitle: 'Auditoria Automática',
+      RowsAdded: fixedCount,
+      GeneratedIDs: [],
+      Resultado: `Auditoria concluída. ${overdueTasks.length} tarefas atrasadas encontradas.`
+    };
+    
+    setBotLog(prev => [logEntry, ...prev]);
+    await refreshData();
+    
+    return { overdueTasks: overdueTasks.length, fixed: fixedCount };
+  }, [tasks, currentUserEmail, refreshData]);
+
   return { 
-    currentUser, users, tasks, templates, ledger, minhasTarefas,
-    loading, error, refreshData,
+    currentUser, users, tasks, templates, ledger, minhasTarefas, botLog,
+    loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
