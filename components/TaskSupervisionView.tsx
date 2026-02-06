@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole } from '../types';
-import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target } from 'lucide-react';
+import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target, Trash2, Copy } from 'lucide-react';
 
 interface TaskSupervisionViewProps {
   tasks: Task[];
@@ -52,6 +52,23 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
     return finalStructure;
   }, [tasks, filterResponsavel]);
 
+  // Detectar tarefas duplicadas (mesmo título + mesmo responsável + mesma data)
+  const duplicateIds = useMemo(() => {
+    const ids = new Set<string>();
+    const seen = new Map<string, string>(); // key -> first task ID
+    tasks.forEach(task => {
+      const date = task.DataLimite_Date || (task.DataLimite ? task.DataLimite.split('T')[0] : '');
+      const key = `${task.Titulo.trim().toLowerCase()}|${task.Responsavel}|${date}`;
+      if (seen.has(key)) {
+        ids.add(seen.get(key)!);
+        ids.add(task.ID);
+      } else {
+        seen.set(key, task.ID);
+      }
+    });
+    return ids;
+  }, [tasks]);
+
   const getStatusStyle = (status: TaskStatus) => {
     switch (status) {
       case TaskStatus.AGUARDANDO_APROVACAO: return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -91,7 +108,8 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                 <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-1/3">Obrigação / Datas de Fluxo</th>
                 <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Status</th>
                 <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Pontos</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right w-40">Modelo ID</th>
+                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Modelo ID</th>
+                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -101,7 +119,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                   return (
                     <React.Fragment key={email}>
                       <tr className="bg-[#8B1B1F]/5">
-                        <td colSpan={4} className="px-8 py-3">
+                        <td colSpan={5} className="px-8 py-3">
                            <div className="flex items-center gap-3">
                               <div className="h-8 w-8 bg-[#8B1B1F] rounded-xl flex items-center justify-center text-white text-xs font-black">
                                  {user?.Nome.charAt(0) || email.charAt(0)}
@@ -116,12 +134,21 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                       
                       {Object.entries(dateGroups).map(([date, items]) => (
                         <React.Fragment key={`${email}-${date}`}>
-                           {items.map(task => (
-                             <tr key={task.ID} className="hover:bg-gray-50/50 transition-colors group">
+                           {items.map(task => {
+                             const isDuplicate = duplicateIds.has(task.ID);
+                             return (
+                             <tr key={task.ID} className={`hover:bg-gray-50/50 transition-colors group ${isDuplicate ? 'bg-orange-50/60 border-l-4 border-l-orange-400' : ''}`}>
                                <td className="px-8 py-5">
                                  <div className="flex flex-col gap-2">
-                                   <span className="text-sm font-bold text-[#111111] leading-tight">{task.Titulo}</span>
-                                   <div className="flex items-center gap-4">
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-sm font-bold text-[#111111] leading-tight">{task.Titulo}</span>
+                                     {isDuplicate && (
+                                       <span className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-[8px] font-black uppercase tracking-wider">
+                                         <Copy size={8} /> Duplicada
+                                       </span>
+                                     )}
+                                   </div>
+                                   <div className="flex items-center gap-4 flex-wrap">
                                       <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest">
                                          <Clock size={10} className="opacity-50" />
                                          Solicitação: {task.DataGeracao ? new Date(task.DataGeracao).toLocaleDateString('pt-BR') : 'Manual'}
@@ -129,6 +156,9 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                       <div className="flex items-center gap-1.5 text-[9px] font-black text-[#8B1B1F] uppercase tracking-widest">
                                          <Target size={10} className="opacity-50" />
                                          Execução: {(task.DataLimite_Date || task.DataLimite?.split('T')[0] || 'Sem Data').split('-').reverse().join('/')}
+                                      </div>
+                                      <div className="text-[8px] font-mono text-gray-300 uppercase">
+                                         ID: {task.ID.substring(0, 8)}
                                       </div>
                                    </div>
                                  </div>
@@ -141,14 +171,24 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                <td className="px-8 py-5 text-center font-black text-[#8B1B1F] text-sm">
                                  {task.PontosValor}
                                </td>
-                               <td className="px-8 py-5 text-right">
-                                  <div className="flex items-center justify-end gap-1.5 text-[9px] font-mono text-gray-400 uppercase">
+                               <td className="px-8 py-5 text-center">
+                                  <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-gray-400 uppercase">
                                     <FileCode size={10} />
                                     {task.OrigemModelo || 'MANUAL'}
                                   </div>
                                </td>
+                               <td className="px-8 py-5 text-center">
+                                  <button
+                                    onClick={() => onDeleteTask(task.ID)}
+                                    className="p-2 rounded-xl text-gray-300 hover:text-red-600 hover:bg-red-50 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                    title={`Excluir tarefa ${task.Titulo} (${task.ID.substring(0, 8)})`}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                               </td>
                              </tr>
-                           ))}
+                           );
+                           })}
                         </React.Fragment>
                       ))}
                     </React.Fragment>
@@ -156,7 +196,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-32 text-center text-gray-300 uppercase font-black text-xs">Nenhuma tarefa ativa.</td>
+                  <td colSpan={5} className="py-32 text-center text-gray-300 uppercase font-black text-xs">Nenhuma tarefa ativa.</td>
                 </tr>
               )}
             </tbody>
