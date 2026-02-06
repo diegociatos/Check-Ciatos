@@ -98,6 +98,7 @@ export const useStore = () => {
           Descricao: t.Descricao,
           Responsavel: t.Responsavel,
           DataLimite: t.DataLimite,
+          DataLimite_Date: t.DataLimite ? t.DataLimite.split('T')[0] : undefined,
           Prioridade: t.Prioridade || TaskPriority.MEDIA,
           PontosValor: t.PontosValor || 10,
           Status: normalizeTaskStatus(t.Status),
@@ -357,11 +358,13 @@ export const useStore = () => {
       // Atualiza local
       setTasks(prev => prev.map(t => {
         if (t.ID === taskId) {
+          const newDataLimite = nextDeadline || t.DataLimite;
           return { 
             ...t, 
             Status: status, 
             JustificativaGestor: justification,
-            DataLimite: nextDeadline || t.DataLimite,
+            DataLimite: newDataLimite,
+            DataLimite_Date: newDataLimite ? newDataLimite.split('T')[0] : t.DataLimite_Date,
             Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
             DataConclusao: status === TaskStatus.APROVADA ? t.DataConclusao : undefined 
           };
@@ -416,6 +419,7 @@ export const useStore = () => {
             Status: status, 
             JustificativaGestor: justification,
             DataLimite: nextDeadline || t.DataLimite,
+            DataLimite_Date: nextDeadline ? nextDeadline.split('T')[0] : t.DataLimite_Date,
             Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
           };
         }
@@ -497,6 +501,7 @@ export const useStore = () => {
       if (result.task) {
         setTasks(prev => [...prev, {
           ...result.task,
+          DataLimite_Date: result.task.DataLimite ? result.task.DataLimite.split('T')[0] : undefined,
           Status: TaskStatus.PENDENTE,
           Tentativas: 0,
         }]);
@@ -539,6 +544,7 @@ export const useStore = () => {
         Descricao: tmpl.Descricao,
         Responsavel: tmpl.Responsavel,
         DataLimite: dueDateTime.toISOString(),
+        DataLimite_Date: dueDateTime.toISOString().split('T')[0],
         DataGeracao: nowIso,
         DataCriacao: nowIso,
         Prioridade: tmpl.Prioridade,
@@ -567,6 +573,7 @@ export const useStore = () => {
         Descricao: t.Descricao,
         Responsavel: t.Responsavel,
         DataLimite: t.DataLimite,
+        DataLimite_Date: t.DataLimite ? t.DataLimite.split('T')[0] : undefined,
         Prioridade: t.Prioridade || TaskPriority.MEDIA,
         PontosValor: t.PontosValor || 10,
         Status: normalizeTaskStatus(t.Status),
