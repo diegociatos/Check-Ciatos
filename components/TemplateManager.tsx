@@ -114,51 +114,99 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {templates.map(tmpl => (
-          <div key={tmpl.ID} className={`bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow ${!tmpl.Ativa ? 'opacity-50' : ''}`}>
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <span className="text-[9px] font-black text-[#8B1B1F] bg-[#8B1B1F]/5 px-3 py-1.5 rounded-full border border-[#8B1B1F]/10 uppercase tracking-widest">
-                  {tmpl.Recorrencia}
-                </span>
-                <div className="flex gap-1">
-                  <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl" title="Pausar/Ativar"><RotateCw size={16} /></button>
-                  <button onClick={() => onDelete(tmpl.ID)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl" title="Excluir"><Trash2 size={16} /></button>
-                </div>
-              </div>
-              <h4 className="text-lg font-bold text-[#111111] mb-2 leading-tight">{tmpl.Titulo}</h4>
-              
-              <div className="space-y-3 pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                  <UserIcon size={14} className="text-gray-300" />
-                  <span>{users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}</span>
-                </div>
-                {tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? (
-                   <div className="flex items-center gap-3 text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                     <Calendar size={14} className="text-blue-300" />
-                     <span>Data Única: {toDateOnly(tmpl.DataInicio).split('-').reverse().join('/')}</span>
-                   </div>
-                ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
-                   <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
-                     <RotateCw size={14} className="text-[#8B1B1F]/30" />
-                     <span>Semanal: {tmpl.DiasRecorrencia.join(', ')}</span>
-                   </div>
-                ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) && (
-                   <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
-                     <CalendarDays size={14} className="text-[#8B1B1F]/30" />
-                     <span>Execução: Todo dia {tmpl.DiaDoMes}</span>
-                   </div>
-                )}
-              </div>
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Header da Lista */}
+        <div className="hidden md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Título</span>
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Responsável</span>
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Recorrência</span>
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</span>
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</span>
+        </div>
+
+        {templates.length === 0 && (
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">
+            Nenhum modelo de recorrência cadastrado.
+          </div>
+        )}
+
+        {templates.map((tmpl, index) => (
+          <div 
+            key={tmpl.ID} 
+            className={`flex flex-col md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-2 md:gap-4 items-start md:items-center px-6 py-4 transition-colors hover:bg-gray-50/50 ${index < templates.length - 1 ? 'border-b border-gray-50' : ''} ${!tmpl.Ativa ? 'opacity-40' : ''}`}
+          >
+            {/* Título */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tmpl.Ativa ? '#22c55e' : '#d1d5db' }}></div>
+              <span className="text-sm font-bold text-[#111111] truncate">{tmpl.Titulo}</span>
             </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-50">
+
+            {/* Responsável */}
+            <div className="flex items-center gap-2 pl-5 md:pl-0">
+              <UserIcon size={12} className="text-gray-300 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-gray-500 truncate">
+                {users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}
+              </span>
+            </div>
+
+            {/* Recorrência / Detalhe */}
+            <div className="flex items-center gap-2 pl-5 md:pl-0">
+              {tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? (
+                <>
+                  <Calendar size={12} className="text-blue-400 flex-shrink-0" />
+                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">
+                    {toDateOnly(tmpl.DataInicio).split('-').reverse().join('/')}
+                  </span>
+                </>
+              ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
+                <>
+                  <RotateCw size={12} className="text-[#8B1B1F]/50 flex-shrink-0" />
+                  <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider truncate">
+                    {tmpl.DiasRecorrencia.join(', ')}
+                  </span>
+                </>
+              ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) ? (
+                <>
+                  <CalendarDays size={12} className="text-[#8B1B1F]/50 flex-shrink-0" />
+                  <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider">
+                    Dia {tmpl.DiaDoMes}/mês
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Clock size={12} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                    {tmpl.Recorrencia}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Status Badge */}
+            <div className="pl-5 md:pl-0">
+              <span className={`inline-block text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                tmpl.Ativa 
+                  ? 'text-green-700 bg-green-50 border-green-200' 
+                  : 'text-gray-400 bg-gray-50 border-gray-200'
+              }`}>
+                {tmpl.Ativa ? 'Ativo' : 'Pausado'}
+              </span>
+            </div>
+
+            {/* Ações */}
+            <div className="flex items-center gap-1 justify-end w-full md:w-auto pl-5 md:pl-0">
               <button 
                 onClick={() => handleGenerateClick(tmpl.ID)}
-                className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#6F0F14] transition-all"
+                className="flex items-center gap-1.5 bg-[#8B1B1F] text-white px-3 py-2 rounded-xl font-black uppercase tracking-wider text-[8px] shadow-sm hover:bg-[#6F0F14] transition-all"
+                title="Gerar tarefa agora"
               >
-                <Zap size={14} className="fill-current" /> Gerar Manualmente Agora
+                <Zap size={11} className="fill-current" /> Gerar
+              </button>
+              <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title={tmpl.Ativa ? 'Pausar' : 'Ativar'}>
+                <RotateCw size={14} />
+              </button>
+              <button onClick={() => onDelete(tmpl.ID)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Excluir">
+                <Trash2 size={14} />
               </button>
             </div>
           </div>

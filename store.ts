@@ -10,7 +10,12 @@ export const getTodayStr = () => {
 
 export const toDateOnly = (dateStr: string): string => {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  // Se já é formato YYYY-MM-DD, retorna direto (evita bug de timezone)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // Para strings ISO com 'T', extrai apenas a parte da data
+  if (dateStr.includes('T')) return dateStr.split('T')[0];
+  // Fallback: usa meio-dia para evitar problemas de timezone
+  const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('en-CA');
 };
 
