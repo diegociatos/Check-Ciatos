@@ -1,17 +1,22 @@
 
 import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole } from '../types';
-import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target, Trash2, Copy } from 'lucide-react';
+import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target, Trash2, Copy, XCircle, Send } from 'lucide-react';
+import { getTodayStr } from '../store';
 
 interface TaskSupervisionViewProps {
   tasks: Task[];
   users: User[];
   onDeleteTask: (taskId: string) => void;
+  onAuditTask?: (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => void;
   currentUserRole?: UserRole;
 }
 
-const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users, onDeleteTask, currentUserRole }) => {
+const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users, onDeleteTask, onAuditTask, currentUserRole }) => {
   const [filterResponsavel, setFilterResponsavel] = useState<string>('TODOS');
+  const [markNotDoneTask, setMarkNotDoneTask] = useState<Task | null>(null);
+  const [notDoneJustification, setNotDoneJustification] = useState('');
+  const todayStr = getTodayStr();
 
   const collaborators = useMemo(() => {
     return users.filter(u => u.Role === UserRole.COLABORADOR);
@@ -178,13 +183,25 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                   </div>
                                </td>
                                <td className="px-8 py-5 text-center">
-                                  <button
-                                    onClick={() => onDeleteTask(task.ID)}
-                                    className="p-2 rounded-xl text-gray-300 hover:text-red-600 hover:bg-red-50 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                    title={`Excluir tarefa ${task.Titulo} (${task.ID.substring(0, 8)})`}
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
+                                  <div className="flex items-center justify-center gap-1">
+                                    {/* Botão "Não Concluída" para tarefas PENDENTE atrasadas */}
+                                    {task.Status === TaskStatus.PENDENTE && task.DataLimite_Date && task.DataLimite_Date < todayStr && onAuditTask && (
+                                      <button
+                                        onClick={() => setMarkNotDoneTask(task)}
+                                        className="p-2 rounded-xl text-red-500 hover:text-white hover:bg-red-600 transition-all duration-200 opacity-70 hover:opacity-100"
+                                        title="Marcar como Não Concluída (com penalização)"
+                                      >
+                                        <XCircle size={16} />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => onDeleteTask(task.ID)}
+                                      className="p-2 rounded-xl text-gray-300 hover:text-red-600 hover:bg-red-50 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                      title={`Excluir tarefa ${task.Titulo} (${task.ID.substring(0, 8)})`}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
                                </td>
                              </tr>
                            );
@@ -203,6 +220,50 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
           </table>
         </div>
       </div>
+
+      {/* Modal "Marcar como Não Concluída" */}
+      {markNotDoneTask && onAuditTask && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-8 border-b border-white/10 flex items-center justify-between text-white bg-red-600">
+               <div className="flex items-center gap-3">
+                  <XCircle size={24}/>
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">Marcar como Não Concluída</h3>
+               </div>
+               <button onClick={() => { setMarkNotDoneTask(null); setNotDoneJustification(''); }} className="text-white/70 hover:text-white">✕</button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+               <div className="bg-red-50 p-6 rounded-3xl border border-red-100">
+                  <p className="text-[10px] font-black text-red-700 uppercase mb-2 tracking-widest">Tarefa não executada no prazo:</p>
+                  <p className="text-lg font-bold text-[#111111]">{markNotDoneTask.Titulo}</p>
+                  <p className="text-xs text-gray-500 mt-1">Responsável: {users.find(u => u.Email === markNotDoneTask.Responsavel)?.Nome || markNotDoneTask.Responsavel}</p>
+                  <p className="text-xs text-gray-500">Prazo: {(markNotDoneTask.DataLimite_Date || '').split('-').reverse().join('/')}</p>
+                  <p className="text-xs font-bold text-red-600 mt-2">Penalidade: -{markNotDoneTask.PontosValor} pontos</p>
+               </div>
+               <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Observação do Gestor (opcional)</label>
+                  <textarea 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-red-100 outline-none min-h-[80px]"
+                    placeholder="Motivo ou observação sobre a não execução..."
+                    value={notDoneJustification}
+                    onChange={(e) => setNotDoneJustification(e.target.value)}
+                  />
+               </div>
+               <button 
+                  onClick={() => {
+                    onAuditTask(markNotDoneTask.ID, TaskStatus.NAO_FEITA, notDoneJustification || 'Tarefa não executada dentro do prazo.');
+                    setMarkNotDoneTask(null);
+                    setNotDoneJustification('');
+                  }}
+                  className="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 bg-red-600 hover:brightness-90 hover:scale-[1.01] active:scale-95"
+               >
+                  <Send size={20} /> Confirmar Penalização
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

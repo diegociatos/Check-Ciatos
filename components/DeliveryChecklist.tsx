@@ -14,7 +14,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
   const [justification, setJustification] = useState('');
   const [nextDeadline, setNextDeadline] = useState('');
   const [actionType, setActionType] = useState<TaskStatus | null>(null);
-  const [viewNoteTask, setViewNoteTask] = useState<Task | null>(null);
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
   const todayStr = getTodayStr();
   const pendingAudit = tasks.filter(t => t.Status === TaskStatus.AGUARDANDO_APROVACAO);
@@ -69,8 +69,11 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
             {pendingAudit.length > 0 ? (
               pendingAudit.map(task => {
                 const hasNote = task.CompletionNote && task.CompletionNote.trim().length > 0;
+                const hasProof = task.ProofAttachment && task.ProofAttachment.trim().length > 0;
+                const isExpanded = expandedTask === task.ID;
                 return (
-                  <tr key={task.ID} className="hover:bg-gray-50/50 transition-colors group">
+                  <React.Fragment key={task.ID}>
+                  <tr className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : task.ID)}>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 bg-[#8B1B1F] rounded-lg flex items-center justify-center text-white text-[10px] font-black">
@@ -91,9 +94,9 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                           )}
                         </div>
                         <button 
-                          onClick={() => setViewNoteTask(task)}
-                          className={`p-1.5 rounded-lg shadow-sm transition-all ${hasNote ? 'bg-[#8B1B1F] text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-[#8B1B1F]'}`}
-                          title={hasNote ? "Ver Relato do Colaborador" : "Sem observações"}
+                          onClick={(e) => { e.stopPropagation(); setExpandedTask(isExpanded ? null : task.ID); }}
+                          className={`p-1.5 rounded-lg shadow-sm transition-all ${isExpanded ? 'bg-[#8B1B1F] text-white' : hasNote ? 'bg-[#8B1B1F] text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-[#8B1B1F]'}`}
+                          title="Ver detalhes da entrega"
                         >
                           <Eye size={14} />
                         </button>
@@ -113,19 +116,19 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     <td className="px-8 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                          <button 
-                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.APROVADA); }}
+                           onClick={(e) => { e.stopPropagation(); setAuditTask(task); setActionType(TaskStatus.APROVADA); }}
                            className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm"
                          >
                            Aprovar
                          </button>
                          <button 
-                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.FEITA_ERRADA); }}
+                           onClick={(e) => { e.stopPropagation(); setAuditTask(task); setActionType(TaskStatus.FEITA_ERRADA); }}
                            className="px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-yellow-100 hover:bg-yellow-500 hover:text-white transition-all shadow-sm"
                          >
                            Erro
                          </button>
                          <button 
-                           onClick={() => { setAuditTask(task); setActionType(TaskStatus.NAO_FEITA); }}
+                           onClick={(e) => { e.stopPropagation(); setAuditTask(task); setActionType(TaskStatus.NAO_FEITA); }}
                            className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
                          >
                            Falta
@@ -133,6 +136,34 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                       </div>
                     </td>
                   </tr>
+                  {/* Linha expandida com detalhes da entrega */}
+                  {isExpanded && (
+                    <tr className="bg-[#8B1B1F]/5">
+                      <td colSpan={5} className="px-8 py-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Descrição da Tarefa</p>
+                            <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-2xl border border-gray-100">
+                              {task.Descricao || 'Sem descrição cadastrada.'}
+                            </p>
+                          </div>
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Relato do Colaborador</p>
+                            <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-2xl border border-gray-100 italic">
+                              {hasNote ? `"${task.CompletionNote}"` : 'Nenhum relato técnico enviado.'}
+                            </p>
+                            {hasProof && (
+                              <div className="bg-white p-3 rounded-2xl border border-gray-100 flex items-center gap-2">
+                                <Info size={14} className="text-blue-500" />
+                                <span className="text-xs font-bold text-blue-600">Anexo: {task.ProofAttachment}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
                 );
               })
             ) : (
@@ -143,35 +174,6 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
           </tbody>
         </table>
       </div>
-
-      {/* MODAL DE NOTA DO COLABORADOR (OLHINHO) */}
-      {viewNoteTask && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-           <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-              <div className="p-8 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <MessageSquare size={20} className="text-[#8B1B1F]" />
-                    <h3 className="text-lg font-bold uppercase tracking-tighter">Nota da Execução</h3>
-                 </div>
-                 <button onClick={() => setViewNoteTask(null)} className="text-gray-400">✕</button>
-              </div>
-              <div className="p-10 space-y-6 text-center">
-                 <div className="bg-[#8B1B1F]/5 p-8 rounded-[32px] border border-[#8B1B1F]/10">
-                    <p className="text-[10px] font-black text-[#8B1B1F] uppercase mb-4 tracking-widest">O que o colaborador disse:</p>
-                    <p className="text-lg text-gray-700 italic leading-relaxed font-medium">
-                       {viewNoteTask.CompletionNote ? `"${viewNoteTask.CompletionNote}"` : "Nenhum relato técnico enviado."}
-                    </p>
-                 </div>
-                 <button 
-                   onClick={() => setViewNoteTask(null)}
-                   className="w-full bg-[#8B1B1F] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
-                 >
-                   <Check size={16} /> Fechar Visualização
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
 
       {/* MODAL DE DECISÃO */}
       {auditTask && actionType && (

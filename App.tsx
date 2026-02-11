@@ -89,7 +89,7 @@ const App: React.FC = () => {
       case 'MY_TASKS_TODAY':
         const myTodayTasks = visibleTasks.filter(t => 
           t.Responsavel === currentUser.Email && 
-          t.DataLimite_Date === today &&
+          t.DataLimite_Date! <= today &&
           (t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)
         );
         return (
@@ -111,11 +111,13 @@ const App: React.FC = () => {
         );
 
       case 'UPCOMING_TASKS':
-        const myUpcoming = visibleTasks.filter(t => 
-          t.Responsavel === currentUser.Email && 
-          t.DataLimite_Date! > today &&
-          (t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)
-        );
+        const currentMonth = today.substring(0, 7); // YYYY-MM
+        const myUpcoming = visibleTasks.filter(t => {
+          if (t.Responsavel !== currentUser.Email) return false;
+          if (t.Status !== TaskStatus.PENDENTE && t.Status !== TaskStatus.FEITA_ERRADA && t.Status !== TaskStatus.NAO_FEITA) return false;
+          // Include: future tasks OR current month overdue tasks
+          return t.DataLimite_Date! > today || (t.DataLimite_Date!.startsWith(currentMonth) && t.DataLimite_Date! <= today);
+        });
         return (
           <UpcomingTasksView 
             tasks={myUpcoming}
@@ -185,7 +187,7 @@ const App: React.FC = () => {
         );
 
       case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} />;
+        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} onAuditTask={store.auditTask} />;
 
       case 'SCORE_SUPERVISION':
         return <ScoreSupervisionView ledger={ledger} users={users} />;

@@ -145,6 +145,7 @@ export interface TaskTemplate {
   DiasRecorrencia: string[]; 
   DiaDoMes?: number;
   DataInicio?: string;
+  PularFinalDeSemana?: boolean;
   Ativa: boolean;
   UltimaExecucao?: string;
 }

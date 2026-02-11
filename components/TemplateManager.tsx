@@ -16,13 +16,16 @@ interface TemplateManagerProps {
 const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
+  const [filterColaborador, setFilterColaborador] = useState<string>('TODOS');
   
   const today = getTodayStr();
+  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR);
+  const filteredTemplates = filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador);
   
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
     Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
     Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
-    DiaDoMes: 1, DataInicio: today, Ativa: true
+    DiaDoMes: 1, DataInicio: today, PularFinalDeSemana: false, Ativa: true
   });
 
   const previewDataExecucao = useMemo(() => {
@@ -104,14 +107,24 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Modelos de Recorrência</h3>
           <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Gestão de Automação de Obrigações</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#8B1B1F] text-white px-6 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition-all">
-          <Plus size={18} /> Novo Modelo
-        </button>
+        <div className="flex items-center gap-3">
+          <select
+            className="bg-[#F3F3F3] border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none appearance-none cursor-pointer text-[#111111]"
+            value={filterColaborador}
+            onChange={e => setFilterColaborador(e.target.value)}
+          >
+            <option value="TODOS">Todos os Colaboradores</option>
+            {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+          </select>
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#8B1B1F] text-white px-6 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition-all">
+            <Plus size={18} /> Novo Modelo
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -124,16 +137,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</span>
         </div>
 
-        {templates.length === 0 && (
+        {filteredTemplates.length === 0 && (
           <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Nenhum modelo de recorrência cadastrado.
+            Nenhum modelo de recorrência encontrado.
           </div>
         )}
 
-        {templates.map((tmpl, index) => (
+        {filteredTemplates.map((tmpl, index) => (
           <div 
             key={tmpl.ID} 
-            className={`flex flex-col md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-2 md:gap-4 items-start md:items-center px-6 py-4 transition-colors hover:bg-gray-50/50 ${index < templates.length - 1 ? 'border-b border-gray-50' : ''} ${!tmpl.Ativa ? 'opacity-40' : ''}`}
+            className={`flex flex-col md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-2 md:gap-4 items-start md:items-center px-6 py-4 transition-colors hover:bg-gray-50/50 ${index < filteredTemplates.length - 1 ? 'border-b border-gray-50' : ''} ${!tmpl.Ativa ? 'opacity-40' : ''}`}
           >
             {/* Título */}
             <div className="flex items-center gap-3 min-w-0">
@@ -305,6 +318,22 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                     <div className="space-y-1 animate-in slide-in-from-top-2 duration-300">
                       <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Dia do Mês para Execução (1 a 31) *</label>
                       <input type="number" min="1" max="31" required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-black outline-none" placeholder="Ex: 10" value={formData.DiaDoMes} onChange={e => setFormData({...formData, DiaDoMes: parseInt(e.target.value)})} />
+                    </div>
+                  )}
+
+                  {/* Opção de Pular Final de Semana */}
+                  {(formData.Recorrencia === RecurrenceType.POR_DATA_FIXA || formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA) && (
+                    <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100 animate-in slide-in-from-top-2 duration-300">
+                      <input 
+                        type="checkbox" 
+                        id="pularFds"
+                        checked={formData.PularFinalDeSemana || false} 
+                        onChange={e => setFormData({...formData, PularFinalDeSemana: e.target.checked})}
+                        className="h-5 w-5 rounded border-orange-300 text-[#8B1B1F] focus:ring-[#8B1B1F]"
+                      />
+                      <label htmlFor="pularFds" className="text-xs font-bold text-orange-800 cursor-pointer">
+                        Se a data cair em sábado ou domingo, transferir automaticamente para o próximo dia útil (segunda-feira)
+                      </label>
                     </div>
                   )}
                </div>

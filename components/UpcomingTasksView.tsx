@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Task, TaskStatus, UserRole, TaskPriority } from '../types';
-import { CalendarClock, ChevronLeft, CheckCircle2, X, Send, Star, Clock, AlertCircle, MessageSquare } from 'lucide-react';
+import { getTodayStr } from '../store';
+import { CalendarClock, ChevronLeft, CheckCircle2, X, Send, Star, Clock, AlertCircle, MessageSquare, AlertTriangle } from 'lucide-react';
 
 interface UpcomingTasksViewProps {
   tasks: Task[];
@@ -74,9 +75,9 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
           >
             <ChevronLeft size={16} /> Voltar para Minha Mesa
           </button>
-          <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2">Tarefas Futuras</h3>
+          <h3 className="text-4xl lg:text-5xl font-bold tracking-tight uppercase mb-2">Planejamento</h3>
           <p className="text-white/60 font-medium text-lg max-w-2xl italic">
-            Visualize e antecipe suas próximas obrigações contratuais.
+            Pendências atuais e próximas obrigações contratuais.
           </p>
         </div>
         <CalendarClock size={120} className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10" />
@@ -96,13 +97,16 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
               <div className="space-y-4">
                 {items.map((task) => {
                    const isRejected = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
+                   const todayStr = getTodayStr();
+                   const isOverdue = task.DataLimite_Date! < todayStr;
                    return (
-                     <div key={task.ID} className={`bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden p-6 hover:shadow-md transition-shadow ${isRejected ? 'border-l-4 border-l-red-500' : ''}`}>
+                     <div key={task.ID} className={`bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden p-6 hover:shadow-md transition-shadow ${isRejected ? 'border-l-4 border-l-red-500' : ''} ${isOverdue ? 'border-l-4 border-l-orange-500 bg-orange-50/30' : ''}`}>
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                            <div className="flex flex-col gap-1">
                               <h4 className="text-sm font-bold text-[#111111] leading-tight flex items-center gap-2">
                                  {task.Titulo}
                                  {isRejected && <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded border border-red-100 uppercase">Ajuste Necessário</span>}
+                                 {isOverdue && !isRejected && <span className="bg-orange-50 text-orange-600 text-[8px] font-black px-2 py-0.5 rounded border border-orange-100 uppercase flex items-center gap-1"><AlertTriangle size={8}/> Pendência Atrasada</span>}
                               </h4>
                               <div className="flex items-center gap-3">
                                  <span className={`text-[9px] uppercase tracking-tighter ${getPriorityStyle(task.Prioridade)}`}>{task.Prioridade}</span>

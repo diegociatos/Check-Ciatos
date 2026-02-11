@@ -127,6 +127,7 @@ export const useStore = () => {
           DiasRecorrencia: t.DiasRecorrencia || [],
           DiaDoMes: t.DiaDoMes,
           DataInicio: t.DataInicio,
+          PularFinalDeSemana: t.PularFinalDeSemana || false,
           Ativa: t.Ativa,
           UltimaExecucao: t.UltimaExecucao,
         })));
@@ -401,12 +402,12 @@ export const useStore = () => {
             delta = t.PontosValor;
             motive = `Aprovação: ${t.Titulo}`;
           } else if (status === TaskStatus.FEITA_ERRADA) {
-            delta = -(t.PontosValor * 0.5);
+            delta = -Math.ceil(t.PontosValor * 0.5);
             motive = `Pena – Erro: ${t.Titulo}`;
             type = ScoreType.PENALIDADE;
           } else if (status === TaskStatus.NAO_FEITA) {
-            delta = -(t.PontosValor * 2);
-            motive = `Penalidade – Não Fez: ${t.Titulo}`;
+            delta = -(t.PontosValor);
+            motive = `Penalidade – Não Concluída: ${t.Titulo}`;
             type = ScoreType.PENALIDADE;
           }
 
@@ -457,6 +458,7 @@ export const useStore = () => {
         DiasRecorrencia: templateData.DiasRecorrencia,
         DiaDoMes: templateData.DiaDoMes,
         DataInicio: templateData.DataInicio,
+        PularFinalDeSemana: templateData.PularFinalDeSemana,
         CriadoPor: currentUserEmail,
       });
       
