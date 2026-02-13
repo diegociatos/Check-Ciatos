@@ -111,7 +111,20 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                       </div>
                     </td>
                     <td className="px-8 py-4 text-center">
-                      <span className="text-sm font-black text-[#8B1B1F]">{task.PontosValor}</span>
+                      {(() => {
+                        const isLate = task.DataConclusao && task.DataLimite_Date && task.DataConclusao.split('T')[0] > task.DataLimite_Date;
+                        const isRetry = (task.Tentativas || 0) > 0;
+                        if (isLate || isRetry) {
+                          return (
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-black text-yellow-600">{Math.ceil(task.PontosValor * 0.5)}</span>
+                              <span className="text-[8px] text-gray-400 line-through">{task.PontosValor} pts</span>
+                              <span className="text-[7px] font-bold text-yellow-600 uppercase">{isLate ? 'Atraso' : 'Reentrega'}</span>
+                            </div>
+                          );
+                        }
+                        return <span className="text-sm font-black text-[#8B1B1F]">{task.PontosValor}</span>;
+                      })()}
                     </td>
                     <td className="px-8 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -195,9 +208,30 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     <div className="h-16 w-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto">
                        <ShieldCheck size={32} />
                     </div>
-                    <p className="text-sm text-gray-500 font-medium italic">
-                      Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong> e creditar {auditTask.PontosValor} pts?
-                    </p>
+                    {(() => {
+                      const isLate = auditTask.DataConclusao && auditTask.DataLimite_Date && auditTask.DataConclusao.split('T')[0] > auditTask.DataLimite_Date;
+                      const isRetry = (auditTask.Tentativas || 0) > 0;
+                      const reducedPoints = Math.ceil(auditTask.PontosValor * 0.5);
+                      if (isLate || isRetry) {
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-sm text-gray-500 font-medium italic">
+                              Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong>?
+                            </p>
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-3 text-[11px] text-yellow-700 font-bold">
+                              <AlertTriangle size={14} className="inline mr-1 -mt-0.5" />
+                              Pontuação reduzida: <span className="line-through text-gray-400">{auditTask.PontosValor} pts</span> → <strong className="text-yellow-800">{reducedPoints} pts</strong>
+                              {isLate ? ' (entrega com atraso)' : ' (reentrega após erro)'}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <p className="text-sm text-gray-500 font-medium italic">
+                          Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong> e creditar {auditTask.PontosValor} pts?
+                        </p>
+                      );
+                    })()}
                  </div>
                ) : (
                  <div className="space-y-6">

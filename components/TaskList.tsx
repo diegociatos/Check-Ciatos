@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
-import { Calendar, User, CheckCircle, Image as ImageIcon, X, Send, CheckSquare, Clock, UserCheck, RotateCcw, Trash2, ShieldCheck, ShieldAlert, ShieldEllipsis, MessageSquare, AlertCircle } from 'lucide-react';
+import { Calendar, User, CheckCircle, Image as ImageIcon, X, Send, CheckSquare, Clock, UserCheck, RotateCcw, Trash2, ShieldCheck, ShieldAlert, ShieldEllipsis, MessageSquare, AlertCircle, History } from 'lucide-react';
 
 interface EnrichedTask extends Task {
   NomeColaborador: string;
@@ -55,7 +55,7 @@ const TaskList: React.FC<TaskListProps> = ({
       {tasks.length > 0 ? (
         tasks.map((task) => {
           const isAssignee = task.Responsavel === currentUserEmail;
-          const isRejected = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
+          const isRejected = (task.Tentativas > 0 && task.Status === TaskStatus.PENDENTE) || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
           
           return (
             <div key={task.ID} className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300 border-l-[6px] ${
@@ -97,12 +97,14 @@ const TaskList: React.FC<TaskListProps> = ({
               </div>
 
               {/* Justificativa de Rejeição */}
-              {isRejected && task.JustificativaGestor && (
-                <div className="px-8 py-5 bg-red-50 border-t border-red-100 flex items-start gap-3">
-                   <AlertCircle size={16} className="text-red-600 mt-0.5 shrink-0" />
+              {isRejected && (task.JustificativaGestor || task.ObservacaoGestor) && (
+                <div className="px-8 py-5 bg-orange-50 border-t border-orange-200 flex items-start gap-3">
+                   <RotateCcw size={16} className="text-orange-600 mt-0.5 shrink-0" />
                    <div>
-                      <p className="text-[9px] font-black text-red-700 uppercase mb-1">Motivo do Retorno:</p>
-                      <p className="text-[11px] text-red-800 font-bold italic">"{task.JustificativaGestor}"</p>
+                      <p className="text-[9px] font-black text-orange-700 uppercase mb-1 flex items-center gap-1">
+                        TAREFA RETORNADA {task.Tentativas > 0 && `— ${task.Tentativas}ª Tentativa`}
+                      </p>
+                      <p className="text-[11px] text-orange-800 font-bold italic">"{task.JustificativaGestor || task.ObservacaoGestor}"</p>
                    </div>
                 </div>
               )}

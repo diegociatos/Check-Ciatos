@@ -112,7 +112,10 @@ export const useStore = () => {
           ProofAttachment: t.ProofAttachment,
           ConferenciaStatus: t.ConferenciaStatus,
           ObservacaoGestor: t.ObservacaoGestor,
+          JustificativaGestor: t.ObservacaoGestor,
           Tentativas: t.Tentativas || 0,
+          DataGeracao: t.DataGeracao || '',
+          DataCriacao: t.DataCriacao || '',
         })));
 
         // Normalizar templates

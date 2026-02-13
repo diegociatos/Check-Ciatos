@@ -83,13 +83,19 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
         }).format(new Date());
 
         const isOverdue = task.DataLimite_Date! < todayStr && task.Status === TaskStatus.PENDENTE;
-        const isReturn = task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
+        const isReturn = (task.Tentativas > 0 && task.Status === TaskStatus.PENDENTE) || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
 
         return (
           <div 
             key={task.ID} 
-            className={`bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative ${isReturn ? 'ring-2 ring-red-100' : ''}`}
+            className={`bg-white rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative ${isReturn ? 'ring-2 ring-orange-300 border-orange-200' : 'border-gray-100'}`}
           >
+            {/* Banner de tarefa retornada */}
+            {isReturn && (
+              <div className="bg-orange-500 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                <RotateCcw size={12} /> TAREFA RETORNADA — Refazer e Reenviar
+              </div>
+            )}
             {/* Botão Deletar (Apenas Admin/Gestor) */}
             {isManagerOrAdmin && onDelete && (
               <button 
@@ -135,12 +141,12 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
               </p>
 
               {/* Justificativa do Gestor em caso de Reenvio */}
-              {isReturn && task.JustificativaGestor && (
-                 <div className="mb-6 p-4 bg-red-50 rounded-2xl border border-red-100">
-                    <p className="text-[9px] font-black text-red-700 uppercase flex items-center gap-1 mb-1">
+              {isReturn && (task.JustificativaGestor || task.ObservacaoGestor) && (
+                 <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-200">
+                    <p className="text-[9px] font-black text-orange-700 uppercase flex items-center gap-1 mb-1">
                        <MessageSquare size={10} /> Motivo do Retorno:
                     </p>
-                    <p className="text-[11px] text-red-600 font-bold italic leading-relaxed">"{task.JustificativaGestor}"</p>
+                    <p className="text-[11px] text-orange-700 font-bold italic leading-relaxed">"{task.JustificativaGestor || task.ObservacaoGestor}"</p>
                  </div>
               )}
 
