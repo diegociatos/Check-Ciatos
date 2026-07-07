@@ -1,15 +1,33 @@
 import React, { useState } from 'react';
 import { Empresa, User } from '../types';
-import { Building2, Plus, X, LogIn, Users as UsersIcon, CheckCircle2 } from 'lucide-react';
+import { Building2, Plus, X, LogIn, Users as UsersIcon, CheckCircle2, Pause, Play, Trash2 } from 'lucide-react';
 
 interface Props {
   empresas: Empresa[];
   users: User[]; // todos os usuários visíveis à plataforma (para contar por empresa)
   onCreate: (nome: string, plano: string, master: { nome: string; email: string }) => Promise<any>;
   onEnter: (empresaId: string) => void;
+  onSuspend: (id: string, suspender: boolean) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnter }) => {
+const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnter, onSuspend, onDelete }) => {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const handleSuspend = async (e: Empresa) => {
+    const suspender = (e.Status || 'Ativa') !== 'Suspensa';
+    if (suspender && !window.confirm(`Suspender "${e.Nome}"? Os usuários dela não conseguirão acessar até você reativar.`)) return;
+    setBusy(e.id);
+    try { await onSuspend(e.id, suspender); } catch (err: any) { alert(err.message); } finally { setBusy(null); }
+  };
+
+  const handleDelete = async (e: Empresa) => {
+    const membros = users.filter(u => u.empresa_id === e.id).length;
+    if (!window.confirm(`EXCLUIR DEFINITIVAMENTE a empresa "${e.Nome}"?\n\nIsto apaga a equipe (${membros} usuário(s)), tarefas, modelos e pontos dela. NÃO pode ser desfeito.`)) return;
+    if (!window.confirm(`Tem certeza absoluta? Digite OK na próxima. Confirmar exclusão de "${e.Nome}"?`)) return;
+    setBusy(e.id);
+    try { await onDelete(e.id); } catch (err: any) { alert(err.message); } finally { setBusy(null); }
+  };
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [criada, setCriada] = useState<{ nome: string; email: string } | null>(null);
@@ -68,28 +86,52 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {empresas.map(e => (
-            <div key={e.id} className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-6 flex flex-col">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-[#8B1B1F]/10 text-[#8B1B1F] flex items-center justify-center">
-                  <Building2 size={20} />
+          {empresas.map(e => {
+            const suspensa = (e.Status || 'Ativa') === 'Suspensa';
+            return (
+              <div key={e.id} className={`bg-white rounded-2xl border shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-6 flex flex-col ${suspensa ? 'border-amber-200 bg-amber-50/30' : 'border-[#E7E5E4]'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${suspensa ? 'bg-amber-100 text-amber-600' : 'bg-[#8B1B1F]/10 text-[#8B1B1F]'}`}>
+                    <Building2 size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-lg text-stone-900 truncate">{e.Nome}</p>
+                    <p className="text-[11px] text-stone-400 uppercase tracking-wider">{e.Plano || 'Padrao'}</p>
+                  </div>
+                  {suspensa && (
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wider">Suspensa</span>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-lg text-stone-900 truncate">{e.Nome}</p>
-                  <p className="text-[11px] text-stone-400 uppercase tracking-wider">{e.Plano || 'Padrao'}</p>
+                <div className="mt-5 flex items-center gap-2 text-sm text-stone-500">
+                  <UsersIcon size={15} /> {countMembros(e.id)} {countMembros(e.id) === 1 ? 'usuário' : 'usuários'}
+                </div>
+                <div className="mt-5 flex items-center gap-2">
+                  <button
+                    onClick={() => onEnter(e.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-2 border border-[#8B1B1F] text-[#8B1B1F] py-3 rounded-xl text-sm font-semibold hover:bg-[#8B1B1F] hover:text-white transition-colors"
+                  >
+                    <LogIn size={16} /> Entrar
+                  </button>
+                  <button
+                    onClick={() => handleSuspend(e)}
+                    disabled={busy === e.id}
+                    title={suspensa ? 'Reativar' : 'Suspender'}
+                    className="p-3 rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 disabled:opacity-50"
+                  >
+                    {suspensa ? <Play size={16} /> : <Pause size={16} />}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(e)}
+                    disabled={busy === e.id}
+                    title="Excluir empresa"
+                    className="p-3 rounded-xl border border-stone-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
-              <div className="mt-5 flex items-center gap-2 text-sm text-stone-500">
-                <UsersIcon size={15} /> {countMembros(e.id)} {countMembros(e.id) === 1 ? 'usuário' : 'usuários'}
-              </div>
-              <button
-                onClick={() => onEnter(e.id)}
-                className="mt-5 inline-flex items-center justify-center gap-2 border border-[#8B1B1F] text-[#8B1B1F] py-3 rounded-xl text-sm font-semibold hover:bg-[#8B1B1F] hover:text-white transition-colors"
-              >
-                <LogIn size={16} /> Entrar
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

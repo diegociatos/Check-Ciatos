@@ -30,6 +30,15 @@ export const authApi = {
       await supabase.auth.signOut();
       throw new Error('Acesso bloqueado. Fale com o administrador.');
     }
+    // Empresa suspensa bloqueia o acesso (exceto a plataforma)
+    if (String(row.Role || '').toLowerCase() !== 'plataforma') {
+      const { data: emps } = await supabase.from('empresas').select('Status');
+      const temAtiva = (emps ?? []).some((e: any) => (e.Status || 'Ativa') !== 'Suspensa');
+      if ((emps?.length ?? 0) > 0 && !temAtiva) {
+        await supabase.auth.signOut();
+        throw new Error('Sua empresa está suspensa. Fale com o suporte.');
+      }
+    }
     // registra último acesso (permitido pela RLS self-update)
     await supabase.from('users').update({ UltimoAcesso: new Date().toISOString() }).eq('Email', row.Email);
     return row;
@@ -219,6 +228,22 @@ export const empresasApi = {
     const { data, error } = await supabase.rpc('criar_empresa', { p_nome: nome, p_plano: plano ?? 'Padrao' });
     if (error) throwSb(error, 'Erro ao criar empresa');
     return data as { id: string; Nome: string };
+  },
+
+  // Suspender / reativar (plataforma) — bloqueia/desbloqueia o acesso dos usuários da empresa
+  setStatus: async (id: string, status: 'Ativa' | 'Suspensa') => {
+    const { error } = await supabase.from('empresas').update({ Status: status }).eq('id', id);
+    if (error) throwSb(error, 'Erro ao alterar status da empresa');
+    return { status };
+  },
+
+  // Excluir a empresa inteira (plataforma) — apaga equipe e dados; irreversível
+  remove: async (id: string) => {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { action: 'delete-empresa', empresa_id: id },
+    });
+    if (error) throwSb(error, 'Erro ao excluir empresa');
+    return data;
   },
 };
 

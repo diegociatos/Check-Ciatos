@@ -178,12 +178,15 @@ export const useStore = () => {
   );
   const isPlataforma = rawCurrentUser?.Role === UserRole.PLATAFORMA;
 
-  // Define a empresa ativa automaticamente para quem não é plataforma
+  // Define a empresa ativa automaticamente para quem não é plataforma (pula suspensas)
   useEffect(() => {
     if (rawCurrentUser && rawCurrentUser.Role !== UserRole.PLATAFORMA) {
-      setActiveEmpresa(rawCurrentUser.empresa_id || null);
+      const ativas = empresas.filter(e => (e.Status || 'Ativa') !== 'Suspensa');
+      const home = rawCurrentUser.empresa_id || null;
+      const homeAtiva = ativas.some(e => e.id === home);
+      setActiveEmpresa(homeAtiva ? home : (ativas[0]?.id ?? home));
     }
-  }, [rawCurrentUser]);
+  }, [rawCurrentUser, empresas]);
 
   // Escopo por empresa ativa vale para todos (single-empresa é no-op; multi-empresa alterna).
   const emScopo = (empresaId?: string) => !activeEmpresa || empresaId === activeEmpresa;
@@ -723,12 +726,22 @@ export const useStore = () => {
   }, []);
   const getUserEmpresas = useCallback((email: string) => authApi.getEmpresasDoUsuario(email), []);
 
+  // Plataforma: suspender/reativar e excluir empresa
+  const suspenderEmpresa = useCallback(async (id: string, suspender: boolean) => {
+    await empresasApi.setStatus(id, suspender ? 'Suspensa' : 'Ativa');
+    setEmpresas(prev => prev.map(e => e.id === id ? { ...e, Status: suspender ? 'Suspensa' : 'Ativa' } : e));
+  }, []);
+  const excluirEmpresa = useCallback(async (id: string) => {
+    await empresasApi.remove(id);
+    setEmpresas(prev => prev.filter(e => e.id !== id));
+  }, []);
+
   return {
     currentUser, users,
     tasks: scopedTasks, templates: scopedTemplates, ledger: scopedLedger,
     minhasTarefas, botLog,
     empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
-    setUserEmpresas, getUserEmpresas,
+    setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
