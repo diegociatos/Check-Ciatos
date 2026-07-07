@@ -144,7 +144,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: <ClipboardCheck size={20} /> 
   },
   { 
-    label: 'Tarefas Recorrentes',
+    label: 'Modelos de Tarefas',
     view: 'MANAGE_TEMPLATES',
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 

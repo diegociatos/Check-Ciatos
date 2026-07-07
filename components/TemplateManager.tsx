@@ -115,9 +115,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
     <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Automação</p>
-          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Tarefas recorrentes</h3>
-          <p className="text-stone-500 mt-1">Modelos que geram obrigações automaticamente para a equipe.</p>
+          <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Tarefas</p>
+          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Modelos de tarefas</h3>
+          <p className="text-stone-500 mt-1">Crie modelos que geram tarefas para a equipe — recorrentes (diária, semanal, mensal) ou avulsas (data específica).</p>
         </div>
         <div className="flex items-center gap-3">
           <select
