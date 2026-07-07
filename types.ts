@@ -207,4 +207,5 @@ export type ViewType =
   | 'PERIOD_REPORT_DASHBOARD'
   | 'BOT_HISTORY'
   | 'MONTHLY_PERFORMANCE'
-  | 'CLIENTES';
+  | 'CLIENTES'
+  | 'PULSO';
