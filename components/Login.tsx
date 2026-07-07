@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (email: string, senha?: string) => void;
+  // Pode ser assíncrono (autenticação real retorna Promise); aceitamos void também.
+  onLogin: (email: string, senha?: string) => Promise<unknown> | void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -15,13 +16,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // impede duplo clique / submit duplicado enquanto autentica
     setError('');
     setLoading(true);
 
     try {
-      onLogin(email, password);
+      // Aguarda a autenticação real: mantém o loading ativo até resolver/rejeitar
+      // e permite que erros de Promise rejeitada sejam capturados aqui.
+      await onLogin(email, password);
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.message || 'Não foi possível entrar. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
