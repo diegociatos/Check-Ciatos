@@ -385,8 +385,9 @@ export const useStore = () => {
         Role: userData.Role,
         Time: userData.Time,
         Gestor: userData.Gestor,
+        empresa_id: userData.empresa_id || activeEmpresa, // cria na empresa aberta
       });
-      
+
       setBaseUsers(prev => [...prev, {
         ...newUser,
         Role: normalizeRole(newUser.Role),
@@ -396,7 +397,7 @@ export const useStore = () => {
     } catch (err: any) {
       throw new Error(err.message || 'Erro ao criar usuário');
     }
-  }, []);
+  }, [activeEmpresa]);
 
   const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
     try {

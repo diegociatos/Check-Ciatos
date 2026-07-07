@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
 
   try {
     if (action === 'create') {
-      const empresaAlvo = isPlataforma ? (user.empresa_id ?? callerEmpresa) : callerEmpresa;
+      // Usa a empresa indicada (empresa ativa) se o chamador tiver acesso; senão a empresa-casa.
+      const empresaAlvo = (user.empresa_id && podeEmpresa(user.empresa_id)) ? user.empresa_id : callerEmpresa;
       if (!podeEmpresa(empresaAlvo)) return json({ error: 'Sem acesso a esta empresa' }, 403);
 
       // Idempotente: se o e-mail já existe (ex.: mesmo master em outro cliente),
