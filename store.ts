@@ -420,12 +420,14 @@ export const useStore = () => {
     else if (status === TaskStatus.NAO_FEITA) apiStatus = 'NAO_CUMPRIU';
 
     try {
-      const result = await tasksApi.audit(taskId, apiStatus, justification);
-      
-      // Atualiza local
+      // Em reprovações, envia o novo prazo para o backend persistir no DataLimite
+      const novaDataLimite = status !== TaskStatus.APROVADA ? (nextDeadline || null) : null;
+      const result = await tasksApi.audit(taskId, apiStatus, justification, novaDataLimite);
+
+      // Atualiza local (usa o prazo confirmado pelo backend quando houver)
       setTasks(prev => prev.map(t => {
         if (t.ID === taskId) {
-          const newDataLimite = nextDeadline || t.DataLimite;
+          const newDataLimite = (result as any)?.dataLimite || nextDeadline || t.DataLimite;
           return { 
             ...t, 
             Status: status, 
