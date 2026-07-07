@@ -518,8 +518,9 @@ export const useStore = () => {
         DataInicio: templateData.DataInicio,
         PularFinalDeSemana: templateData.PularFinalDeSemana,
         CriadoPor: currentUserEmail,
+        empresa_id: activeEmpresa, // cria o modelo na empresa que está aberta (não a "casa")
       });
-      
+
       setTemplates(prev => [...prev, {
         ...newTemplate,
         Ativa: true,
@@ -527,13 +528,13 @@ export const useStore = () => {
     } catch (err: any) {
       console.error('Erro ao criar template:', err);
       // Fallback local
-      setTemplates(prev => [...prev, { 
-        ...templateData, 
+      setTemplates(prev => [...prev, {
+        ...templateData,
         ID: Math.random().toString(36).substr(2, 9),
         Ativa: true,
       }]);
     }
-  }, [currentUserEmail]);
+  }, [currentUserEmail, activeEmpresa]);
 
   const toggleTemplate = useCallback(async (id: string) => {
     try {
