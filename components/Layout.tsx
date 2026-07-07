@@ -18,9 +18,11 @@ interface LayoutProps {
   empresas?: { id: string; Nome: string }[];
   activeEmpresa?: string | null;
   onSwitchEmpresa?: (id: string) => void;
+  naoLidas?: number;
+  onOpenNotifications?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa, empresas = [], activeEmpresa, onSwitchEmpresa }) => {
+const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa, empresas = [], activeEmpresa, onSwitchEmpresa, naoLidas = 0, onOpenNotifications }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -135,14 +137,14 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           </div>
           
           <div className="flex items-center gap-4 relative">
-             <button 
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+             <button
+                onClick={() => { const abrindo = !isNotificationsOpen; setIsNotificationsOpen(abrindo); setIsUserMenuOpen(false); if (abrindo) onOpenNotifications?.(); }}
                 className="p-2 hover:bg-gray-100 rounded-lg relative text-gray-500"
              >
                <Bell size={20} />
-               {myNotifications.length > 0 && (
-                 <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-[#C62828] text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">
-                   {myNotifications.length}
+               {naoLidas > 0 && (
+                 <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-[#C62828] text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">
+                   {naoLidas > 9 ? '9+' : naoLidas}
                  </span>
                )}
              </button>

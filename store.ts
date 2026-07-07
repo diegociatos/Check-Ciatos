@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa } from './types';
 import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi } from './services/api';
 import { supabase } from './lib/supabase';
+import { gerarNotificacoes } from './lib/notifications';
 
 // Funções utilitárias exportadas
 export const getTodayStr = () => {
@@ -243,6 +244,32 @@ export const useStore = () => {
     [users, rawCurrentUser, currentUserEmail]
   );
   const minhasTarefas = useMemo(() => scopedTasks.filter(t => t.Responsavel === currentUserEmail), [scopedTasks, currentUserEmail]);
+
+  // ==================== NOTIFICAÇÕES ====================
+  const isManager = currentUser
+    ? [UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER, UserRole.GESTOR].includes(currentUser.Role)
+    : false;
+  const notifications = useMemo(
+    () => gerarNotificacoes(currentUser, scopedTasks, isManager),
+    [currentUser, scopedTasks, isManager]
+  );
+  const [notifLidas, setNotifLidas] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!currentUserEmail) { setNotifLidas(new Set()); return; }
+    try {
+      setNotifLidas(new Set(JSON.parse(localStorage.getItem('ciatos_notif_' + currentUserEmail) || '[]')));
+    } catch { setNotifLidas(new Set()); }
+  }, [currentUserEmail]);
+  const notifNaoLidas = useMemo(() => notifications.filter(n => !notifLidas.has(n.id)).length, [notifications, notifLidas]);
+  const marcarNotificacoesLidas = useCallback(() => {
+    if (!currentUserEmail) return;
+    setNotifLidas(prev => {
+      const next = new Set(prev);
+      notifications.forEach(n => next.add(n.id));
+      try { localStorage.setItem('ciatos_notif_' + currentUserEmail, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }, [notifications, currentUserEmail]);
 
   // Salva usuário atual no localStorage
   useEffect(() => {
@@ -744,6 +771,7 @@ export const useStore = () => {
     minhasTarefas, botLog,
     empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
+    notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
