@@ -87,9 +87,9 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-ciatos">
       {/* Header e Filtros */}
-      <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h3 className="text-2xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Supervisão de Tarefas</h3>
+          <h3 className="text-2xl text-stone-900">Supervisão de Tarefas</h3>
           <p className="text-sm text-gray-400 font-medium italic">Visão total de obrigações por colaborador e fluxo de datas.</p>
         </div>
         <div className="relative w-full md:w-72">
@@ -105,16 +105,16 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
         </div>
       </div>
 
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left table-fixed">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-1/3">Obrigação / Datas de Fluxo</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Status</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Pontos</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Modelo ID</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Ações</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider w-1/3">Obrigação / Datas de Fluxo</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Status</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Pontos</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Modelo ID</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -154,7 +154,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                      )}
                                    </div>
                                    <div className="flex items-center gap-4 flex-wrap">
-                                      <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                      <div className="flex items-center gap-1.5 text-[9px] font-semibold text-stone-400 uppercase tracking-wider">
                                          <Clock size={10} className="opacity-50" />
                                          Solicitação: {task.DataGeracao ? new Date(task.DataGeracao).toLocaleDateString('pt-BR') : 'Manual'}
                                       </div>
@@ -224,7 +224,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
       {/* Modal "Marcar como Não Concluída" */}
       {markNotDoneTask && onAuditTask && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-white/10 flex items-center justify-between text-white bg-red-600">
                <div className="flex items-center gap-3">
                   <XCircle size={24}/>
@@ -234,7 +234,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
             </div>
             
             <div className="p-8 space-y-6">
-               <div className="bg-red-50 p-6 rounded-3xl border border-red-100">
+               <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
                   <p className="text-[10px] font-black text-red-700 uppercase mb-2 tracking-widest">Tarefa não executada no prazo:</p>
                   <p className="text-lg font-bold text-[#111111]">{markNotDoneTask.Titulo}</p>
                   <p className="text-xs text-gray-500 mt-1">Responsável: {users.find(u => u.Email === markNotDoneTask.Responsavel)?.Nome || markNotDoneTask.Responsavel}</p>
@@ -242,7 +242,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                   <p className="text-xs font-bold text-red-600 mt-2">Penalidade: -{markNotDoneTask.PontosValor} pontos</p>
                </div>
                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Observação do Gestor (opcional)</label>
+                  <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Observação do Gestor (opcional)</label>
                   <textarea 
                     className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-red-100 outline-none min-h-[80px]"
                     placeholder="Motivo ou observação sobre a não execução..."

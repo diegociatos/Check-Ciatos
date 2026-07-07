@@ -150,7 +150,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                     <div className="flex flex-col gap-1">
                       <span className="text-[#8B1B1F] uppercase tracking-tighter text-[11px]">{user.Role}</span>
                       {user.Role === UserRole.COLABORADOR && (
-                         <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest flex items-center gap-1">
+                         <span className="text-[9px] text-stone-400 font-semibold uppercase tracking-wider flex items-center gap-1">
                            <UserRoundSearch size={10} /> Gestor: {users.find(u => u.Email === user.Gestor)?.Nome || 'NÃO DEFINIDO'}
                          </span>
                       )}
@@ -266,7 +266,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Senha Provisória</label>
+                    <label className="text-[10px] font-semibold text-stone-300 uppercase tracking-wider">Senha Provisória</label>
                     <div className="w-full bg-gray-100 border border-gray-200 rounded-2xl p-4 text-sm font-black text-gray-400 italic">
                       {editingEmail ? "Confidencial" : "Padrão: 123456"}
                     </div>
@@ -274,7 +274,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                </div>
                
                <div className="pt-6 border-t border-gray-100">
-                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-3xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
+                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
                     <Save size={20} /> {editingEmail ? 'Salvar Alterações' : 'Finalizar Cadastro'}
                   </button>
                </div>

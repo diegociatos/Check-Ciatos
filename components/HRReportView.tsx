@@ -36,23 +36,23 @@ const HRReportView: React.FC<HRReportViewProps> = ({ users }) => {
         </button>
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center gap-3">
           <div className="p-2 bg-gray-50 rounded-lg text-[#8B1B1F]">
             <UserCheck size={20} />
           </div>
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Controle de Performance Mensal</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Controle de Performance Mensal</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Role</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gestor Direto</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Eficiência (%)</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Confiabilidade (%)</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status RH</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Role</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Gestor Direto</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Eficiência (%)</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Confiabilidade (%)</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Status RH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

@@ -97,11 +97,11 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
             <table className="w-full text-left font-sans text-xs">
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="border-b border-gray-50">
-                  <th className="px-6 py-4 font-black text-gray-400 uppercase tracking-widest">Data</th>
-                  <th className="px-6 py-4 font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                  <th className="px-6 py-4 font-black text-gray-400 uppercase tracking-widest">Descrição do Lançamento</th>
-                  <th className="px-6 py-4 font-black text-gray-400 uppercase tracking-widest text-center">Tipo</th>
-                  <th className="px-6 py-4 font-black text-gray-400 uppercase tracking-widest text-right">Delta</th>
+                  <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider">Data</th>
+                  <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+                  <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider">Descrição do Lançamento</th>
+                  <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider text-center">Tipo</th>
+                  <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider text-right">Delta</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">

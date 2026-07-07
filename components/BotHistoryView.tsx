@@ -48,7 +48,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
-      <div className="bg-[#8B1B1F] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h3 className="text-3xl font-bold uppercase tracking-tight mb-2">Logs de Automação (Auditoria)</h3>
           <p className="text-white/60 font-medium italic">Histórico de execução técnica do motor de regras 'GC_Bot_Generator'.</p>
@@ -57,7 +57,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
       </div>
 
       {/* Seção de Auditoria de Integridade */}
-      <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
         <div className="flex items-center justify-between">
            <div className="flex items-center gap-3">
               <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
@@ -107,7 +107,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
         )}
       </div>
 
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
            <div className="flex items-center gap-2">
               <Terminal size={18} className="text-[#8B1B1F]" />
@@ -119,11 +119,11 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
           <table className="w-full text-left table-fixed">
             <thead>
               <tr className="bg-gray-50/20 border-b border-gray-100">
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">Timestamp</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Modelo / Resultado</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Status Run</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Task_ID</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right w-24">Detalhes</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider w-48">Timestamp</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Modelo / Resultado</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Status Run</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Task_ID</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right w-24">Detalhes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -214,7 +214,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
                                       </div>
                                    </div>
                                  ) : (
-                                   <div className="bg-green-50 p-6 rounded-3xl flex items-center justify-center border border-green-100">
+                                   <div className="bg-green-50 p-6 rounded-2xl flex items-center justify-center border border-green-100">
                                       <p className="text-xs text-green-700 font-bold flex items-center gap-2">
                                          <CheckCircle2 size={16}/> Execução de Teste Manual: Sucesso. Linha visível na 'Mesa de Trabalho'.
                                       </p>

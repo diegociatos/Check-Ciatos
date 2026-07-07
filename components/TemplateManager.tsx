@@ -134,7 +134,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Header da Lista */}
         <div className="hidden md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título</span>
@@ -236,14 +236,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
                <h3 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Configurar Novo Modelo</h3>
                <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                
-               <div className="bg-[#8B1B1F]/5 p-6 rounded-3xl border border-[#8B1B1F]/10 space-y-4">
+               <div className="bg-[#8B1B1F]/5 p-6 rounded-2xl border border-[#8B1B1F]/10 space-y-4">
                   <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-[0.2em] mb-2">
                     <Calendar size={14} /> Fluxo de Datas Previsto
                   </div>
@@ -361,7 +361,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                </div>
 
                <div className="pt-6 border-t border-gray-100">
-                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-3xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
+                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
                     <Save size={20} /> Salvar Modelo de Recorrência
                   </button>
                </div>

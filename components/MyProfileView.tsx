@@ -23,10 +23,10 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20 font-ciatos">
-      <div className="bg-[#8B1B1F] p-12 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
           <div className="relative group">
-            <div className="h-32 w-32 bg-white rounded-3xl flex items-center justify-center text-[#8B1B1F] text-4xl font-black shadow-xl overflow-hidden">
+            <div className="h-32 w-32 bg-white rounded-2xl flex items-center justify-center text-[#8B1B1F] text-4xl font-black shadow-xl overflow-hidden">
               {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : user.Nome.charAt(0)}
             </div>
             <button className="absolute -bottom-2 -right-2 p-3 bg-white text-[#8B1B1F] rounded-2xl shadow-lg hover:scale-110 transition-transform">
@@ -43,11 +43,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+        <div className="lg:col-span-2 bg-white p-10 rounded-2xl border border-gray-100 shadow-sm space-y-8">
           <h3 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Informações Básicas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nome Completo</label>
+              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Nome Completo</label>
               <input 
                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
                 value={formData.Nome}
@@ -55,7 +55,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Telefone / WhatsApp</label>
+              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Telefone / WhatsApp</label>
               <input 
                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
                 value={formData.Telefone}
@@ -63,7 +63,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Endereço Residencial</label>
+              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Endereço Residencial</label>
               <input 
                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
                 value={formData.Endereco}
@@ -80,7 +80,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+          <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Dados de Conta</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4 text-sm">

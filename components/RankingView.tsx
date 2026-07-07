@@ -29,7 +29,7 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsLi
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="bg-[#8B1B1F] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <h3 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Ranking Equipe</h3>
         <p className="text-white/60 font-medium">Reconhecimento baseado nos colaboradores sob sua gestão.</p>
         <div className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10">
@@ -37,15 +37,15 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsLi
         </div>
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Pos</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Eficiência</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Auditado</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Pos</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Eficiência</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Auditado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -63,7 +63,7 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsLi
                       </div>
                       <div>
                         <p className="text-sm font-bold text-[#111111]">{user.Nome}</p>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
+                        <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">{user.Time}</p>
                       </div>
                     </div>
                   </td>

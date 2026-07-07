@@ -73,7 +73,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      <div className="bg-[#8B1B1F] p-12 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Relatórios Periódicos</h2>
           <p className="text-white/70 font-medium text-lg">Selecione os parâmetros para extração de dados analíticos.</p>
@@ -81,12 +81,12 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
         <FileBarChart size={120} className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10" />
       </div>
 
-      <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <form onSubmit={handleSumbit} className="p-10 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Colaborador */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <label className="flex items-center gap-2 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
                 <Users size={12} /> Selecionar Colaborador
               </label>
               <select 
@@ -104,7 +104,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
 
             {/* Período Tipo */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <label className="flex items-center gap-2 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
                 <Calendar size={12} /> Tipo de Período
               </label>
               <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-200">
@@ -127,7 +127,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-gray-50">
             {/* Ano */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ano de Referência</label>
+              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Ano de Referência</label>
               <input 
                 type="number" 
                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
@@ -139,7 +139,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
             {/* Condicional Mes */}
             {periodo === PeriodType.MES && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Mês</label>
+                <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Mês</label>
                 <select 
                   className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none"
                   value={mes}
@@ -155,7 +155,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
             {/* Condicional Trimestre */}
             {periodo === PeriodType.TRIMESTRE && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Trimestre</label>
+                <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Trimestre</label>
                 <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-200">
                   {(['T1', 'T2', 'T3', 'T4'] as const).map(q => (
                     <button
@@ -176,7 +176,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
             {/* Condicional Semestre */}
             {periodo === PeriodType.SEMESTRE && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Semestre</label>
+                <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Semestre</label>
                 <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-200">
                   {(['S1', 'S2'] as const).map(s => (
                     <button

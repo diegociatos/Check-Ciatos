@@ -133,7 +133,7 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Filtros Estratégicos */}
-      <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 items-end">
+      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 items-end">
         <div className="flex-1 space-y-2 w-full">
           <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest flex items-center gap-2">
             <Users size={12} /> Equipe do Gestor
@@ -173,14 +173,14 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
       {/* Cards de KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Card 1: Saúde Geral */}
-        <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between h-64">
+        <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-64">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Saúde Geral Empresa</h3>
             <HeartPulse size={24} className="text-green-500" />
           </div>
           <div className="flex flex-col">
             <span className="text-6xl font-black text-[#8B1B1F] tracking-tighter">{completionRate.toFixed(1)}%</span>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Obrigações Concluídas vs Possíveis</p>
+            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mt-2">Obrigações Concluídas vs Possíveis</p>
           </div>
           <div className="h-2 w-full bg-gray-100 rounded-full mt-4 overflow-hidden">
             <div className="h-full bg-green-500 transition-all duration-1000" style={{ width: `${completionRate}%` }} />
@@ -188,14 +188,14 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
         </div>
 
         {/* Card 2: Alerta de Crise */}
-        <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between h-64">
+        <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-64">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Alerta de Crise</h3>
             <AlertTriangle size={24} className={overdueTotal > 0 ? 'text-red-600 animate-pulse' : 'text-gray-200'} />
           </div>
           <div className="flex flex-col">
             <span className={`text-6xl font-black tracking-tighter ${overdueTotal > 0 ? 'text-red-600' : 'text-gray-300'}`}>{overdueTotal}</span>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Tarefas Atrasadas Atualmente</p>
+            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mt-2">Tarefas Atrasadas Atualmente</p>
           </div>
           <div className={`mt-4 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${overdueTotal > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
             {overdueTotal > 0 ? 'Intervenção Necessária' : 'Operação Estável'}
@@ -203,7 +203,7 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
         </div>
 
         {/* Card 4: Volume de Entregas */}
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col h-64">
+        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-64">
           <h3 className="text-lg font-ciatos font-bold text-[#111111] uppercase tracking-tighter mb-6">Volume de Entregas</h3>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -217,12 +217,12 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest text-center mt-2">Sazonalidade (Últimos 7 dias)</p>
+          <p className="text-[9px] font-semibold text-stone-300 uppercase tracking-wider text-center mt-2">Sazonalidade (Últimos 7 dias)</p>
         </div>
       </div>
 
       {/* Card 3: Ranking de Gestores */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
           <h3 className="text-lg font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Performance de Gestão por Equipe</h3>
           <TrendingUp size={20} className="text-[#8B1B1F]" />
@@ -231,10 +231,10 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gestor</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Time</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Eficiência Média</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Status</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Gestor</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Time</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Eficiência Média</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
