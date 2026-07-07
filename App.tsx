@@ -264,7 +264,9 @@ const App: React.FC = () => {
     <Layout
       currentUser={currentUser}
       currentView={effectiveView}
-      notifications={[]}
+      notifications={store.notifications}
+      naoLidas={store.notifNaoLidas}
+      onOpenNotifications={store.marcarNotificacoesLidas}
       onNavigate={setCurrentView}
       onLogout={store.logout}
       isPlataforma={store.isPlataforma}
