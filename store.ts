@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa } from './types';
-import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi } from './services/api';
+import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, emailApi } from './services/api';
 import { supabase } from './lib/supabase';
 import { gerarNotificacoes } from './lib/notifications';
 
@@ -604,6 +604,17 @@ export const useStore = () => {
           Status: TaskStatus.PENDENTE,
           Tentativas: 0,
         }]);
+
+        // Notifica o responsável por e-mail (não bloqueia)
+        const resp = result.task.Responsavel;
+        const nome = baseUsers.find(u => u.Email === resp)?.Nome;
+        emailApi.notificarNovaTarefa({
+          to: resp,
+          nome,
+          titulo: result.task.Titulo,
+          prazo: result.task.DataLimite,
+          empresa: empresas.find(e => e.id === result.task.empresa_id)?.Nome,
+        });
       }
 
       // Atualiza última execução do template
@@ -655,7 +666,7 @@ export const useStore = () => {
       setTasks(prev => [...prev, newTask]);
       return true;
     }
-  }, [templates, tasks]);
+  }, [templates, tasks, baseUsers, empresas]);
 
   // Função para recarregar dados
   const refreshData = useCallback(async () => {
