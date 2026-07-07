@@ -19,7 +19,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const [filterColaborador, setFilterColaborador] = useState<string>('TODOS');
   
   const today = getTodayStr();
-  const collaborators = users.filter(u => u.Role === UserRole.COLABORADOR);
+  // Qualquer pessoa da operação pode ser responsável por uma tarefa (colaborador, gestor ou admin)
+  const collaborators = users.filter(u =>
+    u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR || u.Role === UserRole.ADMIN
+  );
+  const colaboradoresList = users.filter(u => u.Role === UserRole.COLABORADOR);
+  const gestoresList = users.filter(u => u.Role === UserRole.GESTOR);
+  const adminList = users.filter(u => u.Role === UserRole.ADMIN);
   const filteredTemplates = filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador);
   
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
@@ -260,10 +266,24 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável Operacional</label>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável pela Tarefa</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
-                        <option value="">Vincular Colaborador...</option>
-                        {users.filter(u => u.Role === UserRole.COLABORADOR).map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                        <option value="">Vincular responsável...</option>
+                        {colaboradoresList.length > 0 && (
+                          <optgroup label="Colaboradores">
+                            {colaboradoresList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                          </optgroup>
+                        )}
+                        {gestoresList.length > 0 && (
+                          <optgroup label="Gestores">
+                            {gestoresList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                          </optgroup>
+                        )}
+                        {adminList.length > 0 && (
+                          <optgroup label="Administração">
+                            {adminList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                          </optgroup>
+                        )}
                       </select>
                     </div>
                     <div className="space-y-1">
