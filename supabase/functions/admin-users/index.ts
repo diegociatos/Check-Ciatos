@@ -31,11 +31,15 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, service);
   const { data: caller } = await admin.from('users').select('"Role", empresa_id').ilike('Email', me.user.email).maybeSingle();
-  const role = (caller as any)?.Role;
+  const role = String((caller as any)?.Role ?? '').toLowerCase();
   const callerEmpresa = (caller as any)?.empresa_id ?? null;
   const isPlataforma = role === 'plataforma';
-  const GESTAO = ['plataforma', 'master', 'Admin', 'Gestor'];
-  if (!GESTAO.includes(role)) return json({ error: 'Sem permissão' }, 403);
+  if (!['plataforma', 'master', 'admin', 'gestor'].includes(role)) return json({ error: 'Sem permissão' }, 403);
+
+  // Empresas que o chamador pode administrar (empresa-casa + vínculos)
+  const { data: vinc } = await admin.from('user_empresas').select('empresa_id').ilike('email', me.user.email);
+  const acessoSet = new Set<string>([callerEmpresa, ...((vinc as any[]) ?? []).map(v => v.empresa_id)].filter(Boolean));
+  const podeEmpresa = (emp?: string | null) => isPlataforma || (!!emp && acessoSet.has(emp));
 
   let payload: any;
   try { payload = await req.json(); } catch { return json({ error: 'JSON inválido' }, 400); }
@@ -51,14 +55,25 @@ Deno.serve(async (req) => {
 
   try {
     if (action === 'create') {
+      const empresaAlvo = isPlataforma ? (user.empresa_id ?? callerEmpresa) : callerEmpresa;
+      if (!podeEmpresa(empresaAlvo)) return json({ error: 'Sem acesso a esta empresa' }, 403);
+
+      // Idempotente: se o e-mail já existe (ex.: mesmo master em outro cliente),
+      // não recria — apenas adiciona o vínculo com a nova empresa.
+      const { data: existente } = await admin.from('users').select('*').ilike('Email', user.Email).maybeSingle();
+      if (existente) {
+        await admin.from('user_empresas').upsert(
+          { email: user.Email, empresa_id: empresaAlvo, papel: (user.Role ?? (existente as any).Role) },
+          { onConflict: 'email,empresa_id' }
+        );
+        return json({ user: existente, tempPassword: null, vinculado: true });
+      }
+
       const pass = SENHA_PROVISORIA;
       const { data: created, error: e1 } = await admin.auth.admin.createUser({
         email: user.Email, password: pass, email_confirm: true,
       });
       if (e1) throw e1;
-      // A empresa do novo usuário: a plataforma pode indicar (criar master de outra
-      // empresa); os demais criam sempre dentro da própria empresa.
-      const empresaAlvo = isPlataforma ? (user.empresa_id ?? callerEmpresa) : callerEmpresa;
       const row = {
         Email: user.Email, Nome: user.Nome, Role: user.Role ?? 'Colaborador',
         Status: 'Ativo', Time: user.Time ?? null, Gestor: user.Gestor ?? null,
@@ -66,7 +81,28 @@ Deno.serve(async (req) => {
       };
       const { data: inserted, error: e2 } = await admin.from('users').insert(row).select().single();
       if (e2) throw e2;
+      await admin.from('user_empresas').upsert(
+        { email: user.Email, empresa_id: empresaAlvo, papel: user.Role ?? 'Colaborador' },
+        { onConflict: 'email,empresa_id' }
+      );
       return json({ user: inserted, tempPassword: pass });
+    }
+
+    // Define exatamente quais empresas (entre as que o chamador administra) um usuário acessa.
+    // Usado pelo Master para conceder ao gestor acesso às suas empresas.
+    if (action === 'set-empresas') {
+      const alvo: string[] = (payload.empresas ?? []).filter((e: string) => podeEmpresa(e));
+      const administraveis = [...acessoSet];
+      // remove vínculos do usuário só entre as empresas que o chamador administra
+      if (administraveis.length) {
+        await admin.from('user_empresas').delete().ilike('email', email).in('empresa_id', administraveis);
+      }
+      if (alvo.length) {
+        await admin.from('user_empresas').upsert(
+          alvo.map(e => ({ email, empresa_id: e, papel: 'gestor' })), { onConflict: 'email,empresa_id' }
+        );
+      }
+      return json({ message: 'Acessos atualizados', empresas: alvo });
     }
 
     if (action === 'update') {

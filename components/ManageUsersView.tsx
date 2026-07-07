@@ -16,11 +16,21 @@ interface ManageUsersViewProps {
   onResetPassword: (email: string) => void;
   onToggleStatus: (email: string) => void;
   onDeleteUser: (email: string) => void;
+  empresas?: { id: string; Nome: string }[];
+  activeEmpresa?: string | null;
+  onSetEmpresas?: (email: string, ids: string[]) => Promise<void>;
+  getUserEmpresas?: (email: string) => Promise<string[]>;
 }
 
-const ManageUsersView: React.FC<ManageUsersViewProps> = ({ 
-  users, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser 
+const ManageUsersView: React.FC<ManageUsersViewProps> = ({
+  users, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser,
+  empresas = [], activeEmpresa, onSetEmpresas, getUserEmpresas
 }) => {
+  // Empresas que o gestor atende (quando há mais de uma empresa para escolher)
+  const [empresasGestor, setEmpresasGestor] = useState<string[]>([]);
+  const multiEmpresa = empresas.length > 1;
+  const toggleEmpresaGestor = (id: string) =>
+    setEmpresasGestor(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<User>>({
@@ -34,35 +44,37 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
 
   const gestores = users.filter(u => u.Role === UserRole.GESTOR || u.Role === UserRole.ADMIN);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Validações de E-mail e Obrigatoriedade
-      if (!formData.Email || !formData.Email.includes('@')) {
-        throw new Error("Formato de E-mail inválido.");
-      }
-      
-      if (!formData.Nome) {
-        throw new Error("O Nome é obrigatório.");
-      }
-
+      if (!formData.Email || !formData.Email.includes('@')) throw new Error("Formato de E-mail inválido.");
+      if (!formData.Nome) throw new Error("O Nome é obrigatório.");
       if (formData.Role === UserRole.COLABORADOR && !formData.Gestor) {
         throw new Error("Todo colaborador deve ter um Gestor Responsável vinculado.");
       }
-      
+
+      const email = editingEmail || formData.Email!;
+      const ehGestor = formData.Role === UserRole.GESTOR;
+
       if (editingEmail) {
-        onUpdateUser(editingEmail, formData);
-        setIsModalOpen(false);
-        resetForm();
+        await Promise.resolve(onUpdateUser(editingEmail, formData));
       } else {
-        onAddUser(formData);
-        setIsModalOpen(false);
-        resetForm();
-        // Pop-up com senha provisória conforme solicitado
-        alert("Usuário cadastrado com sucesso.\n\nSenha provisória: 123456\nO usuário deverá alterá-la obrigatoriamente no primeiro acesso.");
+        await Promise.resolve(onAddUser(formData));
+      }
+
+      // Gestor multi-empresa: concede acesso às empresas escolhidas (+ a empresa atual)
+      if (ehGestor && multiEmpresa && onSetEmpresas) {
+        const alvo = Array.from(new Set([...(activeEmpresa ? [activeEmpresa] : []), ...empresasGestor]));
+        await onSetEmpresas(email, alvo);
+      }
+
+      setIsModalOpen(false);
+      resetForm();
+      if (!editingEmail) {
+        alert("Usuário cadastrado com sucesso.\n\nSenha provisória: 123456\nO usuário deverá alterá-la no primeiro acesso.");
       }
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Erro ao salvar.');
     }
   };
 
@@ -75,15 +87,20 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
 
   const resetForm = () => {
     setEditingEmail(null);
-    setFormData({ 
-      Nome: '', Email: '', Role: UserRole.COLABORADOR, Time: '', 
-      Telefone: '', DataNascimento: '', Gestor: '', Status: UserStatus.ATIVO 
+    setFormData({
+      Nome: '', Email: '', Role: UserRole.COLABORADOR, Time: '',
+      Telefone: '', DataNascimento: '', Gestor: '', Status: UserStatus.ATIVO
     });
+    setEmpresasGestor(activeEmpresa ? [activeEmpresa] : []);
   };
 
-  const openEdit = (user: User) => {
+  const openEdit = async (user: User) => {
     setEditingEmail(user.Email);
     setFormData({ ...user });
+    setEmpresasGestor(activeEmpresa ? [activeEmpresa] : []);
+    if (user.Role === UserRole.GESTOR && getUserEmpresas) {
+      try { const ids = await getUserEmpresas(user.Email); if (ids.length) setEmpresasGestor(ids); } catch { /* ignore */ }
+    }
     setIsModalOpen(true);
   };
 
@@ -209,6 +226,25 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                         <option value="">Vincular a um Gestor...</option>
                         {gestores.map(g => <option key={g.Email} value={g.Email}>{g.Nome}</option>)}
                       </select>
+                    </div>
+                  )}
+
+                  {formData.Role === UserRole.GESTOR && multiEmpresa && (
+                    <div className="space-y-1 md:col-span-2 animate-in slide-in-from-top-2">
+                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Empresas que este gestor atende</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-4 max-h-44 overflow-y-auto">
+                        {empresas.map(e => {
+                          const bloqueado = e.id === activeEmpresa; // empresa atual sempre incluída
+                          const marcado = bloqueado || empresasGestor.includes(e.id);
+                          return (
+                            <label key={e.id} className={`flex items-center gap-2 text-sm font-bold ${bloqueado ? 'text-gray-400' : 'text-gray-700 cursor-pointer'}`}>
+                              <input type="checkbox" checked={marcado} disabled={bloqueado} onChange={() => toggleEmpresaGestor(e.id)} className="accent-[#8B1B1F] h-4 w-4" />
+                              {e.Nome}
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold">A empresa atual é sempre incluída. Marque as demais que ele também atende.</p>
                     </div>
                   )}
 

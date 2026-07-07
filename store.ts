@@ -185,7 +185,8 @@ export const useStore = () => {
     }
   }, [rawCurrentUser]);
 
-  const emScopo = (empresaId?: string) => !isPlataforma || !activeEmpresa || empresaId === activeEmpresa;
+  // Escopo por empresa ativa vale para todos (single-empresa é no-op; multi-empresa alterna).
+  const emScopo = (empresaId?: string) => !activeEmpresa || empresaId === activeEmpresa;
   const scopedBaseUsers = useMemo(() => baseUsers.filter(u => emScopo(u.empresa_id)), [baseUsers, isPlataforma, activeEmpresa]);
   const scopedTasks = useMemo(() => tasks.filter(t => emScopo(t.empresa_id)), [tasks, isPlataforma, activeEmpresa]);
   const scopedTemplates = useMemo(() => templates.filter(t => emScopo(t.empresa_id)), [templates, isPlataforma, activeEmpresa]);
@@ -715,11 +716,18 @@ export const useStore = () => {
     return emp;
   }, []);
 
+  // Master concede/ajusta a quais empresas (dele) um usuário tem acesso
+  const setUserEmpresas = useCallback(async (email: string, empresasIds: string[]) => {
+    await authApi.setEmpresas(email, empresasIds);
+  }, []);
+  const getUserEmpresas = useCallback((email: string) => authApi.getEmpresasDoUsuario(email), []);
+
   return {
     currentUser, users,
     tasks: scopedTasks, templates: scopedTemplates, ledger: scopedLedger,
     minhasTarefas, botLog,
     empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
+    setUserEmpresas, getUserEmpresas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
