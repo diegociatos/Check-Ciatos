@@ -29,15 +29,16 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
   return (
     <div className="h-full flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-ciatos font-bold text-[#6F0F14] uppercase tracking-tighter">Supervisão de Pontos</h3>
-          <p className="text-sm text-gray-400 font-medium">Dashboard mestre-detalhe para histórico financeiro de pontuação.</p>
+        <div className="font-ciatos">
+          <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Gestão</p>
+          <h3 className="text-2xl md:text-3xl text-stone-900 mt-1">Supervisão de pontos</h3>
+          <p className="text-stone-500 mt-1">Histórico de pontuação da equipe, por pessoa.</p>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
         {/* Coluna Esquerda: Lista de Colaboradores */}
-        <div className="w-full lg:w-[320px] bg-white rounded-[30px] border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+        <div className="w-full lg:w-[320px] bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
           <div className="p-6 border-b border-gray-50 bg-gray-50/50">
             <div className="relative">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -84,7 +85,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
         </div>
 
         {/* Coluna Direita: Extrato Detalhado */}
-        <div className="flex-1 bg-white rounded-[30px] border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+        <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
           <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
             <div>
               <h4 className="text-sm font-black text-[#111111] uppercase tracking-widest">
@@ -93,8 +94,30 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em]">{displayedLedger.length} Lançamentos Encontrados</p>
             </div>
           </div>
-          <div className="flex-1 overflow-x-auto min-h-0">
-            <table className="w-full text-left font-sans text-xs">
+          <div className="flex-1 overflow-auto min-h-0">
+            {/* Mobile: cards empilhados */}
+            <div className="md:hidden p-4 space-y-3">
+              {[...displayedLedger].sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime()).map(entry => {
+                const ganho = entry.Tipo === ScoreType.GANHO;
+                return (
+                  <div key={entry.ID} className="bg-white border border-stone-200 rounded-xl p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-stone-900">{entry.Descricao}</p>
+                        <p className="text-xs text-stone-400 mt-0.5">
+                          {users.find(u => u.Email === entry.UserEmail)?.Nome || entry.UserEmail} · {new Date(entry.Data).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <span className={`text-base font-semibold shrink-0 ${ganho ? 'text-emerald-600' : 'text-red-600'}`}>{ganho ? '+' : ''}{entry.Pontos}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {displayedLedger.length === 0 && <p className="text-center text-stone-400 text-sm py-8">Nenhum lançamento.</p>}
+            </div>
+
+            {/* Desktop: tabela */}
+            <table className="hidden md:table w-full text-left font-sans text-xs">
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="border-b border-gray-50">
                   <th className="px-6 py-4 font-semibold text-stone-400 uppercase tracking-wider">Data</th>
