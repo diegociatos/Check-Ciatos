@@ -115,20 +115,21 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
     <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Modelos de Recorrência</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Gestão de Automação de Obrigações</p>
+          <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Automação</p>
+          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Tarefas recorrentes</h3>
+          <p className="text-stone-500 mt-1">Modelos que geram obrigações automaticamente para a equipe.</p>
         </div>
         <div className="flex items-center gap-3">
           <select
-            className="bg-[#F3F3F3] border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none appearance-none cursor-pointer text-[#111111]"
+            className="bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none appearance-none cursor-pointer text-stone-700 focus:ring-2 focus:ring-[#8B1B1F]/20"
             value={filterColaborador}
             onChange={e => setFilterColaborador(e.target.value)}
           >
-            <option value="TODOS">Todos os Colaboradores</option>
+            <option value="TODOS">Todas as pessoas</option>
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#8B1B1F] text-white px-6 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition-all">
-            <Plus size={18} /> Novo Modelo
+          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]">
+            <Plus size={18} /> Novo modelo
           </button>
         </div>
       </div>
@@ -136,16 +137,17 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Header da Lista */}
         <div className="hidden md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Título</span>
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Responsável</span>
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Recorrência</span>
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</span>
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Recorrência</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Status</span>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right">Ações</span>
         </div>
 
         {filteredTemplates.length === 0 && (
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Nenhum modelo de recorrência encontrado.
+          <div className="px-6 py-16 text-center">
+            <p className="text-stone-600 text-lg">Nenhum modelo ainda.</p>
+            <p className="text-stone-400 text-sm mt-1">Crie um modelo para gerar tarefas recorrentes automaticamente.</p>
           </div>
         )}
 
@@ -247,12 +249,12 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Solicitação (Hoje)</p>
+                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Solicitação (Hoje)</p>
                       <p className="text-sm font-black text-[#111111]">{today.split('-').reverse().join('/')}</p>
                     </div>
                     <ArrowRightLeft size={16} className="text-[#8B1B1F] opacity-30" />
                     <div className="flex-1 text-right">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Execução (Prazo)</p>
+                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Execução (Prazo)</p>
                       <p className="text-sm font-black text-[#8B1B1F]">{previewDataExecucao}</p>
                     </div>
                   </div>
@@ -260,13 +262,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
                <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título da Tarefa Corporativa</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título da Tarefa Corporativa</label>
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Responsável pela Tarefa</label>
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável pela Tarefa</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular responsável...</option>
                         {colaboradoresList.length > 0 && (
@@ -296,7 +298,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo de Recorrência</label>
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Tipo de Recorrência</label>
                       <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-black uppercase outline-none" value={formData.Recorrencia} onChange={e => setFormData({...formData, Recorrencia: e.target.value as RecurrenceType})}>
                         <option value={RecurrenceType.DIARIA}>Diária</option>
                         <option value={RecurrenceType.SEMANAL}>Semanal</option>
@@ -305,7 +307,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pontuação (Mérito)</label>
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Pontuação (Mérito)</label>
                       <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.PontosValor} onChange={e => setFormData({...formData, PontosValor: parseInt(e.target.value)})} />
                     </div>
                   </div>

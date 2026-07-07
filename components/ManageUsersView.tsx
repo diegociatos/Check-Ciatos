@@ -108,27 +108,28 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
     <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-3xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Gerenciar Usuários</h3>
-          <p className="text-sm text-gray-400 font-medium mt-1">Administração estratégica do capital humano Ciatos.</p>
+          <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Equipe</p>
+          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Gerenciar usuários</h3>
+          <p className="text-stone-500 mt-1">Cadastre e organize as pessoas da empresa.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }} 
-          className="flex items-center gap-2 bg-[#8B1B1F] text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-all"
+        <button
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]"
         >
-          <Plus size={18} /> Novo Usuário
+          <Plus size={18} /> Novo usuário
         </button>
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cargo / Gestor</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Criado em</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Cargo / Gestor</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Status</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Criado em</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-xs font-bold">
@@ -192,23 +193,23 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50">
-               <h3 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">{editingEmail ? 'Editar Usuário Ciatos' : 'Novo Usuário Corporativo'}</h3>
+               <h3 className="text-xl text-stone-900">{editingEmail ? 'Editar usuário' : 'Novo usuário'}</h3>
                <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[80vh] overflow-y-auto">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><UserIcon size={12}/> Nome Completo</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><UserIcon size={12}/> Nome Completo</label>
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={formData.Nome} onChange={e => setFormData({...formData, Nome: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> E-mail Corporativo</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Mail size={12}/> E-mail Corporativo</label>
                     <input required type="email" readOnly={!!editingEmail} className={`w-full border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none ${editingEmail ? 'bg-gray-100' : 'bg-gray-50 focus:ring-4 focus:ring-[#8B1B1F]/10'}`} value={formData.Email} onChange={e => setFormData({...formData, Email: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Shield size={12}/> Cargo / Permissão</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Shield size={12}/> Cargo / Permissão</label>
                     <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Role} onChange={e => setFormData({...formData, Role: e.target.value as UserRole})}>
                       <option value={UserRole.COLABORADOR}>Colaborador</option>
                       <option value={UserRole.GESTOR}>Gestor</option>
@@ -249,15 +250,15 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   )}
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Time / Departamento</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Time / Departamento</label>
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Time} onChange={e => setFormData({...formData, Time: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Calendar size={12}/> Nascimento</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Calendar size={12}/> Nascimento</label>
                     <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.DataNascimento} onChange={e => setFormData({...formData, DataNascimento: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status da Conta</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Status da Conta</label>
                     <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Status} onChange={e => setFormData({...formData, Status: e.target.value as UserStatus})}>
                       <option value={UserStatus.ATIVO}>Ativo</option>
                       <option value={UserStatus.INATIVO}>Inativo</option>
