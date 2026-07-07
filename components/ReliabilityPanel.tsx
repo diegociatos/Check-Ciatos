@@ -17,7 +17,7 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, colla
   };
 
   return (
-    <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
       <div className="p-8 border-b border-gray-50 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Indicadores de Confiabilidade</h3>
@@ -32,10 +32,10 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, colla
         <table className="w-full text-left">
           <thead>
             <tr className="bg-gray-50/50">
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Conferidas</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Confiabilidade</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Tendência</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Conferidas</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Confiabilidade</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Tendência</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -53,7 +53,7 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, colla
                       </div>
                       <div>
                         <p className="text-sm font-bold text-[#111111]">{user.Nome}</p>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
+                        <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">{user.Time}</p>
                       </div>
                     </div>
                   </td>

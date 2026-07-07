@@ -88,7 +88,7 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
         return (
           <div 
             key={task.ID} 
-            className={`bg-white rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative ${isReturn ? 'ring-2 ring-orange-300 border-orange-200' : 'border-gray-100'}`}
+            className={`bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col relative ${isReturn ? 'ring-2 ring-orange-300 border-orange-200' : 'border-gray-100'}`}
           >
             {/* Banner de tarefa retornada */}
             {isReturn && (
@@ -128,7 +128,7 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                     <Star size={14} fill="currentColor" />
                     <span className="text-xl font-black tracking-tighter">{task.PontosValor}</span>
                   </div>
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">PONTOS</span>
+                  <span className="text-[9px] font-semibold text-stone-400 uppercase tracking-wider">PONTOS</span>
                 </div>
               </div>
 
@@ -152,7 +152,7 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
 
               <div className="flex flex-col gap-2 mt-auto">
                 {showUser && (
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  <div className="flex items-center gap-2 text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
                     <UserIcon size={12} /> {task.Responsavel}
                   </div>
                 )}

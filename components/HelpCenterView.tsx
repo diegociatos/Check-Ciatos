@@ -36,7 +36,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
 
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab());
 
-  const cardStyle = "bg-[#F3F3F3] p-8 rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col";
+  const cardStyle = "bg-[#F3F3F3] p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col";
   const iconBoxStyle = "h-14 w-14 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform text-[#8B1B1F]";
   const titleStyle = "text-lg font-ciatos font-bold text-[#8B1B1F] uppercase tracking-tighter mb-4";
   const textStyle = "text-sm text-gray-600 leading-relaxed font-medium";
@@ -44,7 +44,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-24">
       {/* Header Visual */}
-      <div className="bg-[#8B1B1F] p-12 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Guia do Usuário</h2>
           <p className="text-white/70 font-medium text-lg">Sua jornada de alta performance no Grupo Ciatos começa aqui.</p>
@@ -53,7 +53,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
       </div>
 
       {/* Navegação por Abas */}
-      <div className="flex bg-white p-2 rounded-3xl border border-gray-100 shadow-sm overflow-x-auto gap-2">
+      <div className="flex bg-white p-2 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto gap-2">
         <button
           onClick={() => setActiveTab('COLABORADOR')}
           className={`flex-1 min-w-[150px] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
@@ -171,7 +171,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
       </div>
 
       {/* Footer / Suporte */}
-      <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
+      <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="flex items-center gap-6">
           <div className="h-16 w-16 bg-[#8B1B1F]/5 text-[#8B1B1F] rounded-full flex items-center justify-center">
             <HelpCircle size={32} />

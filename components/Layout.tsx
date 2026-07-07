@@ -59,7 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
 
           {!isPlataforma && empresas.length > 1 && (
             <div className="px-6 py-3 border-b border-gray-200 bg-gray-100/40">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Empresa que você atende</label>
+              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Empresa que você atende</label>
               <select
                 value={activeEmpresa || ''}
                 onChange={e => onSwitchEmpresa?.(e.target.value)}
@@ -91,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
 
               return (
                 <div key={section} className="space-y-1">
-                  <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  <h3 className="px-3 text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-2">
                     {section}
                   </h3>
                   {sectionItems.map((item) => (

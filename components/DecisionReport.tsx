@@ -38,14 +38,14 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users, collaboratorsLis
         </button>
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Entrega</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ação Sugerida</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Colaborador</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Status Entrega</th>
+                <th className="px-8 py-5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center">Ação Sugerida</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -59,7 +59,7 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users, collaboratorsLis
                   <tr key={user.Email} className="hover:bg-gray-50/30 transition-colors">
                     <td className="px-8 py-6">
                       <p className="text-sm font-bold text-[#111111]">{user.Nome}</p>
-                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{user.Time}</p>
+                      <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">{user.Time}</p>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border border-transparent ${status.color}`}>

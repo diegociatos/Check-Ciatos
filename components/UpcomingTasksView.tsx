@@ -142,7 +142,7 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
             </div>
           ))
         ) : (
-          <div className="py-24 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
+          <div className="py-24 text-center bg-white rounded-2xl border-2 border-dashed border-gray-100">
             <CalendarClock size={48} className="mx-auto text-gray-100 mb-4" />
             <p className="text-gray-300 font-black uppercase text-xs tracking-widest">Sem tarefas futuras planejadas.</p>
           </div>
@@ -152,19 +152,19 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
       {/* Modal de Conclusão */}
       {selectedTask && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                <h3 className="text-xl font-black text-[#111111] uppercase tracking-tighter">Entrega Antecipada</h3>
                <button onClick={() => setSelectedTask(null)} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <div className="p-8 space-y-6">
-               <div className="bg-[#8B1B1F] p-6 rounded-3xl text-white">
+               <div className="bg-[#8B1B1F] p-6 rounded-2xl text-white">
                   <p className="text-[10px] font-black uppercase text-white/50 mb-1">Título da Tarefa:</p>
                   <p className="text-lg font-bold leading-tight">{selectedTask.Titulo}</p>
                   <p className="text-[10px] mt-2 italic opacity-70">Prazo Original: {selectedTask.DataLimite_Date!.split('-').reverse().join('/')}</p>
                </div>
                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Notas de Execução</label>
+                  <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Notas de Execução</label>
                   <textarea 
                     className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#8B1B1F]/10 outline-none min-h-[120px]"
                     placeholder="Descreva o que foi realizado antecipadamente..."

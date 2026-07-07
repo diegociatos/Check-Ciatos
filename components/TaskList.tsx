@@ -153,7 +153,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
       {/* Comemoração ao concluir */}
       {celebrar && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl px-10 py-12 text-center max-w-sm animate-in zoom-in-95 duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-12 text-center max-w-sm animate-in zoom-in-95 duration-300">
             <div className="mx-auto h-20 w-20 rounded-full bg-emerald-50 flex items-center justify-center animate-in zoom-in duration-500">
               <CheckCircle2 size={44} className="text-emerald-600" />
             </div>

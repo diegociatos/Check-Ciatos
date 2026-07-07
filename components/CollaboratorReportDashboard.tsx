@@ -79,12 +79,12 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
   ];
 
   const StatCard = ({ title, value, icon: Icon, colorClass, subText }: any) => (
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3 h-full hover:shadow-md transition-shadow">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3 h-full hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-md ${colorClass}`}>
           <Icon size={18} />
         </div>
-        <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{title}</span>
+        <span className="text-[9px] font-semibold text-stone-300 uppercase tracking-wider">{title}</span>
       </div>
       <div>
         <h3 className="text-2xl font-black text-[#111111] tracking-tighter">{value}</h3>
@@ -106,7 +106,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
             <p className="text-sm text-gray-400 font-medium">Histórico Analítico de <strong>{colaborador?.Nome.toUpperCase()}</strong></p>
           </div>
         </div>
-        <div className="flex bg-white p-4 rounded-3xl border border-gray-100 text-[#8B1B1F] items-center gap-4 shadow-sm">
+        <div className="flex bg-white p-4 rounded-2xl border border-gray-100 text-[#8B1B1F] items-center gap-4 shadow-sm">
           <Calendar size={18} />
           <span className="text-[10px] font-black uppercase tracking-widest">
             {dataInicio.toLocaleDateString()} — {dataFim.toLocaleDateString()}
@@ -120,7 +120,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
         <StatCard title="APROVADAS" value={aprovadas} icon={Target} colorClass="bg-green-600" subText="Entrega de Valor" />
         <StatCard title="ERROS" value={erros} icon={AlertTriangle} colorClass="bg-yellow-500" subText="Impacto Qualidade" />
         <StatCard title="FALTAS" value={faltas} icon={XCircle} colorClass="bg-red-600" subText="Quebra de Acordo" />
-        <div className={`p-6 rounded-3xl border shadow-lg flex flex-col justify-center gap-1 h-full text-white ${pontuacaoLiquida >= 0 ? 'bg-[#8B1B1F]' : 'bg-red-800'}`}>
+        <div className={`p-6 rounded-2xl border shadow-lg flex flex-col justify-center gap-1 h-full text-white ${pontuacaoLiquida >= 0 ? 'bg-[#8B1B1F]' : 'bg-red-800'}`}>
            <p className="text-[9px] font-black uppercase tracking-widest opacity-70">LÍQUIDO DO PERÍODO</p>
            <h3 className="text-2xl font-black tracking-tighter">{pontuacaoLiquida} pts</h3>
            <p className="text-[8px] font-bold opacity-50 uppercase">De {pontosPossiveis} Possíveis</p>
@@ -129,7 +129,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Distribuição de Performance */}
-        <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white p-10 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-10">
             <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-2">
               <FileBarChart size={20} className="text-[#8B1B1F]" /> Distribuição de Resultados
@@ -156,7 +156,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
         </div>
 
         {/* Resumo de Aproveitamento */}
-        <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between">
+        <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
            <div className="space-y-6">
               <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Índice de Aproveitamento</h4>
               <div className="space-y-2">
@@ -189,7 +189,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
       </div>
 
       {/* Tabelas de Detalhe Auditoria */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
           <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Extrato Analítico para Feedback</h3>
           <button 
@@ -203,10 +203,10 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
           <table className="w-full text-left table-fixed">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-40">Data Evento</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descrição da Auditoria</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-32">Tipo Impacto</th>
-                <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right w-32">Pontuação</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider w-40">Data Evento</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Descrição da Auditoria</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Tipo Impacto</th>
+                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right w-32">Pontuação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

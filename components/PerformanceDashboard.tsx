@@ -52,12 +52,12 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
   }, [tasks]);
 
   const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-6">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-6">
       <div className={`h-16 w-16 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg`}>
         <Icon size={32} />
       </div>
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
+        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{title}</p>
         <h3 className="text-3xl font-ciatos font-bold text-[#111111]">{value}</h3>
       </div>
     </div>
@@ -73,7 +73,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase mb-8">Produtividade da Operação (Últimos 7 dias)</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -88,7 +88,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase mb-8 flex items-center gap-2">
             <Users size={20} className="text-[#8B1B1F]" /> Top Performance
           </h3>
@@ -101,7 +101,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[#111111]">{u.Nome}</p>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{u.Time}</p>
+                    <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">{u.Time}</p>
                   </div>
                 </div>
                 <span className="text-sm font-black text-[#8B1B1F]">{u.PontosRealizadosMes} pts</span>

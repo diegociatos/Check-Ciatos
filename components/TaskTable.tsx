@@ -109,7 +109,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
                       
                       <div className="flex flex-wrap items-center gap-4">
                         <div className="flex flex-col">
-                          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Solicitada em</p>
+                          <p className="text-[8px] font-semibold text-stone-400 uppercase tracking-wider">Solicitada em</p>
                           <p className="text-xs font-bold text-gray-600">{dataSolicitacao}</p>
                         </div>
                         <ArrowRight size={12} className="text-gray-200" />

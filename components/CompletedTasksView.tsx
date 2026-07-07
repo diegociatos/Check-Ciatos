@@ -59,7 +59,7 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
     <div className="space-y-6 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Barra de Filtros para Gestão */}
       {isManagerOrAdmin && (
-        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
              <div className="h-10 w-10 bg-[#8B1B1F]/5 text-[#8B1B1F] rounded-xl flex items-center justify-center">
                 <Filter size={20} />
@@ -85,11 +85,11 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
         </div>
       )}
 
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
           <div>
             <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Histórico em Tabela</h3>
-            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Total de {filteredTasks.length} Registros Aprovados</p>
+            <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Total de {filteredTasks.length} Registros Aprovados</p>
           </div>
           <ShieldCheck className="text-green-600" size={28} />
         </div>
@@ -99,12 +99,12 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
             <thead>
               <tr className="bg-gray-50/20">
                 {isManagerOrAdmin && (
-                  <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest w-48">Colaborador</th>
+                  <th className="px-8 py-4 text-[9px] font-semibold text-stone-400 uppercase tracking-wider w-48">Colaborador</th>
                 )}
-                <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Obrigação Concluída</th>
-                <th className="w-32 px-8 py-4 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Finalizado em</th>
-                <th className="w-24 px-8 py-4 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Auditado</th>
-                <th className="w-20 px-8 py-4 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Pts</th>
+                <th className="px-8 py-4 text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Obrigação Concluída</th>
+                <th className="w-32 px-8 py-4 text-center text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Finalizado em</th>
+                <th className="w-24 px-8 py-4 text-center text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Auditado</th>
+                <th className="w-20 px-8 py-4 text-center text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Pts</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

@@ -57,9 +57,9 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
   ];
 
   const StatCard = ({ title, value, subValue, icon: Icon, colorClass, borderClass }: any) => (
-    <div className={`bg-white p-6 rounded-[32px] border ${borderClass || 'border-gray-100'} shadow-sm flex flex-col justify-between h-full hover:shadow-md transition-shadow`}>
+    <div className={`bg-white p-6 rounded-2xl border ${borderClass || 'border-gray-100'} shadow-sm flex flex-col justify-between h-full hover:shadow-md transition-shadow`}>
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{title}</span>
+        <span className="text-[9px] font-semibold text-stone-400 uppercase tracking-wider">{title}</span>
         <div className={`p-2 rounded-xl bg-gray-50 ${colorClass}`}>
            <Icon size={18} />
         </div>
@@ -74,7 +74,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Header Seletor */}
-      <div className="bg-[#8B1B1F] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-2">
             <h3 className="text-3xl font-bold uppercase tracking-tight">Painel Individual de Feedback</h3>
@@ -111,7 +111,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
 
           {/* Análise de Pontuação */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+            <div className="lg:col-span-2 bg-white p-10 rounded-2xl border border-gray-100 shadow-sm space-y-8">
               <div className="flex items-center justify-between">
                 <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Comparativo de Pontuação Real</h4>
                 <div className="text-right">
@@ -135,11 +135,11 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-50">
-                <div className="bg-green-50/50 p-6 rounded-3xl border border-green-100">
+                <div className="bg-green-50/50 p-6 rounded-2xl border border-green-100">
                   <p className="text-[10px] font-black text-green-700 uppercase mb-1">Pontos Alcançados</p>
                   <p className="text-2xl font-black text-green-700">{metrics.pontosAlcancados}</p>
                 </div>
-                <div className="bg-red-50/50 p-6 rounded-3xl border border-red-100">
+                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
                   <p className="text-[10px] font-black text-red-700 uppercase mb-1">Potencial não Atingido</p>
                   <p className="text-2xl font-black text-red-700">{metrics.pontosPossiveis - metrics.pontosAlcancados}</p>
                 </div>
@@ -147,7 +147,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+              <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                 <h4 className="text-lg font-bold text-[#111111] uppercase tracking-tighter mb-6 flex items-center gap-2">
                   <ArrowDownCircle size={20} className="text-red-600" /> Detalhe de Perdas
                 </h4>
@@ -169,7 +169,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                 </div>
               </div>
 
-              <div className="bg-[#8B1B1F] p-8 rounded-[40px] text-white shadow-xl flex flex-col justify-center">
+              <div className="bg-[#8B1B1F] p-8 rounded-2xl text-white shadow-xl flex flex-col justify-center">
                  <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Info size={24} className="opacity-50" />
@@ -193,7 +193,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
           </div>
 
           {/* Agenda de Futuro */}
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm">
              <div className="flex items-center justify-between mb-8">
                 <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-3">
                    <CalendarClock size={24} className="text-[#8B1B1F]" /> Agenda de Futuro (Planejamento)
@@ -208,7 +208,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
              <div className="space-y-4">
                 {futureTasks.length > 0 ? (
                    futureTasks.map(task => (
-                     <div key={task.ID} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
+                     <div key={task.ID} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
                         <div className="flex items-center gap-4">
                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 group-hover:text-[#8B1B1F] transition-colors">
                               <Clock size={20} />
@@ -222,7 +222,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                         </div>
                         <div className="mt-4 md:mt-0 flex items-center gap-6">
                            <div className="text-right">
-                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</p>
+                              <p className="text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Status</p>
                               <span className={`text-[10px] font-black uppercase tracking-widest ${
                                 task.Status === TaskStatus.FEITA_ERRADA ? 'text-yellow-600' : 
                                 task.Status === TaskStatus.NAO_FEITA ? 'text-red-600' : 'text-blue-600'
@@ -231,14 +231,14 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                               </span>
                            </div>
                            <div className="text-right border-l border-gray-200 pl-6">
-                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Valor</p>
+                              <p className="text-[9px] font-semibold text-stone-400 uppercase tracking-wider">Valor</p>
                               <span className="text-sm font-black text-[#111111]">{task.PontosValor} Pts</span>
                            </div>
                         </div>
                      </div>
                    ))
                 ) : (
-                   <div className="py-12 text-center bg-gray-50/50 rounded-[32px] border-2 border-dashed border-gray-100">
+                   <div className="py-12 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
                       <CalendarClock size={40} className="mx-auto text-gray-200 mb-3" />
                       <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Nenhuma tarefa planejada para as próximas datas.</p>
                    </div>
@@ -247,7 +247,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
           </div>
         </>
       ) : (
-        <div className="py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
+        <div className="py-20 text-center bg-white rounded-2xl border-2 border-dashed border-gray-100">
            <UserIcon size={48} className="mx-auto text-gray-100 mb-4" />
            <p className="text-gray-300 font-black uppercase text-xs tracking-widest">Selecione um colaborador da sua equipe.</p>
         </div>
