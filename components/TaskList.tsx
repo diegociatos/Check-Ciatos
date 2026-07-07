@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
-import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper } from 'lucide-react';
+import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText } from 'lucide-react';
+import { validarArquivo, uploadEvidencia, MAX_MB } from '../lib/storage';
 
 interface EnrichedTask extends Task {
   NomeColaborador: string;
@@ -23,14 +24,41 @@ const RED = '#8B1B1F';
 const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail }) => {
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const [note, setNote] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [celebrar, setCelebrar] = useState<{ titulo: string; pontos: number } | null>(null);
 
-  const confirmar = () => {
-    if (!selectedTask) return;
+  const abrirModal = (task: EnrichedTask) => {
+    setSelectedTask(task); setNote(''); setFile(null); setUploadError('');
+  };
+
+  const escolherArquivo = (f: File | null) => {
+    setUploadError('');
+    if (f) {
+      const err = validarArquivo(f);
+      if (err) { setUploadError(err); setFile(null); return; }
+    }
+    setFile(f);
+  };
+
+  const confirmar = async () => {
+    if (!selectedTask || uploading) return; // impede duplo clique
     const t = selectedTask;
-    onComplete(t.ID, note, '');
-    setSelectedTask(null);
-    setNote('');
+    let proofPath = '';
+    if (file) {
+      setUploading(true); setUploadError('');
+      try {
+        proofPath = await uploadEvidencia(file, t.empresa_id || '', t.ID);
+      } catch (e: any) {
+        setUploadError(e?.message || 'Falha no upload da evidência.');
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+    onComplete(t.ID, note, proofPath);
+    setSelectedTask(null); setNote(''); setFile(null);
     setCelebrar({ titulo: t.Titulo, pontos: t.PontosValor });
     setTimeout(() => setCelebrar(null), 3000);
   };
@@ -100,7 +128,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                 {podeConcluir && (
                   <div className="px-6 pb-6">
                     <button
-                      onClick={() => setSelectedTask(task)}
+                      onClick={() => abrirModal(task)}
                       className="w-full bg-[#8B1B1F] text-white py-3.5 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                       <CheckSquare size={18} /> {isRejected ? 'Refazer' : 'Concluir'}
@@ -142,8 +170,35 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
-              <button onClick={confirmar} className="w-full bg-[#8B1B1F] text-white py-4 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors flex items-center justify-center gap-2">
-                <Send size={18} /> Enviar para aprovação
+
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Evidência <span className="text-stone-300 normal-case">(opcional — imagem ou PDF, até {MAX_MB}MB)</span></label>
+                {file ? (
+                  <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl p-3">
+                    <FileText size={18} className="text-[#8B1B1F] shrink-0" />
+                    <span className="text-sm text-stone-700 truncate flex-1">{file.name}</span>
+                    <button type="button" onClick={() => escolherArquivo(null)} className="text-stone-400 hover:text-stone-600"><X size={18} /></button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 justify-center bg-stone-50 border border-dashed border-stone-300 rounded-xl p-3.5 text-sm text-stone-500 cursor-pointer hover:border-[#8B1B1F]/40 hover:text-stone-700 transition-colors">
+                    <Paperclip size={16} /> Anexar arquivo
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,application/pdf"
+                      className="hidden"
+                      onChange={(e) => escolherArquivo(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                )}
+                {uploadError && <p className="text-[12px] text-[#C62828] mt-1.5">{uploadError}</p>}
+              </div>
+
+              <button onClick={confirmar} disabled={uploading} className="w-full bg-[#8B1B1F] text-white py-4 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+                {uploading ? (
+                  <><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</>
+                ) : (
+                  <><Send size={18} /> Enviar para aprovação</>
+                )}
               </button>
             </div>
           </div>
