@@ -50,7 +50,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
       
       if (selectedDays.length === 0) return 'Selecione os dias';
 
-      let nextDate = new Date(spToday);
+      const nextDate = new Date(spToday);
       let found = false;
       for (let i = 0; i < 8; i++) {
         if (selectedDays.includes(nextDate.getDay())) {
@@ -65,7 +65,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
     // Se é Data Fixa, o dia de execução é o DiaDoMes informado (Repetitivo mensal)
     if ((formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.POR_DATA_FIXA) && formData.DiaDoMes) {
       const targetDay = formData.DiaDoMes;
-      let nextDate = new Date(spToday.getFullYear(), spToday.getMonth(), targetDay);
+      const nextDate = new Date(spToday.getFullYear(), spToday.getMonth(), targetDay);
       if (spToday.getDate() > targetDay) {
         nextDate.setMonth(nextDate.getMonth() + 1);
       }
