@@ -49,20 +49,21 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
-      <div className="flex flex-col gap-2">
-         <h3 className="text-3xl font-bold text-[#8B1B1F] uppercase tracking-tighter">Conferir Entregas</h3>
-         <p className="text-sm text-gray-400 font-medium italic">Auditoria técnica e feedback de performance.</p>
+      <div>
+         <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Gestão</p>
+         <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Conferir entregas</h3>
+         <p className="text-stone-500 mt-1">Aprove ou devolva o que sua equipe entregou — os pontos entram na aprovação.</p>
       </div>
 
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] overflow-hidden">
         <table className="w-full text-left table-fixed">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-1/4">Colaborador</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Obrigação Concluída</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-40">Data Entrega</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-24">Pts</th>
-              <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right w-64">Decisão Auditoria</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider w-1/4">Colaborador</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Obrigação Concluída</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-40">Data Entrega</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Pts</th>
+              <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right w-64">Decisão Auditoria</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -181,7 +182,11 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
               })
             ) : (
               <tr>
-                <td colSpan={5} className="py-24 text-center text-gray-300 uppercase font-black text-xs">Aguardando novas entregas para auditoria.</td>
+                <td colSpan={5} className="py-20 text-center">
+                  <ShieldCheck size={44} className="mx-auto text-emerald-500/60" />
+                  <p className="text-stone-600 mt-3 text-lg">Nada para conferir agora.</p>
+                  <p className="text-stone-400 text-sm mt-1">Quando a equipe concluir obrigações, elas aparecem aqui.</p>
+                </td>
               </tr>
             )}
           </tbody>
@@ -236,7 +241,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                ) : (
                  <div className="space-y-6">
                     <div className="space-y-2">
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Justificativa do Retorno (Obrigatório)</label>
+                       <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Justificativa do Retorno (Obrigatório)</label>
                        <textarea 
                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#8B1B1F]/10 outline-none min-h-[100px]"
                          placeholder="O colaborador verá esta mensagem para corrigir a entrega..."
