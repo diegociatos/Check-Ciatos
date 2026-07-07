@@ -12,9 +12,9 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-function tempPassword(): string {
-  return 'Ciatos@' + Math.random().toString(36).slice(2, 8) + Math.floor(Math.random() * 90 + 10);
-}
+// Senha provisória FIXA, igual ao design original do app (a tela promete "123456"
+// e o usuário deve trocá-la no primeiro acesso). SenhaProvisoria=true marca a troca.
+const SENHA_PROVISORIA = '123456';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
   try {
     if (action === 'create') {
-      const pass = tempPassword();
+      const pass = SENHA_PROVISORIA;
       const { data: created, error: e1 } = await admin.auth.admin.createUser({
         email: user.Email, password: pass, email_confirm: true,
       });
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
 
     if (action === 'reset-password') {
       const { data: row } = await admin.from('users').select('user_id').ilike('Email', email).maybeSingle();
-      const pass = tempPassword();
+      const pass = SENHA_PROVISORIA;
       if ((row as any)?.user_id) {
         const { error } = await admin.auth.admin.updateUserById((row as any).user_id, { password: pass });
         if (error) throw error;
