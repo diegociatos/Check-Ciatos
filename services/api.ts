@@ -146,12 +146,13 @@ export const tasksApi = {
     return { message: 'Tarefa enviada para aprovação' };
   },
 
-  audit: async (taskId: string, status: string, observation: string) => {
+  audit: async (taskId: string, status: string, observation: string, novaDataLimite?: string | null) => {
     const { data, error } = await supabase.rpc('audit_task', {
       p_id: taskId, p_status: status, p_obs: observation ?? null,
+      p_nova_data_limite: novaDataLimite ?? null,
     });
     if (error) throwSb(error, 'Erro ao auditar tarefa');
-    return { message: 'Auditoria registrada', pontos: (data as any)?.pontos ?? 0 };
+    return { message: 'Auditoria registrada', pontos: (data as any)?.pontos ?? 0, dataLimite: (data as any)?.dataLimite };
   },
 
   delete: async (taskId: string) => {

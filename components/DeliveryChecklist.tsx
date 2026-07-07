@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus } from '../types';
 import { getTodayStr } from '../store';
+import { pontosAprovacao } from '../lib/scoreEngine';
 import { CheckCircle, XCircle, AlertCircle, Clock, User, Send, Calendar, ShieldCheck, History, MessageSquare, AlertTriangle, Eye, Info, Check } from 'lucide-react';
 
 interface DeliveryChecklistProps {
@@ -118,13 +119,13 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                         if (isLate || isRetry) {
                           return (
                             <div className="flex flex-col items-center">
-                              <span className="text-xs font-black text-yellow-600">{Math.ceil(task.PontosValor * 0.5)}</span>
+                              <span className="text-xs font-black text-yellow-600">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade, atrasada: !!isLate, reentrega: isRetry })}</span>
                               <span className="text-[8px] text-gray-400 line-through">{task.PontosValor} pts</span>
                               <span className="text-[7px] font-bold text-yellow-600 uppercase">{isLate ? 'Atraso' : 'Reentrega'}</span>
                             </div>
                           );
                         }
-                        return <span className="text-sm font-black text-[#8B1B1F]">{task.PontosValor}</span>;
+                        return <span className="text-sm font-black text-[#8B1B1F]">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade })}</span>;
                       })()}
                     </td>
                     <td className="px-8 py-4 text-right">
@@ -216,7 +217,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     {(() => {
                       const isLate = auditTask.DataConclusao && auditTask.DataLimite_Date && auditTask.DataConclusao.split('T')[0] > auditTask.DataLimite_Date;
                       const isRetry = (auditTask.Tentativas || 0) > 0;
-                      const reducedPoints = Math.ceil(auditTask.PontosValor * 0.5);
+                      const reducedPoints = pontosAprovacao({ pontosBase: auditTask.PontosValor, prioridade: auditTask.Prioridade, atrasada: !!isLate, reentrega: isRetry });
                       if (isLate || isRetry) {
                         return (
                           <div className="space-y-2">
@@ -233,7 +234,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                       }
                       return (
                         <p className="text-sm text-gray-500 font-medium italic">
-                          Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong> e creditar {auditTask.PontosValor} pts?
+                          Confirmar conformidade técnica de <strong className="text-[#111111]">{auditTask.Titulo}</strong> e creditar {pontosAprovacao({ pontosBase: auditTask.PontosValor, prioridade: auditTask.Prioridade })} pts?
                         </p>
                       );
                     })()}
