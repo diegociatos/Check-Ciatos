@@ -7,13 +7,20 @@
     <title>Checklist Diário - Grupo Ciatos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Aplicando a fonte Bookman Antiqua globalmente */
-      body, button, input, select, textarea {
-        font-family: 'Bookman Antiqua', 'Palatino', 'Georgia', serif !important;
+      /* Tipografia de marca Grupo Ciatos: Book Antiqua (serifa editorial).
+         Pilha com equivalentes para quem não tem a fonte local (Mac/celular). */
+      body, button, input, select, textarea, h1, h2, h3, h4, h5, h6 {
+        font-family: 'Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', serif !important;
       }
-      
+
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
       .font-ciatos {
-        font-family: 'Bookman Antiqua', 'Palatino', 'Georgia', serif;
+        font-family: 'Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', serif;
       }
 
       /* Custom scrollbar for better aesthetics */
