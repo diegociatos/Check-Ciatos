@@ -64,11 +64,13 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'DASHBOARD':
         return (
-          <Dashboard 
+          <Dashboard
+            currentUser={currentUser}
             score={currentUser.PontosRealizadosMes || 0}
             pendingTasksToday={visibleTasks.filter(t => t.Responsavel === currentUser.Email && t.Status === TaskStatus.PENDENTE && t.DataLimite_Date === today)}
             recentLedger={ledger.filter(l => l.UserEmail === currentUser.Email).slice(0, 5)}
-            onNavigateToTasks={() => setCurrentView('MY_TASKS_TODAY')}
+            myLedger={ledger.filter(l => l.UserEmail === currentUser.Email)}
+            onNavigateToTasks={(v?: any) => setCurrentView(v || 'MY_TASKS_TODAY')}
             tasks={visibleTasks}
             currentUserRole={currentUser.Role}
             collaborators={collaboratorsList}
