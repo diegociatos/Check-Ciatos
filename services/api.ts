@@ -97,6 +97,22 @@ export const authApi = {
     if (error) throwSb(error, 'Erro ao excluir usuário');
     return { message: data?.message || 'Usuário excluído' };
   },
+
+  // Define quais empresas (entre as que o chamador administra) um usuário acessa.
+  setEmpresas: async (email: string, empresas: string[]) => {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { action: 'set-empresas', email, empresas },
+    });
+    if (error) throwSb(error, 'Erro ao atualizar acessos');
+    return data;
+  },
+
+  // Empresas vinculadas a um usuário (para pré-marcar na tela)
+  getEmpresasDoUsuario: async (email: string) => {
+    const { data, error } = await supabase.from('user_empresas').select('empresa_id').ilike('email', email);
+    if (error) throwSb(error);
+    return (data ?? []).map((r: any) => r.empresa_id);
+  },
 };
 
 // ==================== TASKS ====================

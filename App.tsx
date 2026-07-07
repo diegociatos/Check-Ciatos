@@ -185,13 +185,17 @@ const App: React.FC = () => {
 
       case 'MANAGE_USERS':
         return (
-          <ManageUsersView 
+          <ManageUsersView
             users={users}
             onAddUser={store.addUser}
             onUpdateUser={store.updateUser}
             onResetPassword={store.resetUserPassword}
             onToggleStatus={store.toggleUserStatus}
             onDeleteUser={store.deleteUser}
+            empresas={store.empresas}
+            activeEmpresa={store.activeEmpresa}
+            onSetEmpresas={store.setUserEmpresas}
+            getUserEmpresas={store.getUserEmpresas}
           />
         );
 
@@ -252,6 +256,9 @@ const App: React.FC = () => {
       isPlataforma={store.isPlataforma}
       empresaNome={store.empresaAtual?.Nome}
       onExitEmpresa={() => store.setActiveEmpresa(null)}
+      empresas={store.empresas}
+      activeEmpresa={store.activeEmpresa}
+      onSwitchEmpresa={store.setActiveEmpresa}
     >
       {renderView()}
     </Layout>

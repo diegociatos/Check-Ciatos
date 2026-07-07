@@ -15,9 +15,12 @@ interface LayoutProps {
   isPlataforma?: boolean;
   empresaNome?: string;
   onExitEmpresa?: () => void;
+  empresas?: { id: string; Nome: string }[];
+  activeEmpresa?: string | null;
+  onSwitchEmpresa?: (id: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa }) => {
+const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa, empresas = [], activeEmpresa, onSwitchEmpresa }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -45,14 +48,27 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
       `}>
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-            <div className="h-10 w-10 bg-[#8B1B1F] rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden">
+            <div className="h-10 w-10 bg-[#8B1B1F] rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden shrink-0">
                <span className="font-black">GC</span>
             </div>
-            <div>
-              <h1 className="font-bold leading-tight text-[#111111]">Grupo Ciatos</h1>
+            <div className="min-w-0">
+              <h1 className="font-bold leading-tight text-[#111111] truncate">{empresaNome || (isPlataforma ? 'Plataforma' : 'Checklist Diário')}</h1>
               <p className="text-xs text-gray-500 font-medium">Checklist Diário</p>
             </div>
           </div>
+
+          {!isPlataforma && empresas.length > 1 && (
+            <div className="px-6 py-3 border-b border-gray-200 bg-gray-100/40">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Empresa que você atende</label>
+              <select
+                value={activeEmpresa || ''}
+                onChange={e => onSwitchEmpresa?.(e.target.value)}
+                className="mt-1 w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#8B1B1F]/20"
+              >
+                {empresas.map(e => <option key={e.id} value={e.id}>{e.Nome}</option>)}
+              </select>
+            </div>
+          )}
 
           <div className="px-6 py-4 flex items-center gap-3 bg-gray-200/30">
             <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-[#111111] overflow-hidden border-2 border-white shadow-sm">
