@@ -23,7 +23,8 @@ import {
   FileBarChart,
   Zap,
   LineChart,
-  CalendarDays
+  CalendarDays,
+  Activity
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -93,12 +94,19 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   
   // SEÇÃO: GESTOR
-  { 
-    label: 'Relatório por Colaborador', 
-    view: 'PERIOD_REPORT_FILTERS', 
+  {
+    label: 'Pulso da Operação',
+    view: 'PULSO',
     section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <FileBarChart size={20} /> 
+    role: [UserRole.GESTOR, UserRole.ADMIN],
+    icon: <Activity size={20} />
+  },
+  {
+    label: 'Relatório por Colaborador',
+    view: 'PERIOD_REPORT_FILTERS',
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN],
+    icon: <FileBarChart size={20} />
   },
   { 
     label: 'Supervisão de Tarefas', 
