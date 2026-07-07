@@ -78,6 +78,8 @@ const App: React.FC = () => {
             users={users}
             onCreate={store.createEmpresa}
             onEnter={enterEmpresa}
+            onSuspend={store.suspenderEmpresa}
+            onDelete={store.excluirEmpresa}
           />
         );
 
@@ -256,7 +258,7 @@ const App: React.FC = () => {
       isPlataforma={store.isPlataforma}
       empresaNome={store.empresaAtual?.Nome}
       onExitEmpresa={() => store.setActiveEmpresa(null)}
-      empresas={store.empresas}
+      empresas={store.isPlataforma ? store.empresas : store.empresas.filter(e => (e.Status || 'Ativa') !== 'Suspensa')}
       activeEmpresa={store.activeEmpresa}
       onSwitchEmpresa={store.setActiveEmpresa}
     >

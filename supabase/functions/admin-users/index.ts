@@ -137,6 +137,40 @@ Deno.serve(async (req) => {
       return json({ message: 'Usuário excluído' });
     }
 
+    // Excluir uma empresa inteira (só plataforma): apaga dados, remove usuários
+    // exclusivos dela e desvincula os multi-empresa. Nunca apaga a plataforma.
+    if (action === 'delete-empresa') {
+      if (!isPlataforma) return json({ error: 'Apenas a plataforma pode excluir empresas' }, 403);
+      const empId = payload.empresa_id;
+      if (!empId) return json({ error: 'Empresa não informada' }, 400);
+
+      await admin.from('tasks').delete().eq('empresa_id', empId);
+      await admin.from('task_templates').delete().eq('empresa_id', empId);
+      await admin.from('score_ledger').delete().eq('empresa_id', empId);
+
+      const { data: membros } = await admin.from('users').select('Email, user_id, "Role"').eq('empresa_id', empId);
+      for (const u of (membros as any[]) ?? []) {
+        if (String(u.Role).toLowerCase() === 'plataforma') {
+          // Nunca apaga a plataforma; só solta o vínculo de empresa-casa.
+          await admin.from('users').update({ empresa_id: null }).ilike('Email', u.Email);
+          continue;
+        }
+        const { data: outros } = await admin.from('user_empresas')
+          .select('empresa_id').ilike('email', u.Email).neq('empresa_id', empId);
+        const outras = ((outros as any[]) ?? []).map(o => o.empresa_id);
+        if (outras.length > 0) {
+          await admin.from('users').update({ empresa_id: outras[0] }).ilike('Email', u.Email);
+        } else {
+          await admin.from('users').delete().ilike('Email', u.Email);
+          if (u.user_id) await admin.auth.admin.deleteUser(u.user_id).catch(() => {});
+        }
+      }
+      await admin.from('user_empresas').delete().eq('empresa_id', empId);
+      const { error: de } = await admin.from('empresas').delete().eq('id', empId);
+      if (de) throw de;
+      return json({ message: 'Empresa excluída' });
+    }
+
     return json({ error: 'Ação desconhecida' }, 400);
   } catch (err) {
     return json({ error: (err as Error).message || 'Erro ao processar' }, 400);
