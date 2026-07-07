@@ -79,13 +79,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                         setIsSidebarOpen(false);
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all
-                        ${currentView === item.view 
-                          ? 'bg-[#8B1B1F] text-white shadow-md shadow-[#8B1B1F]/20' 
+                        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold leading-tight text-left transition-all
+                        ${currentView === item.view
+                          ? 'bg-[#8B1B1F] text-white shadow-md shadow-[#8B1B1F]/20'
                           : 'text-gray-600 hover:bg-gray-200 hover:text-[#111111]'}
                       `}
                     >
-                      <span className={currentView === item.view ? 'text-white' : 'text-gray-400 group-hover:text-[#111111]'}>
+                      <span className={`shrink-0 ${currentView === item.view ? 'text-white' : 'text-gray-400 group-hover:text-[#111111]'}`}>
                         {item.icon}
                       </span>
                       {item.label}
