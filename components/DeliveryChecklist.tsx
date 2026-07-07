@@ -1,9 +1,43 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, TaskStatus } from '../types';
 import { getTodayStr } from '../store';
 import { pontosAprovacao } from '../lib/scoreEngine';
-import { CheckCircle, XCircle, AlertCircle, Clock, User, Send, Calendar, ShieldCheck, History, MessageSquare, AlertTriangle, Eye, Info, Check } from 'lucide-react';
+import { urlEvidencia, pareceArquivo } from '../lib/storage';
+
+// Mostra a evidência anexada: link para abrir/baixar (URL assinada) ou o texto antigo.
+const AnexoEvidencia: React.FC<{ path: string }> = ({ path }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  useEffect(() => {
+    let ativo = true;
+    if (pareceArquivo(path)) {
+      urlEvidencia(path).then(u => { if (ativo) { setUrl(u); setCarregando(false); } });
+    } else {
+      setCarregando(false);
+    }
+    return () => { ativo = false; };
+  }, [path]);
+
+  if (carregando) return <div className="bg-white p-3 rounded-xl border border-gray-100 text-xs text-gray-400">Carregando evidência…</div>;
+  if (url) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer"
+         className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-2 hover:border-[#8B1B1F]/40 transition-colors">
+        <Paperclip size={14} className="text-[#8B1B1F]" />
+        <span className="text-xs font-semibold text-[#8B1B1F]">Abrir / baixar evidência</span>
+      </a>
+    );
+  }
+  // Compatibilidade: anexo antigo (texto)
+  return (
+    <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-2">
+      <Info size={14} className="text-blue-500" />
+      <span className="text-xs font-medium text-gray-600 truncate">Anexo: {path}</span>
+    </div>
+  );
+};
+import { CheckCircle, XCircle, AlertCircle, Clock, User, Send, Calendar, ShieldCheck, History, MessageSquare, AlertTriangle, Eye, Info, Check, Paperclip } from 'lucide-react';
 
 interface DeliveryChecklistProps {
   tasks: Task[];
@@ -167,12 +201,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                             <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-2xl border border-gray-100 italic">
                               {hasNote ? `"${task.CompletionNote}"` : 'Nenhum relato técnico enviado.'}
                             </p>
-                            {hasProof && (
-                              <div className="bg-white p-3 rounded-2xl border border-gray-100 flex items-center gap-2">
-                                <Info size={14} className="text-blue-500" />
-                                <span className="text-xs font-bold text-blue-600">Anexo: {task.ProofAttachment}</span>
-                              </div>
-                            )}
+                            {hasProof && <AnexoEvidencia path={task.ProofAttachment!} />}
                           </div>
                         </div>
                       </td>
