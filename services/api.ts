@@ -248,4 +248,16 @@ export const empresasApi = {
   },
 };
 
-export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi };
+// ==================== E-MAIL (Resend via Edge Function) ====================
+export const emailApi = {
+  // Notifica o responsável sobre uma nova obrigação. Nunca bloqueia a criação da tarefa.
+  notificarNovaTarefa: async (payload: { to: string; nome?: string; titulo: string; prazo?: string; empresa?: string }) => {
+    try {
+      await supabase.functions.invoke('notificar-tarefa', { body: payload });
+    } catch (e) {
+      console.warn('Falha ao notificar por e-mail:', e);
+    }
+  },
+};
+
+export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, email: emailApi };
