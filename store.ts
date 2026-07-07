@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog } from './types';
 import { authApi, tasksApi, templatesApi, ledgerApi } from './services/api';
+import { supabase } from './lib/supabase';
 
 // Funções utilitárias exportadas
 export const getTodayStr = () => {
@@ -243,7 +244,22 @@ export const useStore = () => {
     }
   }, []);
 
-  const logout = useCallback(() => setCurrentUserEmail(null), []);
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setCurrentUserEmail(null);
+  }, []);
+
+  // Sincroniza a sessão do Supabase com o email atual (cobre refresh e logout em outra aba)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const email = data.session?.user?.email;
+      if (email) setCurrentUserEmail(prev => prev ?? email);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) setCurrentUserEmail(null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const changePassword = useCallback(async (email: string, oldPass: string, newPass: string) => {
     await authApi.changePassword(email, oldPass, newPass);
