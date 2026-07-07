@@ -116,8 +116,8 @@ const App: React.FC = () => {
           (t.Status === TaskStatus.PENDENTE || t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA)
         );
         return (
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-[#8B1B1F] uppercase">Obrigações de Hoje</h3>
+          <div className="space-y-6 font-ciatos">
+            <h3 className="text-3xl text-stone-900">Obrigações de hoje</h3>
             <TaskList 
               tasks={myTodayTasks.map(t => ({
                 ...t,
