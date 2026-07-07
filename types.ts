@@ -1,9 +1,19 @@
 
 
 export enum UserRole {
+  PLATAFORMA = 'Plataforma',
+  MASTER = 'Master',
   GESTOR = 'Gestor',
   COLABORADOR = 'Colaborador',
   ADMIN = 'Admin'
+}
+
+export interface Empresa {
+  id: string;
+  Nome: string;
+  Status?: string;
+  Plano?: string;
+  DataCriacao?: string;
 }
 
 export enum UserStatus {
@@ -108,6 +118,7 @@ export interface User {
   ScoreConfiabilidade?: number;
   StatusRH?: string;
   TemAtrasos?: boolean;
+  empresa_id?: string;
 }
 
 export interface Task {
@@ -131,6 +142,7 @@ export interface Task {
   ObservacaoGestor?: string;
   ProofAttachment?: string;
   CompletionNote?: string;
+  empresa_id?: string;
 }
 
 // Added DataInicio to TaskTemplate interface to support template generation logic
@@ -148,6 +160,7 @@ export interface TaskTemplate {
   PularFinalDeSemana?: boolean;
   Ativa: boolean;
   UltimaExecucao?: string;
+  empresa_id?: string;
 }
 
 export interface ScoreLedger {
@@ -157,6 +170,7 @@ export interface ScoreLedger {
   Pontos: number;
   Tipo: ScoreType;
   Descricao: string;
+  empresa_id?: string;
 }
 
 export interface Notification {
@@ -192,4 +206,5 @@ export type ViewType =
   | 'PERIOD_REPORT_FILTERS'
   | 'PERIOD_REPORT_DASHBOARD'
   | 'BOT_HISTORY'
-  | 'MONTHLY_PERFORMANCE';
+  | 'MONTHLY_PERFORMANCE'
+  | 'CLIENTES';
