@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog } from './types';
-import { authApi, tasksApi, templatesApi, ledgerApi } from './services/api';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa } from './types';
+import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi } from './services/api';
 import { supabase } from './lib/supabase';
 
 // Funções utilitárias exportadas
@@ -28,6 +28,8 @@ const getLocalTodayStr = () => {
 // Normaliza Role para o formato do frontend
 const normalizeRole = (role: string): UserRole => {
   const upper = role?.toUpperCase();
+  if (upper === 'PLATAFORMA') return UserRole.PLATAFORMA;
+  if (upper === 'MASTER') return UserRole.MASTER;
   if (upper === 'ADMIN') return UserRole.ADMIN;
   if (upper === 'GESTOR') return UserRole.GESTOR;
   return UserRole.COLABORADOR;
@@ -60,6 +62,8 @@ export const useStore = () => {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [ledger, setLedger] = useState<ScoreLedger[]>([]);
   const [botLog, setBotLog] = useState<BotLog[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [activeEmpresa, setActiveEmpresa] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,12 +79,15 @@ export const useStore = () => {
         setError(null);
 
         // Carregar dados em paralelo
-        const [usersData, tasksData, templatesData, ledgerData] = await Promise.all([
+        const [usersData, tasksData, templatesData, ledgerData, empresasData] = await Promise.all([
           authApi.getUsers().catch(() => []),
           tasksApi.getAll().catch(() => []),
           templatesApi.getAll().catch(() => []),
           ledgerApi.getAll().catch(() => []),
+          empresasApi.getAll().catch(() => []),
         ]);
+
+        setEmpresas(empresasData as Empresa[]);
 
         // Normalizar usuários
         setBaseUsers(usersData.map((u: any) => ({
@@ -94,6 +101,7 @@ export const useStore = () => {
           DataCriacao: u.DataCriacao,
           UltimoAcesso: u.UltimoAcesso,
           TentativasFalhadas: u.TentativasFalhadas || 0,
+          empresa_id: u.empresa_id,
         })));
 
         // Normalizar tarefas
@@ -117,6 +125,7 @@ export const useStore = () => {
           Tentativas: t.Tentativas || 0,
           DataGeracao: t.DataGeracao || '',
           DataCriacao: t.DataCriacao || '',
+          empresa_id: t.empresa_id,
         })));
 
         // Normalizar templates
@@ -134,6 +143,7 @@ export const useStore = () => {
           PularFinalDeSemana: t.PularFinalDeSemana || false,
           Ativa: t.Ativa,
           UltimaExecucao: t.UltimaExecucao,
+          empresa_id: t.empresa_id,
         })));
 
         // Normalizar ledger
@@ -144,6 +154,7 @@ export const useStore = () => {
           Pontos: l.Pontos,
           Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
           Descricao: l.Descricao,
+          empresa_id: l.empresa_id,
         })));
 
         console.log('✅ Dados carregados do backend');
@@ -158,19 +169,42 @@ export const useStore = () => {
     loadData();
   }, []);
 
-  // Calcula usuários com métricas
+  // ===== Contexto multi-empresa =====
+  // A plataforma (dono do sistema) enxerga todas as empresas; ao "entrar" numa empresa,
+  // os dados são filtrados por ela. Os demais papéis já vêm isolados pela RLS.
+  const rawCurrentUser = useMemo(
+    () => baseUsers.find(u => u.Email === currentUserEmail) || null,
+    [baseUsers, currentUserEmail]
+  );
+  const isPlataforma = rawCurrentUser?.Role === UserRole.PLATAFORMA;
+
+  // Define a empresa ativa automaticamente para quem não é plataforma
+  useEffect(() => {
+    if (rawCurrentUser && rawCurrentUser.Role !== UserRole.PLATAFORMA) {
+      setActiveEmpresa(rawCurrentUser.empresa_id || null);
+    }
+  }, [rawCurrentUser]);
+
+  const emScopo = (empresaId?: string) => !isPlataforma || !activeEmpresa || empresaId === activeEmpresa;
+  const scopedBaseUsers = useMemo(() => baseUsers.filter(u => emScopo(u.empresa_id)), [baseUsers, isPlataforma, activeEmpresa]);
+  const scopedTasks = useMemo(() => tasks.filter(t => emScopo(t.empresa_id)), [tasks, isPlataforma, activeEmpresa]);
+  const scopedTemplates = useMemo(() => templates.filter(t => emScopo(t.empresa_id)), [templates, isPlataforma, activeEmpresa]);
+  const scopedLedger = useMemo(() => ledger.filter(l => emScopo(l.empresa_id)), [ledger, isPlataforma, activeEmpresa]);
+  const empresaAtual = useMemo(() => empresas.find(e => e.id === activeEmpresa) || null, [empresas, activeEmpresa]);
+
+  // Calcula usuários com métricas (dentro da empresa em escopo)
   const users = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    return baseUsers.map(u => {
-      const userTasks = tasks.filter(t => {
+    return scopedBaseUsers.map(u => {
+      const userTasks = scopedTasks.filter(t => {
         const d = new Date(t.DataLimite);
         return t.Responsavel === u.Email && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       });
 
-      const userLedger = ledger.filter(l => {
+      const userLedger = scopedLedger.filter(l => {
         const d = new Date(l.Data);
         return l.UserEmail === u.Email && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       });
@@ -182,8 +216,8 @@ export const useStore = () => {
       const conferidas = userTasks.filter(t => t.Status === TaskStatus.APROVADA).length;
       const confiabilidade = userTasks.length > 0 ? (conferidas / userTasks.length) * 100 : 0;
 
-      const hasOverdue = tasks.some(t => 
-        t.Responsavel === u.Email && 
+      const hasOverdue = scopedTasks.some(t =>
+        t.Responsavel === u.Email &&
         (t.Status === TaskStatus.ATRASADA || (t.Status === TaskStatus.PENDENTE && new Date(t.DataLimite) < now))
       );
 
@@ -197,10 +231,14 @@ export const useStore = () => {
         StatusRH: eficienciaMes >= 90 ? '💰 ELEGÍVEL PARA BÔNUS' : '✅ DESEMPENHO ADEQUADO'
       };
     });
-  }, [baseUsers, tasks, ledger]);
+  }, [scopedBaseUsers, scopedTasks, scopedLedger]);
 
-  const currentUser = users.find(u => u.Email === currentUserEmail) || null;
-  const minhasTarefas = useMemo(() => tasks.filter(t => t.Responsavel === currentUserEmail), [tasks, currentUserEmail]);
+  // currentUser vem da lista completa (a plataforma não pode ser filtrada pra fora ao entrar noutra empresa)
+  const currentUser = useMemo(
+    () => users.find(u => u.Email === currentUserEmail) || rawCurrentUser,
+    [users, rawCurrentUser, currentUserEmail]
+  );
+  const minhasTarefas = useMemo(() => scopedTasks.filter(t => t.Responsavel === currentUserEmail), [scopedTasks, currentUserEmail]);
 
   // Salva usuário atual no localStorage
   useEffect(() => {
@@ -658,15 +696,33 @@ export const useStore = () => {
     
     setBotLog(prev => [logEntry, ...prev]);
     await refreshData();
-    
+
     return { overdueTasks: overdueTasks.length, fixed: fixedCount };
   }, [tasks, currentUserEmail, refreshData]);
 
-  return { 
-    currentUser, users, tasks, templates, ledger, minhasTarefas, botLog,
+  // ==================== EMPRESAS (plataforma) ====================
+  const createEmpresa = useCallback(async (
+    nome: string,
+    plano: string,
+    master: { nome: string; email: string }
+  ) => {
+    const emp = await empresasApi.create(nome, plano);
+    await authApi.createUser({
+      Email: master.email, Nome: master.nome, Role: UserRole.MASTER, empresa_id: emp.id,
+    });
+    const list = await empresasApi.getAll().catch(() => []);
+    setEmpresas(list as Empresa[]);
+    return emp;
+  }, []);
+
+  return {
+    currentUser, users,
+    tasks: scopedTasks, templates: scopedTemplates, ledger: scopedLedger,
+    minhasTarefas, botLog,
+    empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
-    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate 
+    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   };
 };

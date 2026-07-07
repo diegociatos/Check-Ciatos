@@ -27,6 +27,7 @@ import ReliabilityPanel from './components/ReliabilityPanel.tsx';
 import TeamPanel from './components/TeamPanel.tsx';
 import MyProfileView from './components/MyProfileView.tsx';
 import MonthlyPerformanceView from './components/MonthlyPerformanceView.tsx';
+import PlatformClientsView from './components/PlatformClientsView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -37,7 +38,7 @@ const App: React.FC = () => {
   const visibleTasks = useMemo(() => {
     if (!store.currentUser) return [];
     const { currentUser, tasks, users } = store;
-    if (currentUser.Role === UserRole.ADMIN) return tasks;
+    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER].includes(currentUser.Role)) return tasks;
     if (currentUser.Role === UserRole.GESTOR) {
       const myCollaborators = users.filter(u => u.Gestor === currentUser.Email).map(u => u.Email);
       return tasks.filter(t => t.Responsavel === currentUser.Email || myCollaborators.includes(t.Responsavel));
@@ -48,7 +49,7 @@ const App: React.FC = () => {
   const collaboratorsList = useMemo(() => {
     if (!store.currentUser) return [];
     const { currentUser, users } = store;
-    if (currentUser.Role === UserRole.ADMIN) return users.filter(u => u.Role === UserRole.COLABORADOR);
+    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER].includes(currentUser.Role)) return users.filter(u => u.Role === UserRole.COLABORADOR);
     return users.filter(u => u.Role === UserRole.COLABORADOR && u.Gestor === currentUser.Email);
   }, [store.users, store.currentUser]);
 
@@ -60,8 +61,26 @@ const App: React.FC = () => {
   const { currentUser, tasks, users, ledger, templates, botLog } = store;
   const today = getTodayStr();
 
+  // Plataforma sem empresa aberta cai direto no painel de Clientes
+  const effectiveView: ViewType = store.isPlataforma && !store.activeEmpresa ? 'CLIENTES' : currentView;
+
+  const enterEmpresa = (empresaId: string) => {
+    store.setActiveEmpresa(empresaId);
+    setCurrentView('DASHBOARD');
+  };
+
   const renderView = () => {
-    switch (currentView) {
+    switch (effectiveView) {
+      case 'CLIENTES':
+        return (
+          <PlatformClientsView
+            empresas={store.empresas}
+            users={users}
+            onCreate={store.createEmpresa}
+            onEnter={enterEmpresa}
+          />
+        );
+
       case 'DASHBOARD':
         return (
           <Dashboard
@@ -224,12 +243,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      currentUser={currentUser} 
-      currentView={currentView} 
-      notifications={[]} 
-      onNavigate={setCurrentView} 
+    <Layout
+      currentUser={currentUser}
+      currentView={effectiveView}
+      notifications={[]}
+      onNavigate={setCurrentView}
       onLogout={store.logout}
+      isPlataforma={store.isPlataforma}
+      empresaNome={store.empresaAtual?.Nome}
+      onExitEmpresa={() => store.setActiveEmpresa(null)}
     >
       {renderView()}
     </Layout>

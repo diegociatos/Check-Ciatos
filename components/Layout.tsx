@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Bell } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft } from 'lucide-react';
 import { NAVIGATION_ITEMS, NavigationSection } from '../constants';
 // Fixed: Notification interface is now imported from types.ts
-import { User, ViewType, Notification } from '../types';
+import { User, ViewType, Notification, UserRole } from '../types';
 
 interface LayoutProps {
   currentUser: User;
@@ -12,13 +12,20 @@ interface LayoutProps {
   onNavigate: (view: ViewType) => void;
   children: React.ReactNode;
   onLogout: () => void;
+  isPlataforma?: boolean;
+  empresaNome?: string;
+  onExitEmpresa?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  const filteredNav = NAVIGATION_ITEMS.filter(item => item.role.includes(currentUser.Role));
+  // Plataforma e Master enxergam o menu completo (equivalente ao Admin) dentro da empresa.
+  const navRole = (currentUser.Role === UserRole.PLATAFORMA || currentUser.Role === UserRole.MASTER)
+    ? UserRole.ADMIN : currentUser.Role;
+  const naEmpresa = !isPlataforma || !!empresaNome; // plataforma fora de empresa = só painel de clientes
+  const filteredNav = naEmpresa ? NAVIGATION_ITEMS.filter(item => item.role.includes(navRole)) : [];
   const myNotifications = notifications.filter(n => n.to === currentUser.Email);
 
   const sections: NavigationSection[] = ['INÍCIO', 'COLABORADOR', 'GESTOR', 'ADMINISTRADOR'];
@@ -109,6 +116,14 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {isPlataforma && empresaNome && (
+          <div className="bg-[#8B1B1F] text-white px-4 lg:px-8 py-2 flex items-center justify-between text-sm shrink-0">
+            <span>Você está gerenciando: <strong>{empresaNome}</strong></span>
+            <button onClick={onExitEmpresa} className="inline-flex items-center gap-1.5 font-semibold hover:underline">
+              <ArrowLeft size={15} /> Voltar aos clientes
+            </button>
+          </div>
+        )}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button 

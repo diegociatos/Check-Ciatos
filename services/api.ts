@@ -190,4 +190,20 @@ export const ledgerApi = {
   },
 };
 
-export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi };
+// ==================== EMPRESAS (multi-tenant) ====================
+export const empresasApi = {
+  getAll: async () => {
+    const { data, error } = await supabase.from('empresas').select('*').order('Nome');
+    if (error) throwSb(error);
+    return data ?? [];
+  },
+
+  // Cria a empresa (RPC restrita à plataforma) e retorna { id, Nome }
+  create: async (nome: string, plano?: string) => {
+    const { data, error } = await supabase.rpc('criar_empresa', { p_nome: nome, p_plano: plano ?? 'Padrao' });
+    if (error) throwSb(error, 'Erro ao criar empresa');
+    return data as { id: string; Nome: string };
+  },
+};
+
+export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi };
