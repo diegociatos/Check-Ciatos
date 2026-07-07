@@ -3,7 +3,10 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_URL = "https://app.planejarpatrimonio.com.br/check-ciatos/api"
+  # Backend agora é o Supabase (Postgres + Auth + RLS). A anon key é pública por design
+  # (vai no bundle de qualquer forma); a segurança real vem da RLS no banco.
+  VITE_SUPABASE_URL = "https://rylbvqsjnmjohxvvzstm.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bGJ2cXNqbm1qb2h4dnZ6c3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTAzNzQsImV4cCI6MjA5ODkyNjM3NH0.HLxGatmczQjipc8F-DKw1kDitpOwhC-XAdp03BYEAi8"
 
 [[redirects]]
   from = "/*"
