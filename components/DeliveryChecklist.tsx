@@ -91,6 +91,33 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
       </div>
 
       <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] overflow-hidden">
+        {/* Mobile: cards empilhados */}
+        <div className="md:hidden divide-y divide-stone-100">
+          {pendingAudit.length > 0 ? pendingAudit.map(task => {
+            const isLate = task.DataConclusao && task.DataLimite_Date && task.DataConclusao.split('T')[0] > task.DataLimite_Date;
+            return (
+              <div key={task.ID} className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm text-stone-900 truncate">{task.Titulo}</p>
+                    <p className="text-xs text-stone-400 mt-0.5">{task.Responsavel.split('@')[0]} · entregue {new Date(task.DataConclusao!).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-[#8B1B1F] shrink-0">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade, atrasada: !!isLate, reentrega: (task.Tentativas || 0) > 0 })} pts</span>
+                </div>
+                {task.CompletionNote && <p className="text-xs text-stone-500 italic mt-2 line-clamp-2">"{task.CompletionNote}"</p>}
+                {task.ProofAttachment && task.ProofAttachment.trim() && <div className="mt-2"><AnexoEvidencia path={task.ProofAttachment} /></div>}
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => { setAuditTask(task); setActionType(TaskStatus.APROVADA); }} className="flex-1 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors">Aprovar</button>
+                  <button onClick={() => { setAuditTask(task); setActionType(TaskStatus.FEITA_ERRADA); }} className="flex-1 py-2.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors">Erro</button>
+                  <button onClick={() => { setAuditTask(task); setActionType(TaskStatus.NAO_FEITA); }} className="flex-1 py-2.5 rounded-lg bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100 transition-colors">Falta</button>
+                </div>
+              </div>
+            );
+          }) : <p className="p-10 text-center text-stone-400 text-sm">Nada para conferir agora.</p>}
+        </div>
+
+        {/* Desktop: tabela */}
+        <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left table-fixed">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -221,6 +248,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* MODAL DE DECISÃO */}
