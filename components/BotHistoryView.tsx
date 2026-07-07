@@ -40,7 +40,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
   const getRecommendation = (error?: string) => {
     if (!error) return null;
     if (error.includes('Duplicate')) return "O colaborador já possui esta tarefa hoje. Ajuste a frequência ou force a geração se necessário.";
-    if (error.includes('Responsável')) return "Vá em 'Gerenciar Tarefas Recorrentes' e associe um colaborador válido ao modelo.";
+    if (error.includes('Responsável')) return "Vá em 'Tarefas Recorrentes' e associe um colaborador válido ao modelo.";
     if (error.includes('Data limite')) return "Verifique as configurações de dia do mês ou dias da semana no modelo.";
     if (error.includes('Ref')) return "O campo 'Responsável' aponta para um e-mail não cadastrado. Verifique o cadastro do usuário.";
     return "Revise os campos obrigatórios no modelo (Template) e tente gerar novamente manualmente.";

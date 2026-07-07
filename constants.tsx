@@ -150,8 +150,8 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: <ClipboardCheck size={20} /> 
   },
   { 
-    label: 'Gerenciar Tarefas Recorrentes', 
-    view: 'MANAGE_TEMPLATES', 
+    label: 'Tarefas Recorrentes',
+    view: 'MANAGE_TEMPLATES',
     section: 'GESTOR',
     role: [UserRole.GESTOR, UserRole.ADMIN], 
     icon: <CalendarClock size={20} /> 
