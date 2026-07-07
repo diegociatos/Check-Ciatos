@@ -11,7 +11,8 @@ import {
   Trash2,
   AlertTriangle,
   MessageSquare,
-  History
+  History,
+  RotateCcw
 } from 'lucide-react';
 
 interface TodayTaskCardsProps {
