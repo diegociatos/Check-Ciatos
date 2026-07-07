@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft, HelpCircle, ChevronDown } from 'lucide-react';
 import { NAVIGATION_ITEMS, NavigationSection } from '../constants';
 // Fixed: Notification interface is now imported from types.ts
 import { User, ViewType, Notification, UserRole } from '../types';
@@ -23,6 +23,10 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications, onNavigate, children, onLogout, isPlataforma, empresaNome, onExitEmpresa, empresas = [], activeEmpresa, onSwitchEmpresa }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const viewTitles: Record<string, string> = { MY_PROFILE: 'Meus dados', HELP_CENTER: 'Manual de uso', CLIENTES: 'Clientes' };
+  const headerTitle = viewTitles[currentView] || NAVIGATION_ITEMS.find(i => i.view === currentView)?.label || 'Painel';
 
   // Plataforma e Master enxergam o menu completo (equivalente ao Admin) dentro da empresa.
   const navRole = (currentUser.Role === UserRole.PLATAFORMA || currentUser.Role === UserRole.MASTER)
@@ -70,20 +74,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             </div>
           )}
 
-          <div className="px-6 py-4 flex items-center gap-3 bg-gray-200/30">
-            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-[#111111] overflow-hidden border-2 border-white shadow-sm">
-              {currentUser.Foto ? (
-                <img src={currentUser.Foto} className="w-full h-full object-cover" alt="User" />
-              ) : (
-                <UserIcon size={20} />
-              )}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-bold text-[#111111] truncate">{currentUser.Nome}</p>
-              <p className="text-[10px] text-gray-500 truncate font-bold">{currentUser.Email}</p>
-            </div>
-          </div>
-
           <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
             {sections.map(section => {
               const sectionItems = filteredNav.filter(item => item.section === section);
@@ -118,16 +108,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
               );
             })}
           </nav>
-
-          <div className="p-4 border-t border-gray-200">
-            <button 
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold text-[#C62828] hover:bg-red-50 transition-colors"
-            >
-              <LogOut size={20} />
-              Sair da Conta
-            </button>
-          </div>
         </div>
       </aside>
 
@@ -150,9 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             </button>
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 bg-[#8B1B1F] rounded-md flex items-center justify-center text-white text-[10px] font-black lg:hidden">GC</div>
-              <h2 className="text-lg font-black text-[#111111] uppercase tracking-tighter">
-                {NAVIGATION_ITEMS.find(i => i.view === currentView)?.label || 'Dashboard'}
-              </h2>
+              <h2 className="text-xl text-stone-900">{headerTitle}</h2>
             </div>
           </div>
           
@@ -169,9 +147,43 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                )}
              </button>
 
-             <span className="hidden sm:inline-block px-3 py-1 bg-[#8B1B1F] text-white rounded-full text-[10px] font-black uppercase tracking-tighter">
-               {currentUser.Role}
-             </span>
+             {/* Menu do usuário (canto superior direito) */}
+             <button
+               onClick={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationsOpen(false); }}
+               className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
+             >
+               <div className="h-9 w-9 rounded-full bg-[#8B1B1F] text-white flex items-center justify-center overflow-hidden text-sm font-semibold shrink-0">
+                 {currentUser.Foto ? <img src={currentUser.Foto} className="w-full h-full object-cover" alt="" /> : currentUser.Nome.charAt(0).toUpperCase()}
+               </div>
+               <span className="hidden sm:block text-sm font-semibold text-stone-800 max-w-[130px] truncate">{currentUser.Nome.split(' ')[0]}</span>
+               <ChevronDown size={16} className="hidden sm:block text-stone-400" />
+             </button>
+
+             {isUserMenuOpen && (
+               <>
+                 <div className="fixed inset-0 z-[60]" onClick={() => setIsUserMenuOpen(false)} />
+                 <div className="absolute right-0 top-14 w-64 bg-white rounded-2xl border border-gray-200 shadow-2xl z-[70] overflow-hidden">
+                   <div className="p-4 border-b border-gray-100">
+                     <p className="text-sm font-semibold text-stone-900 truncate">{currentUser.Nome}</p>
+                     <p className="text-xs text-stone-400 truncate">{currentUser.Email}</p>
+                     <span className="inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#8B1B1F]/10 text-[#8B1B1F] uppercase tracking-wider">{currentUser.Role}</span>
+                   </div>
+                   <div className="py-1">
+                     <button onClick={() => { onNavigate('MY_PROFILE'); setIsUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors">
+                       <UserIcon size={16} className="text-stone-400" /> Meus dados
+                     </button>
+                     <button onClick={() => { onNavigate('HELP_CENTER'); setIsUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors">
+                       <HelpCircle size={16} className="text-stone-400" /> Manual de uso
+                     </button>
+                   </div>
+                   <div className="py-1 border-t border-gray-100">
+                     <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C62828] hover:bg-red-50 transition-colors">
+                       <LogOut size={16} /> Sair da conta
+                     </button>
+                   </div>
+                 </div>
+               </>
+             )}
 
              {isNotificationsOpen && (
                <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl z-[70] overflow-hidden">

@@ -61,20 +61,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
     icon: <LineChart size={20} /> 
   },
-  { 
-    label: 'Meus Dados', 
-    view: 'MY_PROFILE', 
-    section: 'INÍCIO',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <UserIcon size={20} /> 
-  },
-  { 
-    label: 'Manual de Uso', 
-    view: 'HELP_CENTER', 
-    section: 'INÍCIO',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <HelpCircle size={20} /> 
-  },
 
   // SEÇÃO: COLABORADOR
   { 
