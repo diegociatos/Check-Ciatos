@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { ScoreLedger, ScoreType, User } from '../types';
 import { getTodayStr } from '../store';
-import { Trophy, Star, Calendar, ArrowUpCircle, ArrowDownCircle, TrendingUp, BarChart3, Activity, Target } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Target, Star } from 'lucide-react';
 
 interface MyScoreViewProps {
   ledger: ScoreLedger[];
@@ -11,169 +10,88 @@ interface MyScoreViewProps {
 
 const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
   const todayStr = getTodayStr();
-  
-  // Cálculos solicitados
-  const pontosConquistados = user.PontosRealizadosMes || 0;
-  const maximoPontosMes = user.PontosPossiveisMes || 0;
-  const progressPercentage = maximoPontosMes > 0 ? (pontosConquistados / maximoPontosMes) * 100 : 0;
 
-  const totalScore = ledger.reduce((acc, curr) => acc + curr.Pontos, 0);
-  const pointsToday = ledger
-    .filter(entry => entry.Data.startsWith(todayStr))
-    .reduce((acc, curr) => acc + curr.Pontos, 0);
+  const conquistados = user.PontosRealizadosMes || 0;
+  const possiveis = user.PontosPossiveisMes || 0;
+  const pct = possiveis > 0 ? (conquistados / possiveis) * 100 : 0;
+  const total = ledger.reduce((a, c) => a + c.Pontos, 0);
+  const hoje = ledger.filter(e => e.Data.startsWith(todayStr)).reduce((a, c) => a + c.Pontos, 0);
 
-  const recentLedger = [...ledger]
-    .sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime())
-    .slice(0, 10);
+  const recente = [...ledger].sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime()).slice(0, 10);
 
-  const StatCard = ({ title, value, icon: Icon, colorClass }: any) => (
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-full font-ciatos">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">{title}</span>
-        <div className={`p-2 rounded-xl bg-[#F3F3F3] ${colorClass.split(' ')[0].replace('text-', 'bg-').replace('600', '100')}`}>
-          <Icon size={18} className={colorClass} />
-        </div>
-      </div>
-      <div className="flex flex-col">
-        <h3 className={`text-3xl font-black tracking-tighter ${colorClass}`}>
-          {value >= 0 && title !== "PONTUAÇÃO TOTAL" ? `+${value}` : value}
-        </h3>
-        <p className="text-[9px] font-bold text-gray-300 uppercase mt-1">Pontos Acumulados</p>
-      </div>
+  const Tile: React.FC<{ label: string; value: React.ReactNode; hint?: string; accent?: string }> = ({ label, value, hint, accent = 'text-stone-900' }) => (
+    <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-6">
+      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">{label}</p>
+      <p className={`mt-3 text-3xl font-semibold ${accent}`}>{value}</p>
+      {hint && <p className="text-sm text-stone-400 mt-1">{hint}</p>}
     </div>
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto font-ciatos">
-      {/* Header da View */}
-      <div className="flex flex-col gap-1">
-        <h2 className="text-3xl font-bold text-[#6F0F14] uppercase tracking-tighter">Minha Pontuação</h2>
-        <p className="text-sm text-gray-400 font-medium">Extrato de pontos ganhos e potencial de carreira.</p>
+    <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-10">
+      <div>
+        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Recompensa</p>
+        <h2 className="text-3xl md:text-4xl text-stone-900 mt-1">Minha pontuação</h2>
+        <p className="text-stone-500 mt-1">Seus pontos ganhos e o quanto falta para o bônus do mês.</p>
       </div>
 
-      {/* PAINEL DE METAS (GAMIFICAÇÃO) */}
-      <div className="bg-white p-8 rounded-[40px] border-2 border-[#8B1B1F]/10 shadow-xl overflow-hidden relative group">
-        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-           <Target size={120} className="text-[#8B1B1F]" />
-        </div>
-        <div className="relative z-10 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-bold text-[#8B1B1F] uppercase tracking-tighter flex items-center gap-2">
-                <Target size={20} /> POTENCIAL DE GANHO MENSAL
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Você conquistou <strong className="text-[#8B1B1F]">{pontosConquistados}</strong> de um total de <strong className="text-[#111111]">{maximoPontosMes}</strong> possíveis.
-              </p>
-            </div>
-            <div className="text-right">
-               <span className="text-4xl font-black text-[#8B1B1F] tracking-tighter">{progressPercentage.toFixed(1)}%</span>
-               <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Garantido</p>
-            </div>
+      {/* Rumo ao bônus */}
+      <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h3 className="text-lg text-stone-900 flex items-center gap-2"><Target size={18} className="text-[#8B1B1F]" /> Potencial do mês</h3>
+            <p className="text-sm text-stone-500 mt-1">
+              Você conquistou <span className="text-[#8B1B1F] font-semibold">{conquistados}</span> de <span className="text-stone-900 font-semibold">{possiveis}</span> pts possíveis.
+            </p>
           </div>
-
-          <div className="space-y-2">
-            <div className="h-4 w-full bg-[#F3F3F3] rounded-full overflow-hidden border border-gray-100">
-              <div 
-                className="h-full bg-[#8B1B1F] transition-all duration-1000 ease-out rounded-full shadow-lg"
-                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
-               <span>Início do Mês</span>
-               <span className="text-[#8B1B1F]">Meta: Excelência Operacional</span>
-               <span>Meta 100%</span>
-            </div>
+          <div className="text-right">
+            <span className="text-4xl font-semibold text-[#8B1B1F]">{pct.toFixed(0)}%</span>
+            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{pct >= 90 ? 'Elegível ao bônus' : 'Meta: 90%'}</p>
           </div>
         </div>
+        <div className="mt-5 h-2.5 w-full bg-stone-100 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-1000 ease-out ${pct >= 90 ? 'bg-emerald-600' : 'bg-[#8B1B1F]'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+        </div>
       </div>
 
-      {/* Grid de Cards Secundários */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard 
-          title="PONTUAÇÃO TOTAL" 
-          value={totalScore} 
-          icon={Trophy} 
-          colorClass="text-[#8B1B1F]" 
-        />
-        <StatCard 
-          title="PONTOS HOJE" 
-          value={pointsToday} 
-          icon={Activity} 
-          colorClass={pointsToday >= 0 ? 'text-green-600' : 'text-red-600'} 
-        />
-        <StatCard 
-          title="CONQUISTADO NO MÊS" 
-          value={pontosConquistados} 
-          icon={BarChart3} 
-          colorClass="text-blue-600" 
-        />
+      {/* Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <Tile label="Acumulado total" value={total} hint="desde o início" accent="text-[#8B1B1F]" />
+        <Tile label="Hoje" value={`${hoje >= 0 ? '+' : ''}${hoje}`} hint="pontos do dia" accent={hoje < 0 ? 'text-red-600' : 'text-stone-900'} />
+        <Tile label="Conquistado no mês" value={conquistados} hint="pontos validados" />
       </div>
 
-      {/* Tabela de Extrato Recente */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-[#6F0F14] uppercase tracking-tighter">Extrato Recente</h3>
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Últimos 10 Lançamentos</span>
+      {/* Extrato */}
+      <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] overflow-hidden">
+        <div className="px-8 py-5 border-b border-stone-100 flex items-center justify-between">
+          <h3 className="text-lg text-stone-900">Extrato recente</h3>
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Últimos 10</span>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Data / Hora</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descrição</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Tipo</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Pontos</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {recentLedger.length > 0 ? (
-                recentLedger.map((entry) => (
-                  <tr key={entry.ID} className={`hover:bg-gray-50/50 transition-colors ${entry.Tipo === ScoreType.GANHO ? 'bg-green-50/10' : 'bg-red-50/10'}`}>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
-                        <Calendar size={14} className="text-gray-300" />
-                        {new Date(entry.Data).toLocaleString('pt-BR', { 
-                          day: '2-digit', month: '2-digit', year: '2-digit', 
-                          hour: '2-digit', minute: '2-digit' 
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="text-sm font-bold text-[#111111]">{entry.Descricao}</span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <div className="flex justify-center">
-                        {entry.Tipo === ScoreType.GANHO ? (
-                          <span className="flex items-center gap-1 text-[9px] font-black text-green-600 bg-white px-3 py-1.5 rounded-full border border-green-100 uppercase tracking-widest shadow-sm">
-                            <ArrowUpCircle size={12} /> Ganho
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-[9px] font-black text-red-600 bg-white px-3 py-1.5 rounded-full border border-red-100 uppercase tracking-widest shadow-sm">
-                            <ArrowDownCircle size={12} /> Penalidade
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <span className={`text-lg font-black ${entry.Tipo === ScoreType.GANHO ? 'text-green-600' : 'text-red-600'}`}>
-                        {entry.Tipo === ScoreType.GANHO ? '+' : ''}{entry.Pontos}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-8 py-20 text-center">
-                    <Star size={48} className="mx-auto text-gray-100 mb-4" />
-                    <p className="text-gray-300 font-black uppercase text-xs tracking-widest">Nenhuma movimentação registrada</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {recente.length > 0 ? (
+          <div className="divide-y divide-stone-100">
+            {recente.map(e => {
+              const ganho = e.Tipo === ScoreType.GANHO;
+              return (
+                <div key={e.ID} className="px-8 py-4 flex items-center gap-4 hover:bg-stone-50/60 transition-colors">
+                  <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${ganho ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                    {ganho ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-stone-900 truncate">{e.Descricao}</p>
+                    <p className="text-xs text-stone-400 mt-0.5">{new Date(e.Data).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <span className={`text-lg font-semibold shrink-0 ${ganho ? 'text-emerald-600' : 'text-red-600'}`}>{ganho ? '+' : ''}{e.Pontos}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-16 text-center">
+            <Star size={40} className="mx-auto text-stone-200" />
+            <p className="text-stone-500 mt-3">Nenhum ponto lançado ainda.</p>
+            <p className="text-stone-400 text-sm mt-1">Conclua suas obrigações para começar a pontuar.</p>
+          </div>
+        )}
       </div>
     </div>
   );
