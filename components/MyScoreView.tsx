@@ -22,7 +22,7 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
   const Tile: React.FC<{ label: string; value: React.ReactNode; hint?: string; accent?: string }> = ({ label, value, hint, accent = 'text-stone-900' }) => (
     <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-6">
       <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">{label}</p>
-      <p className={`mt-3 text-3xl font-semibold ${accent}`}>{value}</p>
+      <p className={`mt-3 font-titulo text-3xl font-semibold ${accent}`}>{value}</p>
       {hint && <p className="text-sm text-stone-400 mt-1">{hint}</p>}
     </div>
   );
@@ -45,7 +45,7 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
             </p>
           </div>
           <div className="text-right">
-            <span className="text-4xl font-semibold text-[#8B1B1F]">{pct.toFixed(0)}%</span>
+            <span className="font-titulo text-4xl font-semibold text-[#8B1B1F]">{pct.toFixed(0)}%</span>
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{pct >= 90 ? 'Elegível ao bônus' : 'Meta: 90%'}</p>
           </div>
         </div>

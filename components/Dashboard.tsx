@@ -179,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="flex justify-center md:pr-6">
               <ProgressRing pct={pct}>
-                <span className="text-3xl font-semibold text-stone-900">{Math.round(pct)}%</span>
+                <span className="font-titulo text-3xl font-semibold text-stone-900">{Math.round(pct)}%</span>
                 <span className="text-[11px] text-stone-400 mt-0.5">{hojeFeitas} de {hojeTotal.length}</span>
               </ProgressRing>
             </div>
@@ -194,7 +194,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Label>Sequência</Label>
               <Flame size={18} className={streak > 0 ? 'text-[#8B1B1F]' : 'text-stone-300'} />
             </div>
-            <p className="mt-4 text-4xl font-semibold text-stone-900">{streak}</p>
+            <p className="mt-4 font-titulo text-4xl font-semibold text-stone-900">{streak}</p>
             <p className="text-sm text-stone-500 mt-1">
               {streak === 0 ? 'Comece uma sequência hoje' : streak === 1 ? 'dia em dia' : 'dias seguidos em dia'}
             </p>
@@ -206,7 +206,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Label>Nível</Label>
               <Award size={18} className="text-[#8B1B1F]" />
             </div>
-            <p className="mt-4 text-2xl font-semibold text-stone-900">{nivel.nome}</p>
+            <p className="mt-4 font-titulo text-2xl font-semibold text-stone-900">{nivel.nome}</p>
             <div className="mt-3 h-1.5 rounded-full bg-stone-100 overflow-hidden">
               <div className="h-full bg-[#8B1B1F] rounded-full transition-all duration-700" style={{ width: `${nivel.progresso}%` }} />
             </div>
@@ -221,7 +221,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Label>Rumo ao bônus</Label>
               <Target size={18} className={elegivel ? 'text-emerald-600' : 'text-[#8B1B1F]'} />
             </div>
-            <p className="mt-4 text-4xl font-semibold text-stone-900">{eficiencia}%</p>
+            <p className="mt-4 font-titulo text-4xl font-semibold text-stone-900">{eficiencia}%</p>
             <div className="mt-3 h-1.5 rounded-full bg-stone-100 overflow-hidden">
               <div className={`h-full rounded-full transition-all duration-700 ${elegivel ? 'bg-emerald-600' : 'bg-[#8B1B1F]'}`} style={{ width: `${bonusPct}%` }} />
             </div>
@@ -255,7 +255,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <Card className="p-8 flex flex-col">
             <Label>Pontos no mês</Label>
-            <p className="mt-3 text-5xl font-semibold text-stone-900">{score}</p>
+            <p className="mt-3 font-titulo text-5xl font-semibold text-stone-900">{score}</p>
             <p className="text-sm text-stone-500">pontos conquistados</p>
             <div className="mt-6 pt-6 border-t border-stone-100 space-y-3">
               <div className="flex items-center justify-between text-sm">
@@ -289,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const Stat: React.FC<{ label: string; value: React.ReactNode; hint?: string }> = ({ label, value, hint }) => (
     <Card className="p-7">
       <Label>{label}</Label>
-      <p className="mt-3 text-3xl font-semibold text-stone-900">{value}</p>
+      <p className="mt-3 font-titulo text-3xl font-semibold text-stone-900">{value}</p>
       {hint && <p className="text-sm text-stone-400 mt-1">{hint}</p>}
     </Card>
   );
@@ -308,7 +308,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-[10px] font-semibold text-white/60 uppercase tracking-[0.14em]">Equipe</p>
             <Users size={18} className="text-white/70" />
           </div>
-          <p className="mt-3 text-3xl font-semibold">{collaborators.length}</p>
+          <p className="mt-3 font-titulo text-3xl font-semibold">{collaborators.length}</p>
           <p className="text-sm text-white/60 mt-1">{collaborators.length === 1 ? 'membro' : 'membros'}</p>
         </Card>
         <Stat label="Pendentes hoje" value={teamPendingToday} hint="obrigações a cumprir" />
