@@ -299,6 +299,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Detalhes / Instruções <span className="text-stone-300 normal-case">(opcional)</span></label>
+                    <textarea
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:ring-4 focus:ring-marca/10 min-h-[96px]"
+                      placeholder="Descreva o escopo do serviço: o que precisa ser feito, passos, o que entregar, links ou referências…"
+                      value={formData.Descricao}
+                      onChange={e => setFormData({...formData, Descricao: e.target.value})}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável pela Tarefa</label>
