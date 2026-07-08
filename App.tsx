@@ -31,6 +31,7 @@ import PlatformClientsView from './components/PlatformClientsView.tsx';
 import PulsoOperacao from './components/PulsoOperacao.tsx';
 import EquipeView from './components/EquipeView.tsx';
 import MinhasTarefasView from './components/MinhasTarefasView.tsx';
+import RelatoriosView from './components/RelatoriosView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -195,6 +196,9 @@ const App: React.FC = () => {
             currentUserRole={currentUser.Role}
           />
         );
+
+      case 'RELATORIOS':
+        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} />;
 
       case 'PERFORMANCE_MANAGEMENT':
         return <PerformanceDashboard tasks={visibleTasks} users={users} collaboratorsList={collaboratorsList} />;
