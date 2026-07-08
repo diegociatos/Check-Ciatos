@@ -11,6 +11,7 @@ import {
 
 interface ManageUsersViewProps {
   users: User[];
+  currentUser: User;
   onAddUser: (user: Partial<User>) => void;
   onUpdateUser: (email: string, user: Partial<User>) => void;
   onResetPassword: (email: string) => void;
@@ -23,9 +24,11 @@ interface ManageUsersViewProps {
 }
 
 const ManageUsersView: React.FC<ManageUsersViewProps> = ({
-  users, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser,
+  users, currentUser, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser,
   empresas = [], activeEmpresa, onSetEmpresas, getUserEmpresas
 }) => {
+  // Gestor só cadastra COLABORADOR (vinculado a ele). Admin/Master/Plataforma criam qualquer papel.
+  const souGestor = currentUser.Role === UserRole.GESTOR;
   // Empresas que o gestor atende (quando há mais de uma empresa para escolher)
   const [empresasGestor, setEmpresasGestor] = useState<string[]>([]);
   const multiEmpresa = empresas.length > 1;
@@ -47,6 +50,12 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Gestor só cria colaborador, sempre vinculado a ele mesmo (trava de segurança).
+      if (souGestor && !editingEmail) {
+        formData.Role = UserRole.COLABORADOR;
+        formData.Gestor = currentUser.Email;
+      }
+
       if (!formData.Email || !formData.Email.includes('@')) throw new Error("Formato de E-mail inválido.");
       if (!formData.Nome) throw new Error("O Nome é obrigatório.");
       if (formData.Role === UserRole.COLABORADOR && !formData.Gestor) {
@@ -210,15 +219,17 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Shield size={12}/> Cargo / Permissão</label>
-                    <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Role} onChange={e => setFormData({...formData, Role: e.target.value as UserRole})}>
+                    <select required disabled={souGestor} className={`w-full border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none ${souGestor ? 'bg-gray-100 text-stone-500' : 'bg-gray-50'}`} value={souGestor ? UserRole.COLABORADOR : formData.Role} onChange={e => setFormData({...formData, Role: e.target.value as UserRole})}>
                       <option value={UserRole.COLABORADOR}>Colaborador</option>
-                      <option value={UserRole.GESTOR}>Gestor</option>
-                      <option value={UserRole.ADMIN}>Administrador Master</option>
+                      {!souGestor && <option value={UserRole.GESTOR}>Gestor</option>}
+                      {!souGestor && <option value={UserRole.ADMIN}>Administrador Master</option>}
                     </select>
+                    {souGestor && <p className="text-[11px] text-stone-400 mt-1">Gestores cadastram colaboradores, vinculados a você.</p>}
                   </div>
                   
-                  {/* Regra de Negócio: Gestor obrigatório apenas para Colaborador */}
-                  {formData.Role === UserRole.COLABORADOR && (
+                  {/* Regra de Negócio: Gestor obrigatório apenas para Colaborador.
+                      Para a gestora, o vínculo é automático (ela mesma) — não mostra o seletor. */}
+                  {formData.Role === UserRole.COLABORADOR && !souGestor && (
                     <div className="space-y-1 animate-in slide-in-from-top-2">
                       <label className="text-[10px] font-black text-marca uppercase tracking-widest flex items-center gap-2">
                         <UserRoundSearch size={12} /> Gestor Responsável *

@@ -49,7 +49,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: 'Relatórios', view: 'RELATORIOS', section: 'GESTÃO', role: GESTAO, icon: <FileBarChart size={20} /> },
 
   // ===== ADMINISTRAÇÃO (admin/master) =====
-  { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: [UserRole.ADMIN], icon: <UserCog size={20} /> },
+  { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <UserCog size={20} /> },
   { label: 'Automação', view: 'BOT_HISTORY', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <Activity size={20} /> },
 ];
 
