@@ -54,6 +54,14 @@ export const authApi = {
     return { message: 'Senha alterada com sucesso' };
   },
 
+  // Primeiro acesso: define a nova senha usando a sessão já autenticada (sem re-login).
+  definirNovaSenha: async (novaSenha: string) => {
+    const { error } = await supabase.auth.updateUser({ password: novaSenha });
+    if (error) throwSb(error, 'Não foi possível definir a senha');
+    await supabase.rpc('clear_senha_provisoria');
+    return { message: 'Senha definida com sucesso' };
+  },
+
   getUsers: async () => {
     const { data, error } = await supabase.from('users').select('*').order('Nome');
     if (error) throwSb(error);

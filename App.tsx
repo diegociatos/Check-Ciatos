@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore, getTodayStr } from './store.ts';
 import { ViewType, UserRole, TaskStatus } from './types.ts';
 import Login from './components/Login.tsx';
+import PrimeiroAcesso from './components/PrimeiroAcesso.tsx';
 import Layout from './components/Layout.tsx';
 import Dashboard from './components/Dashboard.tsx';
 import MyScoreView from './components/MyScoreView.tsx';
@@ -56,6 +57,11 @@ const App: React.FC = () => {
   // Early return for authentication
   if (!store.currentUser) {
     return <Login onLogin={store.login} />;
+  }
+
+  // Primeiro acesso: senha provisória (padrão 123456) precisa ser trocada antes de usar o app
+  if (store.currentUser.SenhaProvisoria) {
+    return <PrimeiroAcesso user={store.currentUser} onDefinir={store.definirNovaSenha} onLogout={store.logout} />;
   }
 
   const { currentUser, tasks, users, ledger, templates, botLog } = store;

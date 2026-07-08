@@ -337,10 +337,18 @@ export const useStore = () => {
 
   const changePassword = useCallback(async (email: string, oldPass: string, newPass: string) => {
     await authApi.changePassword(email, oldPass, newPass);
-    setBaseUsers(prev => prev.map(u => 
+    setBaseUsers(prev => prev.map(u =>
       u.Email === email ? { ...u, SenhaProvisoria: false } : u
     ));
   }, []);
+
+  // Primeiro acesso: usuário troca a senha provisória (usa a sessão já ativa).
+  const definirNovaSenha = useCallback(async (novaSenha: string) => {
+    await authApi.definirNovaSenha(novaSenha);
+    setBaseUsers(prev => prev.map(u =>
+      u.Email === currentUserEmail ? { ...u, SenhaProvisoria: false } : u
+    ));
+  }, [currentUserEmail]);
 
   const resetUserPassword = useCallback(async (email: string) => {
     try {
@@ -808,7 +816,7 @@ export const useStore = () => {
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
-    login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
+    login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   };
