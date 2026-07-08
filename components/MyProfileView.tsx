@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { User } from '../types.ts';
 import { User as UserIcon, Save, Camera, Mail, Phone, MapPin, Briefcase } from 'lucide-react';
+import { showToast } from './ui';
 
 interface MyProfileViewProps {
   user: User;
@@ -18,7 +19,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
 
   const handleSave = () => {
     onUpdate(formData);
-    alert("Perfil atualizado com sucesso!");
+    showToast({ message: 'Perfil atualizado.', tone: 'sucesso' });
   };
 
   return (

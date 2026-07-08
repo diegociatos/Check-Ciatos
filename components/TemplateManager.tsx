@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole } from '../types';
 import { getTodayStr, toDateOnly } from '../store';
 import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft } from 'lucide-react';
+import { useUndoableDelete } from './ui';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
@@ -17,6 +18,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
   const [filterColaborador, setFilterColaborador] = useState<string>('TODOS');
+  const { pendentes: excluindo, remover: excluirModelo } = useUndoableDelete(onDelete, 'Modelo');
   
   const today = getTodayStr();
   // Qualquer pessoa da operação pode ser responsável por uma tarefa (colaborador, gestor ou admin)
@@ -26,7 +28,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const colaboradoresList = users.filter(u => u.Role === UserRole.COLABORADOR);
   const gestoresList = users.filter(u => u.Role === UserRole.GESTOR);
   const adminList = users.filter(u => u.Role === UserRole.ADMIN);
-  const filteredTemplates = filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador);
+  const filteredTemplates = (filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador))
+    .filter(t => !excluindo.has(t.ID));
   
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
     Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
@@ -226,7 +229,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
               <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title={tmpl.Ativa ? 'Pausar' : 'Ativar'}>
                 <RotateCw size={14} />
               </button>
-              <button onClick={() => onDelete(tmpl.ID)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Excluir">
+              <button onClick={() => excluirModelo(tmpl.ID)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Excluir modelo">
                 <Trash2 size={14} />
               </button>
             </div>

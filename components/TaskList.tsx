@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
 import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText } from 'lucide-react';
 import { validarArquivo, uploadEvidencia, MAX_MB } from '../lib/storage';
+import { statusInfo, STATUS_TONE_CLASS } from '../lib/labels';
 
 interface EnrichedTask extends Task {
   NomeColaborador: string;
@@ -72,18 +73,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
   };
 
   const statusPill = (task: EnrichedTask, isRejected: boolean) => {
-    const map: Record<string, string> = {
-      aprovada: 'text-emerald-700 bg-emerald-50',
-      rejeitada: 'text-red-700 bg-red-50',
-      atrasada: 'text-amber-700 bg-amber-50',
-      aguardando: 'text-stone-500 bg-stone-100',
-      pendente: 'text-marca bg-marca/8',
-    };
-    const key = task.Status === TaskStatus.APROVADA ? 'aprovada'
-      : isRejected ? 'rejeitada'
-      : task.Status === TaskStatus.ATRASADA ? 'atrasada'
-      : task.Status === TaskStatus.AGUARDANDO_APROVACAO ? 'aguardando' : 'pendente';
-    return <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${map[key]}`}>{task.Status}</span>;
+    // Reprovada/retornada é sempre "Refazer" para o colaborador
+    const info = isRejected && task.Status === TaskStatus.PENDENTE
+      ? { label: 'Refazer', tone: 'erro' as const }
+      : statusInfo(task.Status);
+    return <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_TONE_CLASS[info.tone]}`}>{info.label}</span>;
   };
 
   return (

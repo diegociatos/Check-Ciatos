@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole } from '../types';
 import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target, Trash2, Copy, XCircle, Send } from 'lucide-react';
 import { getTodayStr } from '../store';
+import { useUndoableDelete } from './ui';
 
 interface TaskSupervisionViewProps {
   tasks: Task[];
@@ -17,6 +18,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   const [markNotDoneTask, setMarkNotDoneTask] = useState<Task | null>(null);
   const [notDoneJustification, setNotDoneJustification] = useState('');
   const todayStr = getTodayStr();
+  const { pendentes: excluindo, remover: excluirTarefa } = useUndoableDelete(onDeleteTask, 'Tarefa');
 
   const collaborators = useMemo(() => {
     return users.filter(u => u.Role === UserRole.COLABORADOR);
@@ -24,8 +26,8 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
 
   // Estrutura de Agrupamento: [Responsavel] -> [DataLimite_Date] -> Task[]
   const groupedData = useMemo(() => {
-    let filtered = tasks.filter(t => t.Status !== TaskStatus.APROVADA);
-    
+    let filtered = tasks.filter(t => t.Status !== TaskStatus.APROVADA && !excluindo.has(t.ID));
+
     if (filterResponsavel !== 'TODOS') {
       filtered = filtered.filter(t => t.Responsavel === filterResponsavel);
     }
@@ -55,7 +57,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
     });
 
     return finalStructure;
-  }, [tasks, filterResponsavel]);
+  }, [tasks, filterResponsavel, excluindo]);
 
   // Detectar tarefas duplicadas (mesmo título + mesmo responsável + mesma data)
   const duplicateIds = useMemo(() => {
@@ -195,9 +197,9 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                       </button>
                                     )}
                                     <button
-                                      onClick={() => onDeleteTask(task.ID)}
+                                      onClick={() => excluirTarefa(task.ID)}
                                       className="p-2 rounded-xl text-gray-300 hover:text-red-600 hover:bg-red-50 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                      title={`Excluir tarefa ${task.Titulo} (${task.ID.substring(0, 8)})`}
+                                      title={`Excluir tarefa ${task.Titulo}`}
                                     >
                                       <Trash2 size={16} />
                                     </button>
