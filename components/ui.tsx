@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, Inbox } from 'lucide-react';
 
 /* =========================================================================
@@ -209,6 +209,36 @@ let seq = 1;
 export function showToast(opts: ToastOptions) {
   const item: ToastItem = { id: seq++, duration: 5000, tone: 'neutral', ...opts };
   listeners.forEach((l) => l(item));
+}
+
+/**
+ * Exclusão com "Desfazer": esconde o item na hora (feedback <100ms) e só executa
+ * a exclusão de verdade após alguns segundos. Se o usuário desfizer, a chamada
+ * nunca acontece — sem tocar na lógica do banco.
+ */
+export function useUndoableDelete(commit: (id: string) => void, label: string, duration = 5000) {
+  const [pendentes, setPendentes] = useState<Set<string>>(new Set());
+  const timers = useRef<Map<string, number>>(new Map());
+
+  const desfazer = (id: string) => {
+    const t = timers.current.get(id);
+    if (t) window.clearTimeout(t);
+    timers.current.delete(id);
+    setPendentes((p) => { const n = new Set(p); n.delete(id); return n; });
+  };
+
+  const remover = (id: string) => {
+    setPendentes((p) => new Set(p).add(id));
+    const t = window.setTimeout(() => {
+      commit(id);
+      timers.current.delete(id);
+      setPendentes((p) => { const n = new Set(p); n.delete(id); return n; });
+    }, duration);
+    timers.current.set(id, t);
+    showToast({ message: `${label} excluído.`, actionLabel: 'Desfazer', onAction: () => desfazer(id), duration });
+  };
+
+  return { pendentes, remover };
 }
 
 export const ToastViewport: React.FC = () => {
