@@ -99,6 +99,15 @@ export const authApi = {
     return { message: data?.message || 'Senha resetada' };
   },
 
+  changeEmail: async (email: string, novoEmail: string) => {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { action: 'change-email', email, novoEmail },
+    });
+    if (error) throwSb(error, 'Erro ao alterar e-mail');
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return { email: (data as any)?.email || novoEmail };
+  },
+
   toggleStatus: async (email: string) => {
     const { data, error } = await supabase.functions.invoke('admin-users', {
       body: { action: 'toggle-status', email },

@@ -423,6 +423,22 @@ export const useStore = () => {
     }
   }, []);
 
+  // Alterar e-mail (chave do usuário) — renomeia no Auth + todas as tabelas.
+  // Se for o próprio usuário logado, desloga para relogar com o novo e-mail.
+  const changeUserEmail = useCallback(async (email: string, novoEmail: string) => {
+    await authApi.changeEmail(email, novoEmail);
+    if (currentUserEmail?.toLowerCase() === email.toLowerCase()) {
+      await logout();
+      return { relogar: true };
+    }
+    setBaseUsers(prev => prev.map(u => {
+      if (u.Email.toLowerCase() === email.toLowerCase()) return { ...u, Email: novoEmail };
+      if (u.Gestor?.toLowerCase() === email.toLowerCase()) return { ...u, Gestor: novoEmail };
+      return u;
+    }));
+    return { relogar: false };
+  }, [currentUserEmail, logout]);
+
   const updateProfile = useCallback(async (updatedData: Partial<User>) => {
     if (currentUserEmail) {
       await updateUser(currentUserEmail, updatedData);
@@ -868,7 +884,7 @@ export const useStore = () => {
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
-    login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
+    login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,
     updateProfile, completeTask, auditTask, deleteTask,
     addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
     criarTarefaPessoal, concluirTarefaPessoal, reabrirTarefaPessoal, excluirTarefaPessoal, valorarTarefaPessoal
