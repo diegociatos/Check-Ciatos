@@ -43,7 +43,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
         { view: 'MY_TASKS_TODAY', label: 'Hoje', icon: <CheckCircle size={22} /> },
         { view: 'CHECK_DELIVERIES', label: 'Conferir', icon: <ClipboardCheck size={22} /> },
-        { view: 'GERAR', label: 'Gerar', icon: <Zap size={22} /> },
+        { view: 'MANAGE_TEMPLATES', label: 'Gerar', icon: <Zap size={22} /> },
       ]
     : [
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },

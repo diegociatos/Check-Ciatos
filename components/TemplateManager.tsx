@@ -116,8 +116,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">Tarefas</p>
-          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Modelos de tarefas</h3>
-          <p className="text-stone-500 mt-1">Crie modelos que geram tarefas para a equipe — recorrentes (diária, semanal, mensal) ou avulsas (data específica).</p>
+          <h3 className="text-3xl md:text-4xl text-stone-900 mt-1">Gerar tarefas</h3>
+          <p className="text-stone-500 mt-1">Crie e dispare as tarefas da equipe — recorrentes (diária, semanal, mensal) ou avulsas (data específica).</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -129,7 +129,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
           <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]">
-            <Plus size={18} /> Novo modelo
+            <Plus size={18} /> Nova tarefa
           </button>
         </div>
       </div>
@@ -146,8 +146,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
         {filteredTemplates.length === 0 && (
           <div className="px-6 py-16 text-center">
-            <p className="text-stone-600 text-lg">Nenhum modelo ainda.</p>
-            <p className="text-stone-400 text-sm mt-1">Crie um modelo para gerar tarefas recorrentes automaticamente.</p>
+            <p className="text-stone-600 text-lg">Nenhuma tarefa configurada ainda.</p>
+            <p className="text-stone-400 text-sm mt-1">Crie a primeira — recorrente ou avulsa — para começar.</p>
           </div>
         )}
 
