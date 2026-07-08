@@ -3,14 +3,12 @@ import React from 'react';
 import {
   Home,
   CheckCircle,
-  CheckCheck,
   Star,
   UserCog,
   ClipboardCheck,
   Eye,
   Users,
   Zap,
-  CalendarDays,
   Activity
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
@@ -39,9 +37,7 @@ const GESTAO = [UserRole.GESTOR, UserRole.ADMIN];
 export const NAVIGATION_ITEMS: NavigationItem[] = [
   // ===== GERAL (colaborador e acima) =====
   { label: 'Início', view: 'DASHBOARD', section: 'GERAL', role: TODOS, icon: <Home size={20} /> },
-  { label: 'Minhas tarefas', view: 'MY_TASKS_TODAY', section: 'GERAL', role: TODOS, icon: <CheckCircle size={20} /> },
-  { label: 'Planejamento futuro', view: 'UPCOMING_TASKS', section: 'GERAL', role: TODOS, icon: <CalendarDays size={20} /> },
-  { label: 'Tarefas concluídas', view: 'COMPLETED_TASKS', section: 'GERAL', role: TODOS, icon: <CheckCheck size={20} /> },
+  { label: 'Minhas tarefas', view: 'MINHAS_TAREFAS', section: 'GERAL', role: TODOS, icon: <CheckCircle size={20} /> },
   { label: 'Meus pontos', view: 'MY_SCORE', section: 'GERAL', role: TODOS, icon: <Star size={20} /> },
 
   // ===== GESTÃO (gestor e admin) =====

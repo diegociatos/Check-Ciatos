@@ -30,6 +30,7 @@ import MonthlyPerformanceView from './components/MonthlyPerformanceView.tsx';
 import PlatformClientsView from './components/PlatformClientsView.tsx';
 import PulsoOperacao from './components/PulsoOperacao.tsx';
 import EquipeView from './components/EquipeView.tsx';
+import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -105,7 +106,7 @@ const App: React.FC = () => {
             pendingTasksToday={visibleTasks.filter(t => t.Responsavel === currentUser.Email && t.Status === TaskStatus.PENDENTE && t.DataLimite_Date === today)}
             recentLedger={ledger.filter(l => l.UserEmail === currentUser.Email).slice(0, 5)}
             myLedger={ledger.filter(l => l.UserEmail === currentUser.Email)}
-            onNavigateToTasks={(v?: any) => setCurrentView(v || 'MY_TASKS_TODAY')}
+            onNavigateToTasks={(v?: any) => setCurrentView(v || 'MINHAS_TAREFAS')}
             tasks={visibleTasks}
             currentUserRole={currentUser.Role}
             collaborators={collaboratorsList}
@@ -183,6 +184,17 @@ const App: React.FC = () => {
 
       case 'EQUIPE':
         return <EquipeView users={users} tasks={visibleTasks} ledger={ledger} collaboratorsList={collaboratorsList} />;
+
+      case 'MINHAS_TAREFAS':
+        return (
+          <MinhasTarefasView
+            currentUser={currentUser}
+            tasks={visibleTasks}
+            users={users}
+            onComplete={store.completeTask}
+            currentUserRole={currentUser.Role}
+          />
+        );
 
       case 'PERFORMANCE_MANAGEMENT':
         return <PerformanceDashboard tasks={visibleTasks} users={users} collaboratorsList={collaboratorsList} />;

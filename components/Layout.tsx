@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
       ]
     : [
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
-        { view: 'MY_TASKS_TODAY', label: 'Tarefas', icon: <CheckCircle size={22} /> },
+        { view: 'MINHAS_TAREFAS', label: 'Tarefas', icon: <CheckCircle size={22} /> },
         { view: 'MY_SCORE', label: 'Pontos', icon: <Star size={22} /> },
       ];
   const myNotifications = notifications.filter(n => n.to === currentUser.Email);
