@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft, HelpCircle, ChevronDown, Home, CheckCircle, ClipboardCheck, Zap, Star } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft, HelpCircle, ChevronDown, Home, CheckCircle, ClipboardCheck, Zap, Star, Users } from 'lucide-react';
 import { NAVIGATION_ITEMS, NavigationSection } from '../constants';
+import { ToastViewport } from './ui';
 // Fixed: Notification interface is now imported from types.ts
 import { User, ViewType, Notification, UserRole } from '../types';
 
@@ -42,6 +43,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
     ? [
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
         { view: 'CHECK_DELIVERIES', label: 'Conferir', icon: <ClipboardCheck size={22} /> },
+        { view: 'EQUIPE', label: 'Equipe', icon: <Users size={22} /> },
         { view: 'MANAGE_TEMPLATES', label: 'Gerar', icon: <Zap size={22} /> },
       ]
     : [
@@ -227,7 +229,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           </div>
         </header>
 
-        <main className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FFFFFF] ${naEmpresa ? 'pb-24 lg:pb-8' : ''}`}>
+        <main className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-fundo ${naEmpresa ? 'pb-24 lg:pb-8' : ''}`}>
           {children}
         </main>
       </div>
@@ -250,6 +252,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           })}
         </nav>
       )}
+
+      <ToastViewport />
     </div>
   );
 };

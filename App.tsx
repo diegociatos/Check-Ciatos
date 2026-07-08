@@ -29,6 +29,7 @@ import MyProfileView from './components/MyProfileView.tsx';
 import MonthlyPerformanceView from './components/MonthlyPerformanceView.tsx';
 import PlatformClientsView from './components/PlatformClientsView.tsx';
 import PulsoOperacao from './components/PulsoOperacao.tsx';
+import EquipeView from './components/EquipeView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -179,6 +180,9 @@ const App: React.FC = () => {
 
       case 'PULSO':
         return <PulsoOperacao tasks={visibleTasks} users={users} ledger={ledger} />;
+
+      case 'EQUIPE':
+        return <EquipeView users={users} tasks={visibleTasks} ledger={ledger} collaboratorsList={collaboratorsList} />;
 
       case 'PERFORMANCE_MANAGEMENT':
         return <PerformanceDashboard tasks={visibleTasks} users={users} collaboratorsList={collaboratorsList} />;
