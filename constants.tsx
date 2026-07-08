@@ -143,12 +143,19 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     role: [UserRole.GESTOR, UserRole.ADMIN], 
     icon: <ClipboardCheck size={20} /> 
   },
-  { 
+  {
+    label: 'Gerar Tarefas',
+    view: 'GERAR',
+    section: 'GESTOR',
+    role: [UserRole.GESTOR, UserRole.ADMIN],
+    icon: <Zap size={20} />
+  },
+  {
     label: 'Modelos de Tarefas',
     view: 'MANAGE_TEMPLATES',
     section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <CalendarClock size={20} /> 
+    role: [UserRole.GESTOR, UserRole.ADMIN],
+    icon: <CalendarClock size={20} />
   },
   { 
     label: 'Painel de Confiabilidade', 

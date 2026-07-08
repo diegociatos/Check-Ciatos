@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft, HelpCircle, ChevronDown } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, Bell, ArrowLeft, HelpCircle, ChevronDown, Home, CheckCircle, ClipboardCheck, Zap, Star } from 'lucide-react';
 import { NAVIGATION_ITEMS, NavigationSection } from '../constants';
 // Fixed: Notification interface is now imported from types.ts
 import { User, ViewType, Notification, UserRole } from '../types';
@@ -35,6 +35,21 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
     ? UserRole.ADMIN : currentUser.Role;
   const naEmpresa = !isPlataforma || !!empresaNome; // plataforma fora de empresa = só painel de clientes
   const filteredNav = naEmpresa ? NAVIGATION_ITEMS.filter(item => item.role.includes(navRole)) : [];
+
+  // Atalhos da barra inferior (mobile) — zona do polegar
+  const ehGestao = [UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER, UserRole.GESTOR].includes(currentUser.Role);
+  const bottomItems: { view: ViewType; label: string; icon: React.ReactNode }[] = ehGestao
+    ? [
+        { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
+        { view: 'MY_TASKS_TODAY', label: 'Hoje', icon: <CheckCircle size={22} /> },
+        { view: 'CHECK_DELIVERIES', label: 'Conferir', icon: <ClipboardCheck size={22} /> },
+        { view: 'GERAR', label: 'Gerar', icon: <Zap size={22} /> },
+      ]
+    : [
+        { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
+        { view: 'MY_TASKS_TODAY', label: 'Hoje', icon: <CheckCircle size={22} /> },
+        { view: 'MY_SCORE', label: 'Pontos', icon: <Star size={22} /> },
+      ];
   const myNotifications = notifications.filter(n => n.to === currentUser.Email);
 
   const sections: NavigationSection[] = ['INÍCIO', 'COLABORADOR', 'GESTOR', 'ADMINISTRADOR'];
@@ -213,10 +228,29 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FFFFFF]">
+        <main className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FFFFFF] ${naEmpresa ? 'pb-24 lg:pb-8' : ''}`}>
           {children}
         </main>
       </div>
+
+      {/* Barra inferior de atalhos (mobile) */}
+      {naEmpresa && bottomItems.length > 0 && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex shadow-[0_-1px_8px_rgba(0,0,0,0.04)]">
+          {bottomItems.map(it => {
+            const active = currentView === it.view;
+            return (
+              <button
+                key={it.view}
+                onClick={() => { onNavigate(it.view); setIsSidebarOpen(false); }}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? 'text-[#8B1B1F]' : 'text-stone-400'}`}
+              >
+                {it.icon}
+                <span className="text-[10px] font-semibold">{it.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 };
