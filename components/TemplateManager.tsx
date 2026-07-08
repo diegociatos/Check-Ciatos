@@ -2,20 +2,22 @@
 import React, { useState, useMemo } from 'react';
 import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole } from '../types';
 import { getTodayStr, toDateOnly } from '../store';
-import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft } from 'lucide-react';
+import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil } from 'lucide-react';
 import { useUndoableDelete } from './ui';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
   users: User[];
   onAdd: (template: Omit<TaskTemplate, 'ID'>) => void;
+  onUpdate: (id: string, template: Omit<TaskTemplate, 'ID'>) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onGenerateNow: (id: string, force?: boolean) => any;
 }
 
-const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onToggle, onDelete, onGenerateNow }) => {
+const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onUpdate, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
   const [filterColaborador, setFilterColaborador] = useState<string>('TODOS');
   const { pendentes: excluindo, remover: excluirModelo } = useUndoableDelete(onDelete, 'Modelo');
@@ -23,11 +25,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const today = getTodayStr();
   // Qualquer pessoa da operação pode ser responsável por uma tarefa (colaborador, gestor ou admin)
   const collaborators = users.filter(u =>
-    u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR || u.Role === UserRole.ADMIN
+    u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR ||
+    u.Role === UserRole.ADMIN || u.Role === UserRole.MASTER || u.Role === UserRole.PLATAFORMA
   );
   const colaboradoresList = users.filter(u => u.Role === UserRole.COLABORADOR);
   const gestoresList = users.filter(u => u.Role === UserRole.GESTOR);
   const adminList = users.filter(u => u.Role === UserRole.ADMIN);
+  // Master (dono da empresa) e plataforma também podem ser responsáveis por tarefas.
+  const masterList = users.filter(u => u.Role === UserRole.MASTER || u.Role === UserRole.PLATAFORMA);
   const filteredTemplates = (filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador))
     .filter(t => !excluindo.has(t.ID));
   
@@ -98,10 +103,31 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
     }
   };
 
+  const formVazio = (): Omit<TaskTemplate, 'ID'> => ({
+    Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
+    Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
+    DiaDoMes: 1, DataInicio: today, PularFinalDeSemana: false, Ativa: true,
+  });
+
+  const abrirNovo = () => { setEditingId(null); setFormData(formVazio()); setIsModalOpen(true); };
+
+  const abrirEdicao = (t: TaskTemplate) => {
+    setEditingId(t.ID);
+    setFormData({
+      Titulo: t.Titulo, Descricao: t.Descricao, Responsavel: t.Responsavel, PontosValor: t.PontosValor,
+      Prioridade: t.Prioridade, Recorrencia: t.Recorrencia, DiasRecorrencia: t.DiasRecorrencia || [],
+      DiaDoMes: t.DiaDoMes || 1, DataInicio: t.DataInicio || today,
+      PularFinalDeSemana: t.PularFinalDeSemana || false, Ativa: t.Ativa,
+    });
+    setIsModalOpen(true);
+  };
+
+  const fecharModal = () => { setIsModalOpen(false); setEditingId(null); };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.Titulo || !formData.Responsavel) return alert("Preencha os campos obrigatórios.");
-    
+
     // Validações por tipo
     if (formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA && !formData.DataInicio) {
         return alert("Por favor, selecione a data de execução específica.");
@@ -110,8 +136,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         return alert("Selecione ao menos um dia da semana para recorrência semanal.");
     }
 
-    onAdd(formData);
-    setIsModalOpen(false);
+    if (editingId) onUpdate(editingId, formData);
+    else onAdd(formData);
+    fecharModal();
   };
 
   return (
@@ -131,7 +158,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
             <option value="TODOS">Todas as pessoas</option>
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 bg-marca text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]">
+          <button onClick={abrirNovo} className="inline-flex items-center gap-2 bg-marca text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]">
             <Plus size={18} /> Nova tarefa
           </button>
         </div>
@@ -226,6 +253,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
               >
                 <Zap size={11} className="fill-current" /> Gerar
               </button>
+              <button onClick={() => abrirEdicao(tmpl)} className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl transition-colors" title="Editar modelo">
+                <Pencil size={14} />
+              </button>
               <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title={tmpl.Ativa ? 'Pausar' : 'Ativar'}>
                 <RotateCw size={14} />
               </button>
@@ -241,8 +271,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-               <h3 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Configurar Novo Modelo</h3>
-               <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
+               <h3 className="font-titulo text-xl text-tinta">{editingId ? 'Editar modelo' : 'Novo modelo de tarefa'}</h3>
+               <button onClick={fecharModal} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                
@@ -274,6 +304,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável pela Tarefa</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular responsável...</option>
+                        {masterList.length > 0 && (
+                          <optgroup label="Master / Direção">
+                            {masterList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                          </optgroup>
+                        )}
                         {colaboradoresList.length > 0 && (
                           <optgroup label="Colaboradores">
                             {colaboradoresList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
@@ -365,7 +400,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
                <div className="pt-6 border-t border-gray-100">
                   <button type="submit" className="w-full bg-marca text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-marca-escuro transition-all hover:scale-[1.01] active:scale-95">
-                    <Save size={20} /> Salvar Modelo de Recorrência
+                    <Save size={20} /> {editingId ? 'Salvar alterações' : 'Criar modelo'}
                   </button>
                </div>
             </form>

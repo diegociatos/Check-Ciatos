@@ -98,6 +98,11 @@ export const useStore = () => {
           Status: normalizeUserStatus(u.Status),
           Time: u.Time,
           Gestor: u.Gestor,
+          Foto: u.Foto,
+          Telefone: u.Telefone,
+          DataNascimento: u.DataNascimento,
+          Endereco: u.Endereco,
+          Bio: u.Bio,
           SenhaProvisoria: u.SenhaProvisoria,
           DataCriacao: u.DataCriacao,
           UltimoAcesso: u.UltimoAcesso,
@@ -333,10 +338,18 @@ export const useStore = () => {
 
   const changePassword = useCallback(async (email: string, oldPass: string, newPass: string) => {
     await authApi.changePassword(email, oldPass, newPass);
-    setBaseUsers(prev => prev.map(u => 
+    setBaseUsers(prev => prev.map(u =>
       u.Email === email ? { ...u, SenhaProvisoria: false } : u
     ));
   }, []);
+
+  // Primeiro acesso: usuário troca a senha provisória (usa a sessão já ativa).
+  const definirNovaSenha = useCallback(async (novaSenha: string) => {
+    await authApi.definirNovaSenha(novaSenha);
+    setBaseUsers(prev => prev.map(u =>
+      u.Email === currentUserEmail ? { ...u, SenhaProvisoria: false } : u
+    ));
+  }, [currentUserEmail]);
 
   const resetUserPassword = useCallback(async (email: string) => {
     try {
@@ -410,9 +423,9 @@ export const useStore = () => {
     }
   }, []);
 
-  const updateProfile = useCallback((updatedData: Partial<User>) => {
+  const updateProfile = useCallback(async (updatedData: Partial<User>) => {
     if (currentUserEmail) {
-      updateUser(currentUserEmail, updatedData);
+      await updateUser(currentUserEmail, updatedData);
     }
   }, [currentUserEmail, updateUser]);
 
@@ -587,6 +600,24 @@ export const useStore = () => {
       console.error('Erro ao deletar template:', err);
     }
     setTemplates(prev => prev.filter(t => t.ID !== id));
+  }, []);
+
+  const updateTemplate = useCallback(async (id: string, data: Omit<TaskTemplate, 'ID'>) => {
+    // Edita o modelo (ex.: corrigir pontos/prazo). Não altera empresa_id nem tarefas já geradas.
+    await templatesApi.update(id, {
+      Titulo: data.Titulo,
+      Descricao: data.Descricao,
+      Responsavel: data.Responsavel,
+      Prioridade: data.Prioridade,
+      PontosValor: data.PontosValor,
+      Recorrencia: data.Recorrencia,
+      DiasRecorrencia: data.DiasRecorrencia,
+      DiaDoMes: data.DiaDoMes,
+      DataInicio: data.DataInicio,
+      PularFinalDeSemana: data.PularFinalDeSemana,
+      Ativa: data.Ativa,
+    });
+    setTemplates(prev => prev.map(t => (t.ID === id ? { ...t, ...data } : t)));
   }, []);
 
   const generateTaskFromTemplate = useCallback(async (templateId: string, force: boolean = false) => {
@@ -837,9 +868,9 @@ export const useStore = () => {
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
-    login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
+    login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
-    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
+    addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
     criarTarefaPessoal, concluirTarefaPessoal, reabrirTarefaPessoal, excluirTarefaPessoal, valorarTarefaPessoal
   };
 };
