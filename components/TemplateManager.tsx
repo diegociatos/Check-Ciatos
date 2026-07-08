@@ -25,11 +25,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const today = getTodayStr();
   // Qualquer pessoa da operação pode ser responsável por uma tarefa (colaborador, gestor ou admin)
   const collaborators = users.filter(u =>
-    u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR || u.Role === UserRole.ADMIN
+    u.Role === UserRole.COLABORADOR || u.Role === UserRole.GESTOR ||
+    u.Role === UserRole.ADMIN || u.Role === UserRole.MASTER || u.Role === UserRole.PLATAFORMA
   );
   const colaboradoresList = users.filter(u => u.Role === UserRole.COLABORADOR);
   const gestoresList = users.filter(u => u.Role === UserRole.GESTOR);
   const adminList = users.filter(u => u.Role === UserRole.ADMIN);
+  // Master (dono da empresa) e plataforma também podem ser responsáveis por tarefas.
+  const masterList = users.filter(u => u.Role === UserRole.MASTER || u.Role === UserRole.PLATAFORMA);
   const filteredTemplates = (filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador))
     .filter(t => !excluindo.has(t.ID));
   
@@ -301,6 +304,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável pela Tarefa</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular responsável...</option>
+                        {masterList.length > 0 && (
+                          <optgroup label="Master / Direção">
+                            {masterList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
+                          </optgroup>
+                        )}
                         {colaboradoresList.length > 0 && (
                           <optgroup label="Colaboradores">
                             {colaboradoresList.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
