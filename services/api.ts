@@ -155,6 +155,12 @@ export const tasksApi = {
     return data;
   },
 
+  definirAndamento: async (taskId: string, andamento: string) => {
+    const { error } = await supabase.rpc('definir_andamento', { p_id: taskId, p_andamento: andamento });
+    if (error) throwSb(error, 'Erro ao mudar a situação');
+    return { ok: true };
+  },
+
   complete: async (taskId: string, note?: string, proof?: string) => {
     const { error } = await supabase.rpc('complete_task', {
       p_id: taskId, p_note: note ?? null, p_proof: proof ?? null,

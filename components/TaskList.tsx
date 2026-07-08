@@ -3,6 +3,7 @@ import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
 import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText } from 'lucide-react';
 import { validarArquivo, uploadEvidencia, MAX_MB } from '../lib/storage';
 import { statusInfo, STATUS_TONE_CLASS } from '../lib/labels';
+import { getTodayStr } from '../store';
 
 interface EnrichedTask extends Task {
   NomeColaborador: string;
@@ -16,13 +17,15 @@ interface TaskListProps {
   onComplete: (taskId: string, note: string, proof: string) => void;
   onReopen?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
+  onDefinirAndamento?: (taskId: string, andamento: string) => Promise<void>;
   currentUserRole: UserRole;
   currentUserEmail: string;
 }
 
 const RED = '#8B1B1F';
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail }) => {
+  const hoje = getTodayStr();
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const [note, setNote] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -89,6 +92,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
             const isRejected = (task.Tentativas > 0 && task.Status === TaskStatus.PENDENTE) || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
             const acent = isRejected || task.Status === TaskStatus.ATRASADA ? '#C62828' : task.Status === TaskStatus.APROVADA ? '#2E7D32' : RED;
             const podeConcluir = isAssignee && task.Status !== TaskStatus.APROVADA && task.Status !== TaskStatus.AGUARDANDO_APROVACAO;
+            const atrasada = podeConcluir && !!task.DataLimite_Date && task.DataLimite_Date < hoje;
+            const emAndamento = (task.Andamento || 'Pendente') === 'Em andamento';
             return (
               <div key={task.ID} className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] overflow-hidden flex flex-col" style={{ borderLeft: `4px solid ${acent}` }}>
                 <div className="p-6 flex-1">
@@ -96,6 +101,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                     <div className="flex flex-wrap items-center gap-2">
                       {statusPill(task, isRejected)}
                       {task.Status === TaskStatus.APROVADA && conferBadge(task.ConferenciaStatus)}
+                      {atrasada && <span className="text-[11px] font-medium px-2.5 py-1 rounded-full text-amber-700 bg-amber-50">Atrasado</span>}
+                      {!atrasada && emAndamento && task.Status === TaskStatus.PENDENTE && <span className="text-[11px] font-medium px-2.5 py-1 rounded-full text-sky-700 bg-sky-50">Em andamento</span>}
                     </div>
                     <span className="text-lg font-semibold text-marca shrink-0">{task.PontosValor} pts</span>
                   </div>
@@ -120,7 +127,26 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                 )}
 
                 {podeConcluir && (
-                  <div className="px-6 pb-6">
+                  <div className="px-6 pb-6 space-y-3">
+                    {onDefinirAndamento && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Situação</p>
+                        <div className="grid grid-cols-2 gap-1 bg-stone-100 rounded-xl p-1">
+                          <button
+                            onClick={() => !emAndamento || onDefinirAndamento(task.ID, 'Pendente')}
+                            className={`py-2 rounded-lg text-xs font-semibold transition-all ${!emAndamento ? 'bg-white text-marca shadow-sm' : 'text-stone-500 hover:text-tinta'}`}
+                          >
+                            A fazer
+                          </button>
+                          <button
+                            onClick={() => emAndamento || onDefinirAndamento(task.ID, 'Em andamento')}
+                            className={`py-2 rounded-lg text-xs font-semibold transition-all ${emAndamento ? 'bg-white text-sky-700 shadow-sm' : 'text-stone-500 hover:text-tinta'}`}
+                          >
+                            Em andamento
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <button
                       onClick={() => abrirModal(task)}
                       className="w-full bg-marca text-white py-3.5 rounded-xl font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
