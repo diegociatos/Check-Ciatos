@@ -208,4 +208,7 @@ export type ViewType =
   | 'BOT_HISTORY'
   | 'MONTHLY_PERFORMANCE'
   | 'CLIENTES'
-  | 'PULSO';
+  | 'PULSO'
+  | 'EQUIPE'
+  | 'RELATORIOS'
+  | 'MINHAS_TAREFAS';
