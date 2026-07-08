@@ -98,6 +98,11 @@ export const useStore = () => {
           Status: normalizeUserStatus(u.Status),
           Time: u.Time,
           Gestor: u.Gestor,
+          Foto: u.Foto,
+          Telefone: u.Telefone,
+          DataNascimento: u.DataNascimento,
+          Endereco: u.Endereco,
+          Bio: u.Bio,
           SenhaProvisoria: u.SenhaProvisoria,
           DataCriacao: u.DataCriacao,
           UltimoAcesso: u.UltimoAcesso,
@@ -409,9 +414,9 @@ export const useStore = () => {
     }
   }, []);
 
-  const updateProfile = useCallback((updatedData: Partial<User>) => {
+  const updateProfile = useCallback(async (updatedData: Partial<User>) => {
     if (currentUserEmail) {
-      updateUser(currentUserEmail, updatedData);
+      await updateUser(currentUserEmail, updatedData);
     }
   }, [currentUserEmail, updateUser]);
 
