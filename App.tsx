@@ -125,6 +125,7 @@ const App: React.FC = () => {
             onConcluirPessoal={store.concluirTarefaPessoal}
             onReabrirPessoal={store.reabrirTarefaPessoal}
             onExcluirPessoal={store.excluirTarefaPessoal}
+            onDefinirAndamento={store.definirAndamento}
           />
         );
 

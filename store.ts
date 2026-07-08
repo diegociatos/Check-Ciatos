@@ -133,6 +133,7 @@ export const useStore = () => {
           DataCriacao: t.DataCriacao || '',
           empresa_id: t.empresa_id,
           Pessoal: !!t.Pessoal,
+          Andamento: t.Andamento || 'Pendente',
         })));
 
         // Normalizar templates
@@ -469,6 +470,12 @@ export const useStore = () => {
         ProofAttachment: proof,
       } : t)));
     }
+  }, []);
+
+  // Situação de trabalho controlada pelo responsável (Pendente / Em andamento).
+  const definirAndamento = useCallback(async (taskId: string, andamento: string) => {
+    await tasksApi.definirAndamento(taskId, andamento);
+    setTasks(prev => prev.map(t => (t.ID === taskId ? { ...t, Andamento: andamento } : t)));
   }, []);
 
   const auditTask = useCallback(async (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => {
@@ -885,7 +892,7 @@ export const useStore = () => {
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,
-    updateProfile, completeTask, auditTask, deleteTask,
+    updateProfile, completeTask, definirAndamento, auditTask, deleteTask,
     addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
     criarTarefaPessoal, concluirTarefaPessoal, reabrirTarefaPessoal, excluirTarefaPessoal, valorarTarefaPessoal
   };

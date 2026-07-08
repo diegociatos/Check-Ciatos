@@ -16,6 +16,7 @@ interface MinhasTarefasViewProps {
   onConcluirPessoal: (taskId: string) => Promise<void>;
   onReabrirPessoal: (taskId: string) => Promise<void>;
   onExcluirPessoal: (taskId: string) => Promise<void>;
+  onDefinirAndamento: (taskId: string, andamento: string) => Promise<void>;
 }
 
 type Aba = 'HOJE' | 'PROXIMAS' | 'CONCLUIDAS' | 'PESSOAIS';
@@ -24,7 +25,7 @@ const PENDENTE_LIKE = [TaskStatus.PENDENTE, TaskStatus.FEITA_ERRADA, TaskStatus.
 
 const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
   currentUser, tasks, users, onComplete, currentUserRole,
-  onCriarPessoal, onConcluirPessoal, onReabrirPessoal, onExcluirPessoal,
+  onCriarPessoal, onConcluirPessoal, onReabrirPessoal, onExcluirPessoal, onDefinirAndamento,
 }) => {
   const today = getTodayStr();
   const [aba, setAba] = useState<Aba>('HOJE');
@@ -120,7 +121,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
             action={proximas.length > 0 ? <button onClick={() => setAba('PROXIMAS')} className="text-sm font-semibold text-marca hover:text-marca-escuro">Ver próximas ({proximas.length})</button> : undefined}
           />
         ) : (
-          <TaskList tasks={enrich(hoje)} onComplete={onComplete} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} />
+          <TaskList tasks={enrich(hoje)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} />
         )
       )}
 
@@ -128,7 +129,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
         proximas.length === 0 ? (
           <EmptyState icon={<CalendarDays size={26} />} title="Sem próximas obrigações" message="Quando novas tarefas forem geradas para você, aparecem aqui com antecedência." />
         ) : (
-          <TaskList tasks={enrich(proximas)} onComplete={onComplete} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} />
+          <TaskList tasks={enrich(proximas)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} />
         )
       )}
 

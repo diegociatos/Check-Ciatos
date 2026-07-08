@@ -144,6 +144,7 @@ export interface Task {
   CompletionNote?: string;
   empresa_id?: string;
   Pessoal?: boolean; // tarefa criada pelo próprio colaborador (0 pt até o master valorar)
+  Andamento?: string; // situação de trabalho controlada pelo responsável: 'Pendente' | 'Em andamento'
 }
 
 // Added DataInicio to TaskTemplate interface to support template generation logic
