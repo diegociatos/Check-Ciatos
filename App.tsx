@@ -134,6 +134,7 @@ const App: React.FC = () => {
         return (
           <ManageUsersView
             users={users}
+            currentUser={currentUser}
             onAddUser={store.addUser}
             onUpdateUser={store.updateUser}
             onResetPassword={store.resetUserPassword}
