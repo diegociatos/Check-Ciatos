@@ -57,9 +57,9 @@ const App: React.FC = () => {
   // Tela de carregamento (evita piscar o Login enquanto os dados chegam)
   if (store.loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F3F3F3] font-ciatos">
+      <div className="min-h-screen flex items-center justify-center bg-fundo font-ciatos">
         <div className="text-center animate-in fade-in duration-300">
-          <div className="h-12 w-12 rounded-2xl bg-[#8B1B1F] text-white flex items-center justify-center font-black text-lg mx-auto animate-pulse">GC</div>
+          <div className="h-12 w-12 rounded-2xl bg-marca text-white flex items-center justify-center font-black text-lg mx-auto animate-pulse">GC</div>
           <p className="text-stone-400 mt-4 text-sm">Carregando…</p>
         </div>
       </div>

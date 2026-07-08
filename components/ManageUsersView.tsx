@@ -114,7 +114,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
         </div>
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]"
+          className="inline-flex items-center gap-2 bg-marca text-white pl-5 pr-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]"
         >
           <Plus size={18} /> Novo usuário
         </button>
@@ -137,7 +137,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                 <tr key={user.Email} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-[#8B1B1F] rounded-2xl flex items-center justify-center text-white text-sm font-black overflow-hidden shadow-sm">
+                      <div className="h-10 w-10 bg-marca rounded-2xl flex items-center justify-center text-white text-sm font-black overflow-hidden shadow-sm">
                         {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : user.Nome.charAt(0)}
                       </div>
                       <div>
@@ -148,7 +148,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[#8B1B1F] uppercase tracking-tighter text-[11px]">{user.Role}</span>
+                      <span className="text-marca uppercase tracking-tighter text-[11px]">{user.Role}</span>
                       {user.Role === UserRole.COLABORADOR && (
                          <span className="text-[9px] text-stone-400 font-semibold uppercase tracking-wider flex items-center gap-1">
                            <UserRoundSearch size={10} /> Gestor: {users.find(u => u.Email === user.Gestor)?.Nome || 'NÃO DEFINIDO'}
@@ -170,7 +170,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   </td>
                   <td className="px-8 py-5 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(user)} className="p-2 text-gray-400 hover:text-[#8B1B1F] hover:bg-gray-50 rounded-xl transition-all" title="Editar">
+                      <button onClick={() => openEdit(user)} className="p-2 text-gray-400 hover:text-marca hover:bg-gray-50 rounded-xl transition-all" title="Editar">
                         <Edit3 size={16} />
                       </button>
                       <button onClick={() => handleResetPasswordAction(user.Email)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Resetar Senha para 123456">
@@ -202,11 +202,11 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><UserIcon size={12}/> Nome Completo</label>
-                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" value={formData.Nome} onChange={e => setFormData({...formData, Nome: e.target.value})} />
+                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10" value={formData.Nome} onChange={e => setFormData({...formData, Nome: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Mail size={12}/> E-mail Corporativo</label>
-                    <input required type="email" readOnly={!!editingEmail} className={`w-full border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none ${editingEmail ? 'bg-gray-100' : 'bg-gray-50 focus:ring-4 focus:ring-[#8B1B1F]/10'}`} value={formData.Email} onChange={e => setFormData({...formData, Email: e.target.value})} />
+                    <input required type="email" readOnly={!!editingEmail} className={`w-full border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none ${editingEmail ? 'bg-gray-100' : 'bg-gray-50 focus:ring-4 focus:ring-marca/10'}`} value={formData.Email} onChange={e => setFormData({...formData, Email: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider flex items-center gap-2"><Shield size={12}/> Cargo / Permissão</label>
@@ -220,10 +220,10 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   {/* Regra de Negócio: Gestor obrigatório apenas para Colaborador */}
                   {formData.Role === UserRole.COLABORADOR && (
                     <div className="space-y-1 animate-in slide-in-from-top-2">
-                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-[10px] font-black text-marca uppercase tracking-widest flex items-center gap-2">
                         <UserRoundSearch size={12} /> Gestor Responsável *
                       </label>
-                      <select required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Gestor} onChange={e => setFormData({...formData, Gestor: e.target.value})}>
+                      <select required className="w-full bg-white border-2 border-marca/20 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Gestor} onChange={e => setFormData({...formData, Gestor: e.target.value})}>
                         <option value="">Vincular a um Gestor...</option>
                         {gestores.map(g => <option key={g.Email} value={g.Email}>{g.Nome}</option>)}
                       </select>
@@ -232,14 +232,14 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
 
                   {formData.Role === UserRole.GESTOR && multiEmpresa && (
                     <div className="space-y-1 md:col-span-2 animate-in slide-in-from-top-2">
-                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Empresas que este gestor atende</label>
+                      <label className="text-[10px] font-black text-marca uppercase tracking-widest">Empresas que este gestor atende</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-4 max-h-44 overflow-y-auto">
                         {empresas.map(e => {
                           const bloqueado = e.id === activeEmpresa; // empresa atual sempre incluída
                           const marcado = bloqueado || empresasGestor.includes(e.id);
                           return (
                             <label key={e.id} className={`flex items-center gap-2 text-sm font-bold ${bloqueado ? 'text-gray-400' : 'text-gray-700 cursor-pointer'}`}>
-                              <input type="checkbox" checked={marcado} disabled={bloqueado} onChange={() => toggleEmpresaGestor(e.id)} className="accent-[#8B1B1F] h-4 w-4" />
+                              <input type="checkbox" checked={marcado} disabled={bloqueado} onChange={() => toggleEmpresaGestor(e.id)} className="accent-marca h-4 w-4" />
                               {e.Nome}
                             </label>
                           );
@@ -274,7 +274,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                </div>
                
                <div className="pt-6 border-t border-gray-100">
-                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
+                  <button type="submit" className="w-full bg-marca text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-marca-escuro transition-all hover:scale-[1.01] active:scale-95">
                     <Save size={20} /> {editingEmail ? 'Salvar Alterações' : 'Finalizar Cadastro'}
                   </button>
                </div>

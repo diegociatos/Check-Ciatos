@@ -74,7 +74,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Header Seletor */}
-      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-2">
             <h3 className="text-3xl font-bold uppercase tracking-tight">Painel Individual de Feedback</h3>
@@ -116,7 +116,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                 <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter">Comparativo de Pontuação Real</h4>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-gray-400 uppercase">Eficiência de Ganho</p>
-                  <p className="text-2xl font-black text-[#8B1B1F]">{((metrics.pontosAlcancados / (metrics.pontosPossiveis || 1)) * 100).toFixed(1)}%</p>
+                  <p className="text-2xl font-black text-marca">{((metrics.pontosAlcancados / (metrics.pontosPossiveis || 1)) * 100).toFixed(1)}%</p>
                 </div>
               </div>
               
@@ -169,7 +169,7 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                 </div>
               </div>
 
-              <div className="bg-[#8B1B1F] p-8 rounded-2xl text-white shadow-xl flex flex-col justify-center">
+              <div className="bg-marca p-8 rounded-2xl text-white shadow-xl flex flex-col justify-center">
                  <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Info size={24} className="opacity-50" />
@@ -196,10 +196,10 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
           <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm">
              <div className="flex items-center justify-between mb-8">
                 <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-3">
-                   <CalendarClock size={24} className="text-[#8B1B1F]" /> Agenda de Futuro (Planejamento)
+                   <CalendarClock size={24} className="text-marca" /> Agenda de Futuro (Planejamento)
                 </h4>
-                <div className="bg-[#8B1B1F]/5 px-4 py-2 rounded-2xl border border-[#8B1B1F]/10">
-                   <span className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                <div className="bg-marca/5 px-4 py-2 rounded-2xl border border-marca/10">
+                   <span className="text-[10px] font-black text-marca uppercase tracking-widest">
                      {futureTasks.reduce((acc, t) => acc + t.PontosValor, 0)} Pts em Planejamento
                    </span>
                 </div>
@@ -210,12 +210,12 @@ const IndividualPerformanceDashboard: React.FC<IndividualPerformanceDashboardPro
                    futureTasks.map(task => (
                      <div key={task.ID} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
                         <div className="flex items-center gap-4">
-                           <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 group-hover:text-[#8B1B1F] transition-colors">
+                           <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 group-hover:text-marca transition-colors">
                               <Clock size={20} />
                            </div>
                            <div>
                               <p className="text-sm font-bold text-[#111111]">{task.Titulo}</p>
-                              <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                              <p className="text-[10px] font-black text-marca uppercase tracking-widest">
                                 Prazo: {task.DataLimite_Date!.split('-').reverse().join('/')}
                               </p>
                            </div>

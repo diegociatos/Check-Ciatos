@@ -32,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#8B1B1F] flex items-center justify-center p-6 relative overflow-hidden font-ciatos">
+    <div className="min-h-screen bg-marca flex items-center justify-center p-6 relative overflow-hidden font-ciatos">
       {/* Subtle Pattern Overlay */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 0)', backgroundSize: '40px 40px' }} />
       
@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           
           {/* Logo Section */}
           <div className="mx-auto mb-6">
-            <div className="h-20 w-20 bg-[#8B1B1F] rounded-lg flex items-center justify-center text-white text-3xl font-bold shadow-md ring-4 ring-gray-50 overflow-hidden">
+            <div className="h-20 w-20 bg-marca rounded-lg flex items-center justify-center text-white text-3xl font-bold shadow-md ring-4 ring-gray-50 overflow-hidden">
                {/* Using text representation as grupo.jpg is not available in the prompt environment */}
                <span className="font-serif italic">GC</span>
             </div>
@@ -60,7 +60,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 required
                 type="email"
                 placeholder="seu.email@ciatos.com.br"
-                className={`w-full border border-[#E0E0E0] rounded-[8px] p-[12px] px-[15px] text-[14px] text-[#111111] focus:border-[#8B1B1F] focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-300`}
+                className={`w-full border border-[#E0E0E0] rounded-[8px] p-[12px] px-[15px] text-[14px] text-[#111111] focus:border-marca focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-300`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -72,14 +72,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   required
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Digite sua senha"
-                  className={`w-full border border-[#E0E0E0] rounded-[8px] p-[12px] px-[15px] text-[14px] text-[#111111] focus:border-[#8B1B1F] focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-300`}
+                  className={`w-full border border-[#E0E0E0] rounded-[8px] p-[12px] px-[15px] text-[14px] text-[#111111] focus:border-marca focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-300`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#8B1B1F] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-marca transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -88,7 +88,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button 
                   type="button"
                   onClick={() => alert('Contate o administrador para resetar sua senha.')}
-                  className="text-[12px] text-[#8B1B1F] hover:text-[#6F0F14] transition-colors font-medium"
+                  className="text-[12px] text-marca hover:text-marca-escuro transition-colors font-medium"
                 >
                   Esqueceu a senha?
                 </button>
@@ -105,7 +105,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button
               disabled={loading}
               type="submit"
-              className="w-full bg-[#8B1B1F] text-white py-[14px] px-[30px] rounded-[8px] text-[16px] font-bold uppercase shadow-lg shadow-[#8B1B1F]/20 hover:bg-[#6F0F14] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50"
+              className="w-full bg-marca text-white py-[14px] px-[30px] rounded-[8px] text-[16px] font-bold uppercase shadow-lg shadow-marca/20 hover:bg-marca-escuro active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {loading ? (
                 <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

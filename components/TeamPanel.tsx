@@ -36,7 +36,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks, collaboratorsList }
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-[#8B1B1F] p-6 rounded-2xl text-white shadow-lg flex flex-col justify-between h-40">
+        <div className="bg-marca p-6 rounded-2xl text-white shadow-lg flex flex-col justify-between h-40">
            <LayoutDashboard size={24} className="opacity-50" />
            <div>
               <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Conf. Média Equipe</p>
@@ -44,7 +44,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ users, tasks, collaboratorsList }
            </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-40">
-           <Activity size={24} className="text-[#8B1B1F] opacity-50" />
+           <Activity size={24} className="text-marca opacity-50" />
            <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Tarefas Hoje</p>
               <h4 className="text-3xl font-ciatos font-bold text-[#111111]">{totalTasksToday}</h4>

@@ -33,7 +33,7 @@ const DecisionReport: React.FC<DecisionReportProps> = ({ users, collaboratorsLis
           <h3 className="text-2xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Relatório Estratégico</h3>
           <p className="text-sm text-gray-400 font-medium">Cruzamento de dados da sua equipe.</p>
         </div>
-        <button onClick={handleGenerateReport} className="flex items-center gap-3 bg-[#8B1B1F] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-[#8B1B1F]/20">
+        <button onClick={handleGenerateReport} className="flex items-center gap-3 bg-marca text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-marca/20">
           <Download size={18} /> Exportar Fechamento
         </button>
       </div>

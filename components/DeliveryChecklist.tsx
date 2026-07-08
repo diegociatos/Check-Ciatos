@@ -23,9 +23,9 @@ const AnexoEvidencia: React.FC<{ path: string }> = ({ path }) => {
   if (url) {
     return (
       <a href={url} target="_blank" rel="noopener noreferrer"
-         className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-2 hover:border-[#8B1B1F]/40 transition-colors">
-        <Paperclip size={14} className="text-[#8B1B1F]" />
-        <span className="text-xs font-semibold text-[#8B1B1F]">Abrir / baixar evidência</span>
+         className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-2 hover:border-marca/40 transition-colors">
+        <Paperclip size={14} className="text-marca" />
+        <span className="text-xs font-semibold text-marca">Abrir / baixar evidência</span>
       </a>
     );
   }
@@ -102,7 +102,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     <p className="text-sm text-stone-900 truncate">{task.Titulo}</p>
                     <p className="text-xs text-stone-400 mt-0.5">{task.Responsavel.split('@')[0]} · entregue {new Date(task.DataConclusao!).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <span className="text-sm font-semibold text-[#8B1B1F] shrink-0">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade, atrasada: !!isLate, reentrega: (task.Tentativas || 0) > 0 })} pts</span>
+                  <span className="text-sm font-semibold text-marca shrink-0">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade, atrasada: !!isLate, reentrega: (task.Tentativas || 0) > 0 })} pts</span>
                 </div>
                 {task.CompletionNote && <p className="text-xs text-stone-500 italic mt-2 line-clamp-2">"{task.CompletionNote}"</p>}
                 {task.ProofAttachment && task.ProofAttachment.trim() && <div className="mt-2"><AnexoEvidencia path={task.ProofAttachment} /></div>}
@@ -139,7 +139,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                   <tr className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : task.ID)}>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-[#8B1B1F] rounded-lg flex items-center justify-center text-white text-[10px] font-black">
+                        <div className="h-8 w-8 bg-marca rounded-lg flex items-center justify-center text-white text-[10px] font-black">
                           {task.Responsavel.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex flex-col">
@@ -158,7 +158,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                         </div>
                         <button 
                           onClick={(e) => { e.stopPropagation(); setExpandedTask(isExpanded ? null : task.ID); }}
-                          className={`p-1.5 rounded-lg shadow-sm transition-all ${isExpanded ? 'bg-[#8B1B1F] text-white' : hasNote ? 'bg-[#8B1B1F] text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-[#8B1B1F]'}`}
+                          className={`p-1.5 rounded-lg shadow-sm transition-all ${isExpanded ? 'bg-marca text-white' : hasNote ? 'bg-marca text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-marca'}`}
                           title="Ver detalhes da entrega"
                         >
                           <Eye size={14} />
@@ -186,7 +186,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                             </div>
                           );
                         }
-                        return <span className="text-sm font-black text-[#8B1B1F]">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade })}</span>;
+                        return <span className="text-sm font-black text-marca">{pontosAprovacao({ pontosBase: task.PontosValor, prioridade: task.Prioridade })}</span>;
                       })()}
                     </td>
                     <td className="px-8 py-4 text-right">
@@ -214,17 +214,17 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                   </tr>
                   {/* Linha expandida com detalhes da entrega */}
                   {isExpanded && (
-                    <tr className="bg-[#8B1B1F]/5">
+                    <tr className="bg-marca/5">
                       <td colSpan={5} className="px-8 py-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-3">
-                            <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Descrição da Tarefa</p>
+                            <p className="text-[10px] font-black text-marca uppercase tracking-widest">Descrição da Tarefa</p>
                             <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-2xl border border-gray-100">
                               {task.Descricao || 'Sem descrição cadastrada.'}
                             </p>
                           </div>
                           <div className="space-y-3">
-                            <p className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Relato do Colaborador</p>
+                            <p className="text-[10px] font-black text-marca uppercase tracking-widest">Relato do Colaborador</p>
                             <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-2xl border border-gray-100 italic">
                               {hasNote ? `"${task.CompletionNote}"` : 'Nenhum relato técnico enviado.'}
                             </p>
@@ -301,7 +301,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     <div className="space-y-2">
                        <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Justificativa do Retorno (Obrigatório)</label>
                        <textarea 
-                         className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#8B1B1F]/10 outline-none min-h-[100px]"
+                         className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-marca/10 outline-none min-h-[100px]"
                          placeholder="O colaborador verá esta mensagem para corrigir a entrega..."
                          value={justification}
                          onChange={(e) => setJustification(e.target.value)}
@@ -310,10 +310,10 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     
                     {auditTask.DataLimite_Date! <= todayStr ? (
                       <div className="space-y-2 animate-in slide-in-from-top-2">
-                         <label className="block text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Definir Novo Prazo para Correção</label>
+                         <label className="block text-[10px] font-black text-marca uppercase tracking-widest">Definir Novo Prazo para Correção</label>
                          <input 
                            type="date"
-                           className="w-full bg-white border-2 border-[#8B1B1F]/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-[#8B1B1F]"
+                           className="w-full bg-white border-2 border-marca/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-marca"
                            value={nextDeadline}
                            onChange={(e) => setNextDeadline(e.target.value)}
                          />

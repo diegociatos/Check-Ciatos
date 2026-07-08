@@ -64,9 +64,9 @@ const PulsoOperacao: React.FC<Props> = ({ tasks, users, ledger }) => {
     <Card className="p-6">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.14em]">{label}</p>
-        <span className={alerta ? 'text-[#8B1B1F]' : 'text-stone-400'}>{icon}</span>
+        <span className={alerta ? 'text-marca' : 'text-stone-400'}>{icon}</span>
       </div>
-      <p className={`mt-3 text-3xl font-semibold ${alerta ? 'text-[#8B1B1F]' : 'text-stone-900'}`}>{value}</p>
+      <p className={`mt-3 text-3xl font-semibold ${alerta ? 'text-marca' : 'text-stone-900'}`}>{value}</p>
       {hint && <p className="text-sm text-stone-400 mt-1">{hint}</p>}
     </Card>
   );
@@ -90,14 +90,14 @@ const PulsoOperacao: React.FC<Props> = ({ tasks, users, ledger }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Críticas do dia */}
         <Card className="lg:col-span-2 p-8">
-          <h3 className="text-lg text-stone-900 flex items-center gap-2 mb-5"><Flame size={18} className="text-[#8B1B1F]" /> Tarefas críticas de hoje</h3>
+          <h3 className="text-lg text-stone-900 flex items-center gap-2 mb-5"><Flame size={18} className="text-marca" /> Tarefas críticas de hoje</h3>
           {m.criticas.length === 0 ? (
             <p className="text-stone-400 text-sm">Nenhuma tarefa de prioridade alta/urgente vencendo hoje. 🎯</p>
           ) : (
             <div className="divide-y divide-stone-100">
               {m.criticas.map(t => (
                 <div key={t.ID} className="py-3 flex items-center gap-3">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.Prioridade === TaskPriority.URGENTE ? 'bg-[#8B1B1F]/10 text-[#8B1B1F]' : 'bg-amber-50 text-amber-700'}`}>{t.Prioridade}</span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.Prioridade === TaskPriority.URGENTE ? 'bg-marca/10 text-marca' : 'bg-amber-50 text-amber-700'}`}>{t.Prioridade}</span>
                   <span className="text-sm text-stone-800 truncate flex-1">{t.Titulo}</span>
                   <span className="text-xs text-stone-400 shrink-0">{t.nome}</span>
                 </div>
@@ -108,7 +108,7 @@ const PulsoOperacao: React.FC<Props> = ({ tasks, users, ledger }) => {
 
         {/* Colaboradores com mais atrasos */}
         <Card className="p-8">
-          <h3 className="text-lg text-stone-900 flex items-center gap-2 mb-5"><Users size={18} className="text-[#8B1B1F]" /> Mais atrasos</h3>
+          <h3 className="text-lg text-stone-900 flex items-center gap-2 mb-5"><Users size={18} className="text-marca" /> Mais atrasos</h3>
           {m.topAtrasos.length === 0 ? (
             <p className="text-stone-400 text-sm">Ninguém com atrasos. Excelente. ✅</p>
           ) : (
@@ -116,7 +116,7 @@ const PulsoOperacao: React.FC<Props> = ({ tasks, users, ledger }) => {
               {m.topAtrasos.map((p, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <span className="text-sm text-stone-700 truncate">{p.nome}</span>
-                  <span className="text-sm font-semibold text-[#8B1B1F] shrink-0">{p.qtd} {p.qtd === 1 ? 'atraso' : 'atrasos'}</span>
+                  <span className="text-sm font-semibold text-marca shrink-0">{p.qtd} {p.qtd === 1 ? 'atraso' : 'atrasos'}</span>
                 </div>
               ))}
             </div>

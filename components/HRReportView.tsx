@@ -30,7 +30,7 @@ const HRReportView: React.FC<HRReportViewProps> = ({ users }) => {
         </div>
         <button 
           onClick={handleExport}
-          className="flex items-center gap-3 bg-[#8B1B1F] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-[#6F0F14] transition-all"
+          className="flex items-center gap-3 bg-marca text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-marca-escuro transition-all"
         >
           <Download size={18} /> Exportar Dados RH
         </button>
@@ -38,7 +38,7 @@ const HRReportView: React.FC<HRReportViewProps> = ({ users }) => {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center gap-3">
-          <div className="p-2 bg-gray-50 rounded-lg text-[#8B1B1F]">
+          <div className="p-2 bg-gray-50 rounded-lg text-marca">
             <UserCheck size={20} />
           </div>
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Controle de Performance Mensal</span>
@@ -78,7 +78,7 @@ const HRReportView: React.FC<HRReportViewProps> = ({ users }) => {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-center">
-                      <span className={`text-sm font-black ${u.EficienciaMes! >= 80 ? 'text-green-600' : 'text-[#8B1B1F]'}`}>
+                      <span className={`text-sm font-black ${u.EficienciaMes! >= 80 ? 'text-green-600' : 'text-marca'}`}>
                         {u.EficienciaMes?.toFixed(1)}%
                       </span>
                     </td>

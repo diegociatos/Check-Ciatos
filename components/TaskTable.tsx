@@ -71,10 +71,10 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
       {Object.entries(groupedTasks).map(([label, items]) => (
         <div key={label} className="space-y-6">
           <div className="flex items-center gap-4 px-2">
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#8B1B1F]">
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-marca">
               {label}
             </span>
-            <div className="h-px flex-1 bg-[#8B1B1F]/20 shadow-sm"></div>
+            <div className="h-px flex-1 bg-marca/20 shadow-sm"></div>
           </div>
           
           <div className="grid grid-cols-1 gap-5">
@@ -90,14 +90,14 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
                 >
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="shrink-0">
-                      <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 group-hover:bg-[#8B1B1F]/5">
+                      <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 group-hover:bg-marca/5">
                         {getStatusIcon(task.Status)}
                       </div>
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-3">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-xl font-bold text-[#111111] leading-tight font-ciatos truncate group-hover:text-[#8B1B1F]">
+                        <h4 className="text-xl font-bold text-[#111111] leading-tight font-ciatos truncate group-hover:text-marca">
                           {task.Titulo}
                         </h4>
                         {isRejected && (
@@ -114,7 +114,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
                         </div>
                         <ArrowRight size={12} className="text-gray-200" />
                         <div className="flex flex-col">
-                          <p className="text-[8px] font-black text-[#8B1B1F] uppercase tracking-widest">Executar em (Prazo)</p>
+                          <p className="text-[8px] font-black text-marca uppercase tracking-widest">Executar em (Prazo)</p>
                           <p className="text-sm font-black text-[#111111]">{dataExecucao}</p>
                         </div>
                         <div className="h-6 w-px bg-gray-100 hidden sm:block"></div>
@@ -129,7 +129,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, onComplete, showStatusIcon
                       {(task.Status === TaskStatus.PENDENTE || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA) ? (
                         <button 
                           onClick={() => onComplete(task.ID)}
-                          className="w-full md:w-auto bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-4 px-8 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95"
+                          className="w-full md:w-auto bg-marca hover:bg-marca-escuro text-white py-4 px-8 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95"
                         >
                           <Check size={18} strokeWidth={3} /> {isRejected ? 'REFAZER E ENVIAR' : 'CONCLUIR'}
                         </button>

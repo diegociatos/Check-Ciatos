@@ -106,7 +106,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
             <p className="text-sm text-gray-400 font-medium">Histórico Analítico de <strong>{colaborador?.Nome.toUpperCase()}</strong></p>
           </div>
         </div>
-        <div className="flex bg-white p-4 rounded-2xl border border-gray-100 text-[#8B1B1F] items-center gap-4 shadow-sm">
+        <div className="flex bg-white p-4 rounded-2xl border border-gray-100 text-marca items-center gap-4 shadow-sm">
           <Calendar size={18} />
           <span className="text-[10px] font-black uppercase tracking-widest">
             {dataInicio.toLocaleDateString()} — {dataFim.toLocaleDateString()}
@@ -120,7 +120,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
         <StatCard title="APROVADAS" value={aprovadas} icon={Target} colorClass="bg-green-600" subText="Entrega de Valor" />
         <StatCard title="ERROS" value={erros} icon={AlertTriangle} colorClass="bg-yellow-500" subText="Impacto Qualidade" />
         <StatCard title="FALTAS" value={faltas} icon={XCircle} colorClass="bg-red-600" subText="Quebra de Acordo" />
-        <div className={`p-6 rounded-2xl border shadow-lg flex flex-col justify-center gap-1 h-full text-white ${pontuacaoLiquida >= 0 ? 'bg-[#8B1B1F]' : 'bg-red-800'}`}>
+        <div className={`p-6 rounded-2xl border shadow-lg flex flex-col justify-center gap-1 h-full text-white ${pontuacaoLiquida >= 0 ? 'bg-marca' : 'bg-red-800'}`}>
            <p className="text-[9px] font-black uppercase tracking-widest opacity-70">LÍQUIDO DO PERÍODO</p>
            <h3 className="text-2xl font-black tracking-tighter">{pontuacaoLiquida} pts</h3>
            <p className="text-[8px] font-bold opacity-50 uppercase">De {pontosPossiveis} Possíveis</p>
@@ -132,7 +132,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
         <div className="lg:col-span-2 bg-white p-10 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-10">
             <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-2">
-              <FileBarChart size={20} className="text-[#8B1B1F]" /> Distribuição de Resultados
+              <FileBarChart size={20} className="text-marca" /> Distribuição de Resultados
             </h3>
             <div className="flex gap-4">
                <div className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-green-600"></div><span className="text-[9px] font-black uppercase">Aprov.</span></div>
@@ -162,10 +162,10 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase">
                    <span>Pontos do Colaborador</span>
-                   <span className="text-[#8B1B1F]">{((pontosGanhos / (pontosPossiveis || 1)) * 100).toFixed(1)}%</span>
+                   <span className="text-marca">{((pontosGanhos / (pontosPossiveis || 1)) * 100).toFixed(1)}%</span>
                 </div>
                 <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-[#8B1B1F] shadow-sm transition-all duration-1000" style={{ width: `${(pontosGanhos / (pontosPossiveis || 1)) * 100}%` }} />
+                   <div className="h-full bg-marca shadow-sm transition-all duration-1000" style={{ width: `${(pontosGanhos / (pontosPossiveis || 1)) * 100}%` }} />
                 </div>
               </div>
               <div className="space-y-4 pt-6 border-t border-gray-50">
@@ -181,7 +181,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
            </div>
            <button 
              onClick={() => window.print()}
-             className="w-full mt-8 bg-gray-50 text-[#8B1B1F] py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-gray-100 hover:bg-white transition-all shadow-sm flex items-center justify-center gap-2"
+             className="w-full mt-8 bg-gray-50 text-marca py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-gray-100 hover:bg-white transition-all shadow-sm flex items-center justify-center gap-2"
            >
              <Download size={14} /> Imprimir Relatório de Feedback
            </button>
@@ -194,7 +194,7 @@ const CollaboratorReportDashboard: React.FC<CollaboratorReportDashboardProps> = 
           <h3 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Extrato Analítico para Feedback</h3>
           <button 
             onClick={() => handleExportCSV(relatorioLedger, `extrato_feedback_${colaborador?.Nome}`)}
-            className="p-3 bg-white rounded-xl text-gray-400 hover:text-[#8B1B1F] transition-all border border-gray-100 shadow-sm"
+            className="p-3 bg-white rounded-xl text-gray-400 hover:text-marca transition-all border border-gray-100 shadow-sm"
           >
             <Download size={18} />
           </button>

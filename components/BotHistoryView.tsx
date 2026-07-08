@@ -48,7 +48,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
-      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h3 className="text-3xl font-bold uppercase tracking-tight mb-2">Logs de Automação (Auditoria)</h3>
           <p className="text-white/60 font-medium italic">Histórico de execução técnica do motor de regras 'GC_Bot_Generator'.</p>
@@ -71,7 +71,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
            <button 
              onClick={handleRunAudit}
              disabled={isAuditing}
-             className="bg-[#8B1B1F] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-[#6F0F14] transition-all disabled:opacity-50"
+             className="bg-marca text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-marca-escuro transition-all disabled:opacity-50"
            >
              {isAuditing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
              Executar Varredura Agora
@@ -110,7 +110,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
            <div className="flex items-center gap-2">
-              <Terminal size={18} className="text-[#8B1B1F]" />
+              <Terminal size={18} className="text-marca" />
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">TaskGenerationLog - Últimos 20 Eventos</span>
            </div>
         </div>
@@ -159,7 +159,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
                       <td className="px-8 py-4 text-right">
                         <button 
                           onClick={() => setExpandedLog(expandedLog === log.ID ? null : log.ID)}
-                          className="p-2 text-gray-300 hover:text-[#8B1B1F] transition-colors"
+                          className="p-2 text-gray-300 hover:text-marca transition-colors"
                         >
                           {expandedLog === log.ID ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </button>
@@ -171,7 +171,7 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
                         <td colSpan={5} className="bg-gray-50/50 p-8 animate-in slide-in-from-top-2">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                               <div className="space-y-4">
-                                 <h5 className="text-[10px] font-black uppercase text-[#8B1B1F] flex items-center gap-2">
+                                 <h5 className="text-[10px] font-black uppercase text-marca flex items-center gap-2">
                                     <Database size={12} /> Atribuições (Action: Add a new row)
                                  </h5>
                                  <div className="bg-white p-4 rounded-2xl border border-gray-100 font-mono text-[11px] space-y-2">

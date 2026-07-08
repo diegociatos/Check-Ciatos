@@ -94,7 +94,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
         </div>
         <div className="relative w-full md:w-72">
           <select 
-            className="w-full bg-[#F3F3F3] border-none rounded-2xl p-4 text-sm font-bold outline-none appearance-none cursor-pointer text-[#111111]"
+            className="w-full bg-fundo border-none rounded-2xl p-4 text-sm font-bold outline-none appearance-none cursor-pointer text-[#111111]"
             value={filterResponsavel}
             onChange={e => setFilterResponsavel(e.target.value)}
           >
@@ -123,16 +123,16 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                   const user = users.find(u => u.Email === email);
                   return (
                     <React.Fragment key={email}>
-                      <tr className="bg-[#8B1B1F]/5">
+                      <tr className="bg-marca/5">
                         <td colSpan={5} className="px-8 py-3">
                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 bg-[#8B1B1F] rounded-xl flex items-center justify-center text-white text-xs font-black">
+                              <div className="h-8 w-8 bg-marca rounded-xl flex items-center justify-center text-white text-xs font-black">
                                  {user?.Nome.charAt(0) || email.charAt(0)}
                               </div>
-                              <span className="text-xs font-black text-[#8B1B1F] uppercase tracking-widest">
+                              <span className="text-xs font-black text-marca uppercase tracking-widest">
                                  {user?.Nome || email}
                               </span>
-                              <div className="h-px flex-1 bg-[#8B1B1F]/10"></div>
+                              <div className="h-px flex-1 bg-marca/10"></div>
                            </div>
                         </td>
                       </tr>
@@ -158,7 +158,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                          <Clock size={10} className="opacity-50" />
                                          Solicitação: {task.DataGeracao ? new Date(task.DataGeracao).toLocaleDateString('pt-BR') : 'Manual'}
                                       </div>
-                                      <div className="flex items-center gap-1.5 text-[9px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                                      <div className="flex items-center gap-1.5 text-[9px] font-black text-marca uppercase tracking-widest">
                                          <Target size={10} className="opacity-50" />
                                          Execução: {(task.DataLimite_Date || task.DataLimite?.split('T')[0] || 'Sem Data').split('-').reverse().join('/')}
                                       </div>
@@ -173,7 +173,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
                                    {task.Status}
                                  </span>
                                </td>
-                               <td className="px-8 py-5 text-center font-black text-[#8B1B1F] text-sm">
+                               <td className="px-8 py-5 text-center font-black text-marca text-sm">
                                  {task.PontosValor}
                                </td>
                                <td className="px-8 py-5 text-center">

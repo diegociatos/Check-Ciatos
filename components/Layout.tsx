@@ -63,12 +63,12 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
       )}
 
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-[#F3F3F3] text-[#111111] border-r border-gray-200 transition-transform duration-300 lg:relative lg:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-72 bg-fundo text-[#111111] border-r border-gray-200 transition-transform duration-300 lg:relative lg:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-            <div className="h-10 w-10 bg-[#8B1B1F] rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden shrink-0">
+            <div className="h-10 w-10 bg-marca rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden shrink-0">
                <span className="font-black">GC</span>
             </div>
             <div className="min-w-0">
@@ -83,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
               <select
                 value={activeEmpresa || ''}
                 onChange={e => onSwitchEmpresa?.(e.target.value)}
-                className="mt-1 w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#8B1B1F]/20"
+                className="mt-1 w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-marca/20"
               >
                 {empresas.map(e => <option key={e.id} value={e.id}>{e.Nome}</option>)}
               </select>
@@ -110,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                       className={`
                         w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold leading-tight text-left transition-all
                         ${currentView === item.view
-                          ? 'bg-[#8B1B1F] text-white shadow-md shadow-[#8B1B1F]/20'
+                          ? 'bg-marca text-white shadow-md shadow-marca/20'
                           : 'text-gray-600 hover:bg-gray-200 hover:text-[#111111]'}
                       `}
                     >
@@ -129,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {isPlataforma && empresaNome && (
-          <div className="bg-[#8B1B1F] text-white px-4 lg:px-8 py-2 flex items-center justify-between text-sm shrink-0">
+          <div className="bg-marca text-white px-4 lg:px-8 py-2 flex items-center justify-between text-sm shrink-0">
             <span>Você está gerenciando: <strong>{empresaNome}</strong></span>
             <button onClick={onExitEmpresa} className="inline-flex items-center gap-1.5 font-semibold hover:underline">
               <ArrowLeft size={15} /> Voltar aos clientes
@@ -145,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
               <Menu size={24} />
             </button>
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-[#8B1B1F] rounded-md flex items-center justify-center text-white text-[10px] font-black lg:hidden">GC</div>
+              <div className="h-8 w-8 bg-marca rounded-md flex items-center justify-center text-white text-[10px] font-black lg:hidden">GC</div>
               <h2 className="text-xl text-stone-900">{headerTitle}</h2>
             </div>
           </div>
@@ -168,7 +168,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                onClick={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationsOpen(false); }}
                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
              >
-               <div className="h-9 w-9 rounded-full bg-[#8B1B1F] text-white flex items-center justify-center overflow-hidden text-sm font-semibold shrink-0">
+               <div className="h-9 w-9 rounded-full bg-marca text-white flex items-center justify-center overflow-hidden text-sm font-semibold shrink-0">
                  {currentUser.Foto ? <img src={currentUser.Foto} className="w-full h-full object-cover" alt="" /> : currentUser.Nome.charAt(0).toUpperCase()}
                </div>
                <span className="hidden sm:block text-sm font-semibold text-stone-800 max-w-[130px] truncate">{currentUser.Nome.split(' ')[0]}</span>
@@ -182,7 +182,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                    <div className="p-4 border-b border-gray-100">
                      <p className="text-sm font-semibold text-stone-900 truncate">{currentUser.Nome}</p>
                      <p className="text-xs text-stone-400 truncate">{currentUser.Email}</p>
-                     <span className="inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#8B1B1F]/10 text-[#8B1B1F] uppercase tracking-wider">{currentUser.Role}</span>
+                     <span className="inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-marca/10 text-marca uppercase tracking-wider">{currentUser.Role}</span>
                    </div>
                    <div className="py-1">
                      <button onClick={() => { onNavigate('MY_PROFILE'); setIsUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors">
@@ -211,7 +211,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
                     {myNotifications.length > 0 ? (
                       myNotifications.map(n => (
                         <div key={n.id} className="p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                          <p className="text-[10px] font-black text-[#8B1B1F] uppercase mb-1">{n.subject}</p>
+                          <p className="text-[10px] font-black text-marca uppercase mb-1">{n.subject}</p>
                           <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{n.body}</p>
                           <p className="text-[9px] text-gray-400 mt-2 font-medium">{new Date(n.date).toLocaleString()}</p>
                         </div>
@@ -241,7 +241,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
               <button
                 key={it.view}
                 onClick={() => { onNavigate(it.view); setIsSidebarOpen(false); }}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? 'text-[#8B1B1F]' : 'text-stone-400'}`}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? 'text-marca' : 'text-stone-400'}`}
               >
                 {it.icon}
                 <span className="text-[10px] font-semibold">{it.label}</span>

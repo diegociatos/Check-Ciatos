@@ -67,7 +67,7 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
   return (
     <div className="flex flex-col gap-0 -m-4 lg:-m-8 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Cabeçalho */}
-      <div className="bg-[#8B1B1F] p-8 lg:p-12 text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-8 lg:p-12 text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <button 
             onClick={onBack}
@@ -88,10 +88,10 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
           (Object.entries(groupedTasks) as [string, Task[]][]).map(([date, items]) => (
             <div key={date} className="space-y-3">
               <div className="flex items-center gap-3 px-4">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8B1B1F]">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-marca">
                   PRAZO: {date}
                 </span>
-                <div className="h-px flex-1 bg-[#8B1B1F]/20"></div>
+                <div className="h-px flex-1 bg-marca/20"></div>
               </div>
               
               <div className="space-y-4">
@@ -110,12 +110,12 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
                               </h4>
                               <div className="flex items-center gap-3">
                                  <span className={`text-[9px] uppercase tracking-tighter ${getPriorityStyle(task.Prioridade)}`}>{task.Prioridade}</span>
-                                 <span className="text-[9px] font-black text-[#8B1B1F] flex items-center gap-1"><Star size={10} fill="currentColor"/> {task.PontosValor} pts</span>
+                                 <span className="text-[9px] font-black text-marca flex items-center gap-1"><Star size={10} fill="currentColor"/> {task.PontosValor} pts</span>
                               </div>
                            </div>
                            <button 
                              onClick={() => setSelectedTask(task)}
-                             className="bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2"
+                             className="bg-marca hover:bg-marca-escuro text-white py-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2"
                            >
                              <CheckCircle2 size={14} /> {isRejected ? 'Refazer Antecipação' : 'Check_Antecipado'}
                            </button>
@@ -158,7 +158,7 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
                <button onClick={() => setSelectedTask(null)} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <div className="p-8 space-y-6">
-               <div className="bg-[#8B1B1F] p-6 rounded-2xl text-white">
+               <div className="bg-marca p-6 rounded-2xl text-white">
                   <p className="text-[10px] font-black uppercase text-white/50 mb-1">Título da Tarefa:</p>
                   <p className="text-lg font-bold leading-tight">{selectedTask.Titulo}</p>
                   <p className="text-[10px] mt-2 italic opacity-70">Prazo Original: {selectedTask.DataLimite_Date!.split('-').reverse().join('/')}</p>
@@ -166,7 +166,7 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
                <div className="space-y-2">
                   <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Notas de Execução</label>
                   <textarea 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#8B1B1F]/10 outline-none min-h-[120px]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-marca/10 outline-none min-h-[120px]"
                     placeholder="Descreva o que foi realizado antecipadamente..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -174,7 +174,7 @@ const UpcomingTasksView: React.FC<UpcomingTasksViewProps> = ({ tasks, onComplete
                </div>
                <button 
                   onClick={submitCompletion}
-                  className="w-full bg-[#8B1B1F] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#6F0F14] transition-all shadow-xl flex items-center justify-center gap-3"
+                  className="w-full bg-marca text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-marca-escuro transition-all shadow-xl flex items-center justify-center gap-3"
                >
                   <Send size={20} /> Confirmar Antecipação
                </button>

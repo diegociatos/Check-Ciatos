@@ -36,15 +36,15 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
 
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab());
 
-  const cardStyle = "bg-[#F3F3F3] p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col";
-  const iconBoxStyle = "h-14 w-14 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform text-[#8B1B1F]";
-  const titleStyle = "text-lg font-ciatos font-bold text-[#8B1B1F] uppercase tracking-tighter mb-4";
+  const cardStyle = "bg-fundo p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col";
+  const iconBoxStyle = "h-14 w-14 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform text-marca";
+  const titleStyle = "text-lg font-ciatos font-bold text-marca uppercase tracking-tighter mb-4";
   const textStyle = "text-sm text-gray-600 leading-relaxed font-medium";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-24">
       {/* Header Visual */}
-      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Guia do Usuário</h2>
           <p className="text-white/70 font-medium text-lg">Sua jornada de alta performance no Grupo Ciatos começa aqui.</p>
@@ -57,7 +57,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
         <button
           onClick={() => setActiveTab('COLABORADOR')}
           className={`flex-1 min-w-[150px] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'COLABORADOR' ? 'bg-[#8B1B1F] text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
+            activeTab === 'COLABORADOR' ? 'bg-marca text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
           }`}
         >
           <CheckCircle size={14} /> Sou Colaborador
@@ -65,7 +65,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
         <button
           onClick={() => setActiveTab('GESTOR')}
           className={`flex-1 min-w-[150px] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'GESTOR' ? 'bg-[#8B1B1F] text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
+            activeTab === 'GESTOR' ? 'bg-marca text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
           }`}
         >
           <ShieldCheck size={14} /> Sou Gestor
@@ -73,7 +73,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
         <button
           onClick={() => setActiveTab('ADMIN')}
           className={`flex-1 min-w-[150px] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'ADMIN' ? 'bg-[#8B1B1F] text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
+            activeTab === 'ADMIN' ? 'bg-marca text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
           }`}
         >
           <Zap size={14} /> Sou Admin
@@ -173,7 +173,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
       {/* Footer / Suporte */}
       <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="flex items-center gap-6">
-          <div className="h-16 w-16 bg-[#8B1B1F]/5 text-[#8B1B1F] rounded-full flex items-center justify-center">
+          <div className="h-16 w-16 bg-marca/5 text-marca rounded-full flex items-center justify-center">
             <HelpCircle size={32} />
           </div>
           <div>
@@ -183,7 +183,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
         </div>
         <a 
           href="mailto:controladoria@grupociatos.com.br?subject=Dúvida no Sistema de Checklist"
-          className="bg-[#8B1B1F] text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#6F0F14] transition-all flex items-center gap-3 shadow-xl shadow-[#8B1B1F]/20"
+          className="bg-marca text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-marca-escuro transition-all flex items-center gap-3 shadow-xl shadow-marca/20"
         >
           <Phone size={18} /> Falar com a Controladoria
         </a>

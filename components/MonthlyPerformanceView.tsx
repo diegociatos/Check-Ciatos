@@ -135,7 +135,7 @@ const MonthlyPerformanceView: React.FC<MonthlyPerformanceViewProps> = ({ tasks, 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-20">
       {/* Header com Filtros e Identidade */}
-      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           <div>
             <h3 className="text-3xl font-bold uppercase tracking-tight font-ciatos">Análise de Performance</h3>
@@ -194,7 +194,7 @@ const MonthlyPerformanceView: React.FC<MonthlyPerformanceViewProps> = ({ tasks, 
         <StatCard title="Pontuação Máxima" value={metrics.pontuacaoMaxima} subValue="Potencial Teórico" icon={Target} colorClass="text-gray-400" />
         <StatCard title="Pontos Conquistados" value={metrics.conquistados} subValue="Mérito Validado" icon={Trophy} colorClass="text-green-700" isHighImportance={true} />
         <StatCard title="Pontos Perdidos" value={metrics.perdidos} subValue="Deduções por Falhas" icon={TrendingDown} colorClass="text-red-700" isHighImportance={true} />
-        <div className="bg-[#8B1B1F] p-6 rounded-2xl text-white shadow-xl flex flex-col justify-between font-ciatos">
+        <div className="bg-marca p-6 rounded-2xl text-white shadow-xl flex flex-col justify-between font-ciatos">
            <div className="flex items-center justify-between mb-4">
               <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Potencial Restante</span>
               <div className="p-2 rounded-xl bg-white/20">
@@ -213,7 +213,7 @@ const MonthlyPerformanceView: React.FC<MonthlyPerformanceViewProps> = ({ tasks, 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h4 className="text-xl font-bold text-[#111111] uppercase tracking-tighter flex items-center gap-2">
-              <History size={20} className="text-[#8B1B1F]" /> Evolução de Tendência (12 Meses)
+              <History size={20} className="text-marca" /> Evolução de Tendência (12 Meses)
             </h4>
             <p className="text-xs text-gray-400 font-medium italic">Histórico consolidado de aproveitamento de pontos e conformidade.</p>
           </div>
@@ -246,7 +246,7 @@ const MonthlyPerformanceView: React.FC<MonthlyPerformanceViewProps> = ({ tasks, 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
            <h4 className="text-lg font-bold text-[#111111] uppercase tracking-tighter">Obrigações Detalhadas - {new Date(0, selectedMonth - 1).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</h4>
-           <Calendar size={20} className="text-[#8B1B1F]" />
+           <Calendar size={20} className="text-marca" />
         </div>
         <div className="overflow-x-auto">
            <table className="w-full text-left">
@@ -292,7 +292,7 @@ const MonthlyPerformanceView: React.FC<MonthlyPerformanceViewProps> = ({ tasks, 
                                 <div className="flex items-center gap-2 text-gray-400 italic text-[11px] font-medium">
                                    {t.JustificativaGestor ? (
                                       <>
-                                         <Activity size={12} className="text-[#8B1B1F]" />
+                                         <Activity size={12} className="text-marca" />
                                          <span className="truncate max-w-[150px]">{t.JustificativaGestor}</span>
                                       </>
                                    ) : '--'}

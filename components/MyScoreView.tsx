@@ -39,24 +39,24 @@ const MyScoreView: React.FC<MyScoreViewProps> = ({ ledger, user }) => {
       <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h3 className="text-lg text-stone-900 flex items-center gap-2"><Target size={18} className="text-[#8B1B1F]" /> Potencial do mês</h3>
+            <h3 className="text-lg text-stone-900 flex items-center gap-2"><Target size={18} className="text-marca" /> Potencial do mês</h3>
             <p className="text-sm text-stone-500 mt-1">
-              Você conquistou <span className="text-[#8B1B1F] font-semibold">{conquistados}</span> de <span className="text-stone-900 font-semibold">{possiveis}</span> pts possíveis.
+              Você conquistou <span className="text-marca font-semibold">{conquistados}</span> de <span className="text-stone-900 font-semibold">{possiveis}</span> pts possíveis.
             </p>
           </div>
           <div className="text-right">
-            <span className="font-titulo text-4xl font-semibold text-[#8B1B1F]">{pct.toFixed(0)}%</span>
+            <span className="font-titulo text-4xl font-semibold text-marca">{pct.toFixed(0)}%</span>
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{pct >= 90 ? 'Elegível ao bônus' : 'Meta: 90%'}</p>
           </div>
         </div>
         <div className="mt-5 h-2.5 w-full bg-stone-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all duration-1000 ease-out ${pct >= 90 ? 'bg-emerald-600' : 'bg-[#8B1B1F]'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+          <div className={`h-full rounded-full transition-all duration-1000 ease-out ${pct >= 90 ? 'bg-emerald-600' : 'bg-marca'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
         </div>
       </div>
 
       {/* Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <Tile label="Acumulado total" value={total} hint="desde o início" accent="text-[#8B1B1F]" />
+        <Tile label="Acumulado total" value={total} hint="desde o início" accent="text-marca" />
         <Tile label="Hoje" value={`${hoje >= 0 ? '+' : ''}${hoje}`} hint="pontos do dia" accent={hoje < 0 ? 'text-red-600' : 'text-stone-900'} />
         <Tile label="Conquistado no mês" value={conquistados} hint="pontos validados" />
       </div>

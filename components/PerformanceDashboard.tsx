@@ -69,7 +69,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
         <StatCard title="Total Tarefas Hoje" value={todayTasks.length} icon={Activity} color="bg-blue-500" />
         <StatCard title="Concluídas Total" value={completedTasks.length} icon={CheckCircle} color="bg-green-600" />
         <StatCard title="Pendências Atrasadas" value={overdueTasks.length} icon={AlertTriangle} color="bg-red-600" />
-        <StatCard title="Taxa de Conclusão" value={`${completionRate.toFixed(1)}%`} icon={TrendingUp} color="bg-[#8B1B1F]" />
+        <StatCard title="Taxa de Conclusão" value={`${completionRate.toFixed(1)}%`} icon={TrendingUp} color="bg-marca" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -90,13 +90,13 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
 
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase mb-8 flex items-center gap-2">
-            <Users size={20} className="text-[#8B1B1F]" /> Top Performance
+            <Users size={20} className="text-marca" /> Top Performance
           </h3>
           <div className="space-y-6">
             {topCollaborators.map((u, i) => (
               <div key={u.Email} className="flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-[#8B1B1F] group-hover:bg-[#8B1B1F] group-hover:text-white transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-marca group-hover:bg-marca group-hover:text-white transition-colors">
                     {i + 1}
                   </div>
                   <div>
@@ -104,7 +104,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ tasks, user
                     <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">{u.Time}</p>
                   </div>
                 </div>
-                <span className="text-sm font-black text-[#8B1B1F]">{u.PontosRealizadosMes} pts</span>
+                <span className="text-sm font-black text-marca">{u.PontosRealizadosMes} pts</span>
               </div>
             ))}
             {topCollaborators.length === 0 && <p className="text-xs text-gray-300 italic text-center py-10">Nenhum dado de performance disponível para sua equipe.</p>}
