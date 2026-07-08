@@ -29,7 +29,6 @@ import MyProfileView from './components/MyProfileView.tsx';
 import MonthlyPerformanceView from './components/MonthlyPerformanceView.tsx';
 import PlatformClientsView from './components/PlatformClientsView.tsx';
 import PulsoOperacao from './components/PulsoOperacao.tsx';
-import GerarTarefas from './components/GerarTarefas.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -180,9 +179,6 @@ const App: React.FC = () => {
 
       case 'PULSO':
         return <PulsoOperacao tasks={visibleTasks} users={users} ledger={ledger} />;
-
-      case 'GERAR':
-        return <GerarTarefas templates={templates} users={users} onGenerate={store.generateTaskFromTemplate} />;
 
       case 'PERFORMANCE_MANAGEMENT':
         return <PerformanceDashboard tasks={visibleTasks} users={users} collaboratorsList={collaboratorsList} />;
