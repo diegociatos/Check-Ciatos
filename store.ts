@@ -115,7 +115,7 @@ export const useStore = () => {
           DataLimite: t.DataLimite,
           DataLimite_Date: t.DataLimite ? t.DataLimite.split('T')[0] : undefined,
           Prioridade: t.Prioridade || TaskPriority.MEDIA,
-          PontosValor: t.PontosValor || 10,
+          PontosValor: t.PontosValor ?? 10,
           Status: normalizeTaskStatus(t.Status),
           DataConclusao: t.DataConclusao,
           CompletionNote: t.CompletionNote,
@@ -127,6 +127,7 @@ export const useStore = () => {
           DataGeracao: t.DataGeracao || '',
           DataCriacao: t.DataCriacao || '',
           empresa_id: t.empresa_id,
+          Pessoal: !!t.Pessoal,
         })));
 
         // Normalizar templates
@@ -685,7 +686,7 @@ export const useStore = () => {
         DataLimite: t.DataLimite,
         DataLimite_Date: t.DataLimite ? t.DataLimite.split('T')[0] : undefined,
         Prioridade: t.Prioridade || TaskPriority.MEDIA,
-        PontosValor: t.PontosValor || 10,
+        PontosValor: t.PontosValor ?? 10,
         Status: normalizeTaskStatus(t.Status),
         DataConclusao: t.DataConclusao,
         CompletionNote: t.CompletionNote,
@@ -693,6 +694,8 @@ export const useStore = () => {
         ConferenciaStatus: t.ConferenciaStatus,
         ObservacaoGestor: t.ObservacaoGestor,
         Tentativas: t.Tentativas || 0,
+        empresa_id: t.empresa_id,
+        Pessoal: !!t.Pessoal,
       })));
 
       setLedger(ledgerData.map((l: any) => ({
@@ -707,6 +710,55 @@ export const useStore = () => {
       console.error('Erro ao atualizar dados:', err);
     }
   }, []);
+
+  // ==================== TAREFAS PESSOAIS ====================
+  // Colaborador cria/gerencia as próprias (0 pt); só o master valora.
+  const criarTarefaPessoal = useCallback(async (titulo: string, descricao?: string, dataLimite?: string) => {
+    const novo = await tasksApi.criarPessoal(titulo, descricao, dataLimite);
+    if (novo) {
+      setTasks(prev => [...prev, {
+        ID: novo.ID,
+        Titulo: novo.Titulo,
+        Descricao: novo.Descricao,
+        Responsavel: novo.Responsavel,
+        DataLimite: novo.DataLimite,
+        DataLimite_Date: novo.DataLimite ? novo.DataLimite.split('T')[0] : undefined,
+        Prioridade: novo.Prioridade || TaskPriority.MEDIA,
+        PontosValor: novo.PontosValor ?? 0,
+        Status: normalizeTaskStatus(novo.Status),
+        Tentativas: 0,
+        DataGeracao: novo.DataGeracao || '',
+        DataCriacao: novo.DataCriacao || '',
+        empresa_id: novo.empresa_id,
+        Pessoal: true,
+      } as Task]);
+    }
+    return novo;
+  }, []);
+
+  const concluirTarefaPessoal = useCallback(async (taskId: string) => {
+    await tasksApi.concluirPessoal(taskId);
+    setTasks(prev => prev.map(t => t.ID === taskId
+      ? { ...t, Status: TaskStatus.APROVADA, DataConclusao: new Date().toISOString() } : t));
+  }, []);
+
+  const reabrirTarefaPessoal = useCallback(async (taskId: string) => {
+    await tasksApi.reabrirPessoal(taskId);
+    setTasks(prev => prev.map(t => t.ID === taskId
+      ? { ...t, Status: TaskStatus.PENDENTE, DataConclusao: undefined } : t));
+  }, []);
+
+  const excluirTarefaPessoal = useCallback(async (taskId: string) => {
+    await tasksApi.excluirPessoal(taskId);
+    setTasks(prev => prev.filter(t => t.ID !== taskId));
+  }, []);
+
+  const valorarTarefaPessoal = useCallback(async (taskId: string, pontos: number, obs?: string) => {
+    await tasksApi.valorarPessoal(taskId, pontos, obs);
+    setTasks(prev => prev.map(t => t.ID === taskId
+      ? { ...t, PontosValor: pontos, Status: TaskStatus.APROVADA, ObservacaoGestor: obs } : t));
+    await refreshData(); // reflete os pontos no extrato/relatórios/ranking
+  }, [refreshData]);
 
   // Função para auditoria e correção de tarefas (para o BotHistoryView)
   const auditAndFixTasks = useCallback(async () => {
@@ -787,6 +839,7 @@ export const useStore = () => {
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
-    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
+    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
+    criarTarefaPessoal, concluirTarefaPessoal, reabrirTarefaPessoal, excluirTarefaPessoal, valorarTarefaPessoal
   };
 };

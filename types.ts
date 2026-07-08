@@ -143,6 +143,7 @@ export interface Task {
   ProofAttachment?: string;
   CompletionNote?: string;
   empresa_id?: string;
+  Pessoal?: boolean; // tarefa criada pelo próprio colaborador (0 pt até o master valorar)
 }
 
 // Added DataInicio to TaskTemplate interface to support template generation logic

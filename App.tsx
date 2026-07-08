@@ -105,7 +105,7 @@ const App: React.FC = () => {
         return <MyProfileView user={currentUser} onUpdate={store.updateProfile} />;
 
       case 'EQUIPE':
-        return <EquipeView users={users} tasks={visibleTasks} ledger={ledger} collaboratorsList={collaboratorsList} />;
+        return <EquipeView users={users} tasks={visibleTasks} ledger={ledger} collaboratorsList={collaboratorsList} onValorar={store.valorarTarefaPessoal} />;
 
       case 'MINHAS_TAREFAS':
         return (
@@ -115,6 +115,10 @@ const App: React.FC = () => {
             users={users}
             onComplete={store.completeTask}
             currentUserRole={currentUser.Role}
+            onCriarPessoal={store.criarTarefaPessoal}
+            onConcluirPessoal={store.concluirTarefaPessoal}
+            onReabrirPessoal={store.reabrirTarefaPessoal}
+            onExcluirPessoal={store.excluirTarefaPessoal}
           />
         );
 

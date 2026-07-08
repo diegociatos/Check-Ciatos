@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Task, TaskStatus, User, UserRole } from '../types';
 import { getTodayStr } from '../store';
-import { CalendarDays, CheckCheck, Sun, PartyPopper } from 'lucide-react';
-import { PageHeader, EmptyState } from './ui';
+import { CalendarDays, CheckCheck, Sun, PartyPopper, Plus, Check, RotateCcw, Trash2, Star, X } from 'lucide-react';
+import { PageHeader, EmptyState, Card, Btn, Pill, showToast, useUndoableDelete } from './ui';
 import TaskList from './TaskList';
 import CompletedTasksView from './CompletedTasksView';
 
@@ -12,25 +12,27 @@ interface MinhasTarefasViewProps {
   users: User[];
   onComplete: (taskId: string, note: string, proof: string) => void;
   currentUserRole: UserRole;
+  onCriarPessoal: (titulo: string, descricao?: string, dataLimite?: string) => Promise<any>;
+  onConcluirPessoal: (taskId: string) => Promise<void>;
+  onReabrirPessoal: (taskId: string) => Promise<void>;
+  onExcluirPessoal: (taskId: string) => Promise<void>;
 }
 
-type Aba = 'HOJE' | 'PROXIMAS' | 'CONCLUIDAS';
+type Aba = 'HOJE' | 'PROXIMAS' | 'CONCLUIDAS' | 'PESSOAIS';
 
 const PENDENTE_LIKE = [TaskStatus.PENDENTE, TaskStatus.FEITA_ERRADA, TaskStatus.NAO_FEITA];
 
-const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, tasks, users, onComplete, currentUserRole }) => {
+const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
+  currentUser, tasks, users, onComplete, currentUserRole,
+  onCriarPessoal, onConcluirPessoal, onReabrirPessoal, onExcluirPessoal,
+}) => {
   const today = getTodayStr();
   const [aba, setAba] = useState<Aba>('HOJE');
 
-  const meusPendentes = useMemo(
-    () => tasks.filter((t) => t.Responsavel === currentUser.Email && PENDENTE_LIKE.includes(t.Status)),
-    [tasks, currentUser.Email]
-  );
-
-  // Hoje: vencidas ou vencendo hoje
+  const meus = useMemo(() => tasks.filter((t) => t.Responsavel === currentUser.Email), [tasks, currentUser.Email]);
+  // Obrigações pontuadas (não pessoais)
+  const meusPendentes = useMemo(() => meus.filter((t) => !t.Pessoal && PENDENTE_LIKE.includes(t.Status)), [meus]);
   const hoje = useMemo(() => meusPendentes.filter((t) => (t.DataLimite_Date || '') <= today), [meusPendentes, today]);
-
-  // Próximas: futuras ou atrasadas do mês corrente que não estão na aba Hoje
   const proximas = useMemo(() => {
     const mes = today.substring(0, 7);
     return meusPendentes.filter((t) => {
@@ -38,14 +40,16 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
       return d > today || (d.startsWith(mes) && d <= today);
     });
   }, [meusPendentes, today]);
+  const concluidas = useMemo(() => meus.filter((t) => !t.Pessoal && t.Status === TaskStatus.APROVADA), [meus]);
 
-  const concluidas = useMemo(
-    () => tasks.filter((t) => t.Responsavel === currentUser.Email && t.Status === TaskStatus.APROVADA),
-    [tasks, currentUser.Email]
+  // Tarefas pessoais (0 pt até o master valorar)
+  const pessoais = useMemo(
+    () => [...meus.filter((t) => t.Pessoal)].sort((a, b) => (a.DataLimite_Date || '').localeCompare(b.DataLimite_Date || '')),
+    [meus]
   );
 
-  // Progresso do dia
-  const doDia = useMemo(() => tasks.filter((t) => t.Responsavel === currentUser.Email && t.DataLimite_Date === today), [tasks, currentUser.Email, today]);
+  // Progresso do dia — só obrigações pontuadas
+  const doDia = useMemo(() => meus.filter((t) => !t.Pessoal && t.DataLimite_Date === today), [meus, today]);
   const feitasHoje = doDia.filter((t) => t.Status === TaskStatus.AGUARDANDO_APROVACAO || t.Status === TaskStatus.APROVADA).length;
   const totalHoje = doDia.length;
   const pct = totalHoje > 0 ? Math.round((feitasHoje / totalHoje) * 100) : 0;
@@ -64,6 +68,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
     { key: 'HOJE', label: 'Hoje', count: hoje.length, icon: <Sun size={16} /> },
     { key: 'PROXIMAS', label: 'Próximas', count: proximas.length, icon: <CalendarDays size={16} /> },
     { key: 'CONCLUIDAS', label: 'Concluídas', count: concluidas.length, icon: <CheckCheck size={16} /> },
+    { key: 'PESSOAIS', label: 'Pessoais', count: pessoais.length, icon: <Star size={16} /> },
   ];
 
   return (
@@ -71,11 +76,10 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
       <PageHeader
         kicker="Minha rotina"
         title="Minhas tarefas"
-        subtitle={totalHoje > 0 ? `${totalHoje} para hoje · ${feitasHoje} concluída${feitasHoje === 1 ? '' : 's'}` : 'Suas obrigações de hoje, as próximas e o histórico.'}
+        subtitle={totalHoje > 0 ? `${totalHoje} para hoje · ${feitasHoje} concluída${feitasHoje === 1 ? '' : 's'}` : 'Suas obrigações, as próximas e seus serviços pessoais.'}
       />
 
-      {/* Barra de progresso do dia — o pico de "zerei o dia" */}
-      {totalHoje > 0 && (
+      {totalHoje > 0 && aba !== 'PESSOAIS' && (
         <div className="bg-superficie rounded-2xl border border-stone-200 shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-tinta flex items-center gap-2">
@@ -84,21 +88,17 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
             <span className="font-titulo text-lg text-tinta">{feitasHoje}/{totalHoje}</span>
           </div>
           <div className="h-2.5 rounded-full bg-stone-100 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${zerou ? 'bg-emerald-500' : 'bg-marca'}`}
-              style={{ width: `${pct}%` }}
-            />
+            <div className={`h-full rounded-full transition-all duration-700 ${zerou ? 'bg-emerald-500' : 'bg-marca'}`} style={{ width: `${pct}%` }} />
           </div>
         </div>
       )}
 
-      {/* Abas */}
-      <div className="flex gap-1 bg-stone-100 rounded-xl p-1 w-full sm:w-fit">
+      <div className="flex gap-1 bg-stone-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
         {abas.map((a) => (
           <button
             key={a.key}
             onClick={() => setAba(a.key)}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 sm:flex-none whitespace-nowrap inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               aba === a.key ? 'bg-superficie text-marca shadow-sm' : 'text-stone-500 hover:text-tinta'
             }`}
           >
@@ -111,12 +111,11 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
         ))}
       </div>
 
-      {/* Conteúdo da aba */}
       {aba === 'HOJE' && (
         hoje.length === 0 ? (
           <EmptyState
             icon={<PartyPopper size={26} />}
-            title="Nenhuma tarefa para hoje 🎉"
+            title="Nenhuma obrigação para hoje 🎉"
             message="Você está em dia. Aproveite — ou adiante alguma das próximas."
             action={proximas.length > 0 ? <button onClick={() => setAba('PROXIMAS')} className="text-sm font-semibold text-marca hover:text-marca-escuro">Ver próximas ({proximas.length})</button> : undefined}
           />
@@ -139,6 +138,157 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({ currentUser, task
         ) : (
           <CompletedTasksView tasks={concluidas} users={users} currentUserRole={currentUserRole} />
         )
+      )}
+
+      {aba === 'PESSOAIS' && (
+        <PessoaisPanel
+          pessoais={pessoais}
+          onCriar={onCriarPessoal}
+          onConcluir={onConcluirPessoal}
+          onReabrir={onReabrirPessoal}
+          onExcluir={onExcluirPessoal}
+        />
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Painel de tarefas pessoais: o colaborador cria e gerencia seus serviços.
+// ---------------------------------------------------------------------------
+const PessoaisPanel: React.FC<{
+  pessoais: Task[];
+  onCriar: (titulo: string, descricao?: string, dataLimite?: string) => Promise<any>;
+  onConcluir: (taskId: string) => Promise<void>;
+  onReabrir: (taskId: string) => Promise<void>;
+  onExcluir: (taskId: string) => Promise<void>;
+}> = ({ pessoais, onCriar, onConcluir, onReabrir, onExcluir }) => {
+  const [criando, setCriando] = useState(false);
+  const [titulo, setTitulo] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [prazo, setPrazo] = useState(getTodayStr());
+  const [salvando, setSalvando] = useState(false);
+  const { pendentes: excluindo, remover: excluir } = useUndoableDelete((id) => { void onExcluir(id); }, 'Tarefa');
+
+  const salvar = async () => {
+    if (!titulo.trim()) { showToast({ message: 'Dê um nome à tarefa.', tone: 'erro' }); return; }
+    setSalvando(true);
+    try {
+      await onCriar(titulo.trim(), descricao.trim() || undefined, prazo || undefined);
+      setTitulo(''); setDescricao(''); setPrazo(getTodayStr()); setCriando(false);
+      showToast({ message: 'Tarefa pessoal criada.', tone: 'sucesso' });
+    } catch (e: any) {
+      showToast({ message: e?.message || 'Não foi possível criar.', tone: 'erro' });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const visiveis = pessoais.filter((t) => !excluindo.has(t.ID));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <p className="text-sm text-stone-500 max-w-lg">
+          Anote aqui os serviços que você mesmo organiza. Eles <strong>não valem pontos</strong> — servem para sua gestão e para o seu gestor enxergar seu trabalho. Se ele quiser reconhecer, ele atribui os pontos.
+        </p>
+        <Btn onClick={() => setCriando(true)}><Plus size={16} /> Nova tarefa</Btn>
+      </div>
+
+      {visiveis.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Star size={26} />}
+            title="Organize seus serviços aqui"
+            message="Crie tarefas para você mesmo — controle o seu dia e deixe seu gestor por dentro do que você entrega."
+            action={<Btn onClick={() => setCriando(true)}><Plus size={16} /> Criar a primeira</Btn>}
+          />
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {visiveis.map((t) => {
+            const feita = t.Status === TaskStatus.APROVADA;
+            const valorada = (t.PontosValor || 0) > 0;
+            return (
+              <Card key={t.ID} className="p-4">
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={() => (feita ? onReabrir(t.ID) : onConcluir(t.ID))}
+                    disabled={valorada}
+                    title={valorada ? 'Já valorada pelo gestor' : feita ? 'Reabrir' : 'Marcar como feita'}
+                    className={`mt-0.5 h-6 w-6 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                      feita ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-stone-300 text-transparent hover:border-marca'
+                    } ${valorada ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    <Check size={14} />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${feita ? 'text-stone-400 line-through' : 'text-tinta'}`}>{t.Titulo}</p>
+                    {t.Descricao && <p className="text-xs text-stone-400 mt-0.5">{t.Descricao}</p>}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <Pill tone="neutral">Pessoal</Pill>
+                      {t.DataLimite_Date && <span className="text-xs text-stone-400">{t.DataLimite_Date.split('-').reverse().join('/')}</span>}
+                      {valorada && <Pill tone="sucesso"><Star size={11} /> Reconhecida · +{t.PontosValor} pts</Pill>}
+                    </div>
+                  </div>
+                  {!valorada && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {feita && (
+                        <button onClick={() => onReabrir(t.ID)} title="Reabrir" className="p-2 text-stone-400 hover:text-tinta hover:bg-stone-50 rounded-lg">
+                          <RotateCcw size={15} />
+                        </button>
+                      )}
+                      <button onClick={() => excluir(t.ID)} title="Excluir" className="p-2 text-stone-400 hover:text-erro hover:bg-red-50 rounded-lg">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal de criação */}
+      {criando && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-tinta/40 backdrop-blur-sm">
+          <div className="bg-superficie w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="font-titulo text-xl text-tinta">Nova tarefa pessoal</h3>
+              <button onClick={() => setCriando(false)} className="text-stone-400 hover:text-tinta"><X size={20} /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">O que você vai fazer?</label>
+                <input
+                  autoFocus
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Ex.: Revisar contrato do cliente X"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Detalhes <span className="text-stone-300 normal-case">(opcional)</span></label>
+                <textarea
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Contexto, links, o que precisa entregar…"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca/20 min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Prazo</label>
+                <input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Btn variant="secondary" onClick={() => setCriando(false)} full>Cancelar</Btn>
+                <Btn onClick={salvar} loading={salvando} full>Criar tarefa</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

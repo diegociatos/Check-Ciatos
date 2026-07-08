@@ -160,6 +160,41 @@ export const tasksApi = {
     if (error) throwSb(error, 'Erro ao excluir tarefa');
     return { message: 'Tarefa excluída' };
   },
+
+  // ---- Tarefas pessoais (colaborador cria p/ si; só o master valora) ----
+  criarPessoal: async (titulo: string, descricao?: string, dataLimite?: string) => {
+    const { data, error } = await supabase.rpc('criar_tarefa_pessoal', {
+      p_titulo: titulo, p_descricao: descricao ?? null, p_data_limite: dataLimite ?? null,
+    });
+    if (error) throwSb(error, 'Erro ao criar tarefa pessoal');
+    return (data as any)?.task;
+  },
+
+  concluirPessoal: async (taskId: string) => {
+    const { error } = await supabase.rpc('concluir_tarefa_pessoal', { p_id: taskId });
+    if (error) throwSb(error, 'Erro ao concluir tarefa');
+    return { ok: true };
+  },
+
+  reabrirPessoal: async (taskId: string) => {
+    const { error } = await supabase.rpc('reabrir_tarefa_pessoal', { p_id: taskId });
+    if (error) throwSb(error, 'Erro ao reabrir tarefa');
+    return { ok: true };
+  },
+
+  excluirPessoal: async (taskId: string) => {
+    const { error } = await supabase.rpc('excluir_tarefa_pessoal', { p_id: taskId });
+    if (error) throwSb(error, 'Erro ao excluir tarefa');
+    return { ok: true };
+  },
+
+  valorarPessoal: async (taskId: string, pontos: number, obs?: string) => {
+    const { data, error } = await supabase.rpc('valorar_tarefa_pessoal', {
+      p_id: taskId, p_pontos: pontos, p_obs: obs ?? null,
+    });
+    if (error) throwSb(error, 'Erro ao valorar tarefa');
+    return { pontos: (data as any)?.pontos ?? pontos };
+  },
 };
 
 // ==================== TEMPLATES ====================

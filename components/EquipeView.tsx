@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { User, Task, ScoreLedger, TaskStatus } from '../types';
 import { getTodayStr } from '../store';
-import { Users, Gauge, Star, AlertTriangle, ShieldCheck, ChevronRight, ArrowUpDown } from 'lucide-react';
-import { Card, Label, PageHeader, StatCard, EmptyState, Pill, Drawer } from './ui';
+import { Users, Gauge, Star, AlertTriangle, ShieldCheck, ChevronRight, ArrowUpDown, Sparkles } from 'lucide-react';
+import { Card, Label, PageHeader, StatCard, EmptyState, Pill, Drawer, Btn, showToast } from './ui';
 
 interface EquipeViewProps {
   users: User[];
   tasks: Task[];
   ledger: ScoreLedger[];
   collaboratorsList: User[];
+  onValorar: (taskId: string, pontos: number, obs?: string) => Promise<void>;
 }
 
 interface Row {
@@ -27,7 +28,7 @@ type SortKey = 'nome' | 'pontosMes' | 'eficiencia' | 'confiabilidade' | 'atrasad
 
 const efTone = (v: number) => (v >= 90 ? 'sucesso' : v >= 70 ? 'atraso' : 'erro');
 
-const EquipeView: React.FC<EquipeViewProps> = ({ tasks, ledger, collaboratorsList }) => {
+const EquipeView: React.FC<EquipeViewProps> = ({ tasks, ledger, collaboratorsList, onValorar }) => {
   const today = getTodayStr();
   const [sortKey, setSortKey] = useState<SortKey>('pontosMes');
   const [asc, setAsc] = useState(false);
@@ -169,17 +170,26 @@ const EquipeView: React.FC<EquipeViewProps> = ({ tasks, ledger, collaboratorsLis
 
       {/* Drawer de detalhe individual */}
       <Drawer open={!!selected} onClose={() => setSelected(null)} title={selected?.Nome}>
-        {selected && <ColaboradorDetalhe user={selected} rows={rows} ledger={ledger} />}
+        {selected && <ColaboradorDetalhe user={selected} rows={rows} ledger={ledger} tasks={tasks} onValorar={onValorar} />}
       </Drawer>
     </div>
   );
 };
 
-const ColaboradorDetalhe: React.FC<{ user: User; rows: Row[]; ledger: ScoreLedger[] }> = ({ user, rows, ledger }) => {
+const ColaboradorDetalhe: React.FC<{
+  user: User;
+  rows: Row[];
+  ledger: ScoreLedger[];
+  tasks: Task[];
+  onValorar: (taskId: string, pontos: number, obs?: string) => Promise<void>;
+}> = ({ user, rows, ledger, tasks, onValorar }) => {
   const r = rows.find((x) => x.user.Email === user.Email);
   const recentes = [...ledger.filter((l) => l.UserEmail === user.Email)]
     .sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime())
     .slice(0, 8);
+  const pessoais = tasks
+    .filter((t) => t.Pessoal && t.Responsavel === user.Email)
+    .sort((a, b) => (b.DataLimite_Date || '').localeCompare(a.DataLimite_Date || ''));
   if (!r) return null;
 
   return (
@@ -217,6 +227,16 @@ const ColaboradorDetalhe: React.FC<{ user: User; rows: Row[]; ledger: ScoreLedge
         </div>
       </div>
 
+      {pessoais.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2 text-stone-500"><Sparkles size={15} /><Label>Serviços pessoais deste colaborador</Label></div>
+          <p className="text-xs text-stone-400 mb-3">Tarefas que {user.Nome.split(' ')[0]} organiza por conta própria. Se quiser reconhecer, atribua pontos — eles entram no extrato.</p>
+          <div className="space-y-2">
+            {pessoais.map((t) => <ValorarTarefa key={t.ID} task={t} onValorar={onValorar} />)}
+          </div>
+        </div>
+      )}
+
       <div>
         <Label>Movimentações recentes</Label>
         {recentes.length === 0 ? (
@@ -241,4 +261,75 @@ const ColaboradorDetalhe: React.FC<{ user: User; rows: Row[]; ledger: ScoreLedge
   );
 };
 
+// Card de um serviço pessoal com atribuição de pontos pelo master.
+const ValorarTarefa: React.FC<{ task: Task; onValorar: (taskId: string, pontos: number, obs?: string) => Promise<void> }> = ({ task, onValorar }) => {
+  const jaValorada = (task.PontosValor || 0) > 0;
+  const [aberto, setAberto] = useState(false);
+  const [pontos, setPontos] = useState<number>(task.PontosValor || 10);
+  const [obs, setObs] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const feita = task.Status === TaskStatus.APROVADA;
+
+  const salvar = async () => {
+    if (pontos < 0) { showToast({ message: 'Pontos inválidos.', tone: 'erro' }); return; }
+    setSalvando(true);
+    try {
+      await onValorar(task.ID, pontos, obs.trim() || undefined);
+      setAberto(false);
+      showToast({ message: pontos > 0 ? `+${pontos} pts concedidos.` : 'Pontuação removida.', tone: 'sucesso' });
+    } catch (e: any) {
+      showToast({ message: e?.message || 'Não foi possível valorar.', tone: 'erro' });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-stone-200 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-tinta">{task.Titulo}</p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <Pill tone={feita ? 'sucesso' : 'neutral'}>{feita ? 'Feita' : 'Em andamento'}</Pill>
+            {jaValorada && <Pill tone="marca"><Star size={11} /> +{task.PontosValor} pts</Pill>}
+            {task.DataLimite_Date && <span className="text-xs text-stone-400">{task.DataLimite_Date.split('-').reverse().join('/')}</span>}
+          </div>
+        </div>
+        {!aberto && (
+          <button onClick={() => setAberto(true)} className="text-sm font-semibold text-marca hover:text-marca-escuro shrink-0">
+            {jaValorada ? 'Ajustar' : 'Valorar'}
+          </button>
+        )}
+      </div>
+
+      {aberto && (
+        <div className="mt-3 pt-3 border-t border-stone-100 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-stone-500 shrink-0">Pontos</label>
+            <input
+              type="number"
+              min={0}
+              value={pontos}
+              onChange={(e) => setPontos(Number(e.target.value))}
+              className="w-24 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-marca/20"
+            />
+            <span className="text-xs text-stone-400">0 = sem pontos</span>
+          </div>
+          <input
+            value={obs}
+            onChange={(e) => setObs(e.target.value)}
+            placeholder="Observação (opcional)"
+            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-marca/20"
+          />
+          <div className="flex gap-2">
+            <Btn variant="secondary" onClick={() => setAberto(false)} full>Cancelar</Btn>
+            <Btn onClick={salvar} loading={salvando} full>Confirmar</Btn>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default EquipeView;
+
