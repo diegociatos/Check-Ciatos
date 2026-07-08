@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   const { action, email, user } = payload ?? {};
 
   // Fora a plataforma, ações sobre um usuário existente só valem dentro da própria empresa.
-  if (!isPlataforma && ['update', 'reset-password', 'toggle-status', 'delete'].includes(action)) {
+  if (!isPlataforma && ['update', 'reset-password', 'toggle-status', 'delete', 'change-email'].includes(action)) {
     const { data: alvo } = await admin.from('users').select('empresa_id').ilike('Email', email).maybeSingle();
     if (!alvo || (alvo as any).empresa_id !== callerEmpresa) {
       return json({ error: 'Usuário de outra empresa' }, 403);
@@ -55,6 +55,12 @@ Deno.serve(async (req) => {
 
   try {
     if (action === 'create') {
+      // Reforço no servidor: gestor só cadastra COLABORADOR (não pode criar admin/master).
+      const papelSolicitado = String(user.Role ?? 'Colaborador').toLowerCase();
+      if (role === 'gestor' && papelSolicitado !== 'colaborador') {
+        return json({ error: 'Gestor só pode cadastrar colaboradores' }, 403);
+      }
+
       // Usa a empresa indicada (empresa ativa) se o chamador tiver acesso; senão a empresa-casa.
       const empresaAlvo = (user.empresa_id && podeEmpresa(user.empresa_id)) ? user.empresa_id : callerEmpresa;
       if (!podeEmpresa(empresaAlvo)) return json({ error: 'Sem acesso a esta empresa' }, 403);
@@ -129,6 +135,31 @@ Deno.serve(async (req) => {
       const novo = (row as any)?.Status === 'Ativo' ? 'Inativo' : 'Ativo';
       await admin.from('users').update({ Status: novo }).ilike('Email', email);
       return json({ message: `Status alterado para ${novo}`, status: novo });
+    }
+
+    if (action === 'change-email') {
+      const novoEmail = String(payload.novoEmail ?? '').trim().toLowerCase();
+      if (!novoEmail || !novoEmail.includes('@')) return json({ error: 'E-mail inválido' }, 400);
+      if (novoEmail === String(email).trim().toLowerCase()) return json({ error: 'O novo e-mail é igual ao atual' }, 400);
+
+      const { data: alvo } = await admin.from('users').select('user_id').ilike('Email', email).maybeSingle();
+      if (!alvo) return json({ error: 'Usuário não encontrado' }, 404);
+
+      const { data: jaExiste } = await admin.from('users').select('Email').ilike('Email', novoEmail).maybeSingle();
+      if (jaExiste) return json({ error: 'Este e-mail já está em uso' }, 400);
+
+      const userId = (alvo as any).user_id;
+      // 1) Auth (login). 2) Banco (transacional). Se o banco falhar, reverte o Auth.
+      if (userId) {
+        const { error: eAuth } = await admin.auth.admin.updateUserById(userId, { email: novoEmail, email_confirm: true });
+        if (eAuth) throw eAuth;
+      }
+      const { error: eRpc } = await admin.rpc('renomear_email', { p_old: email, p_new: novoEmail });
+      if (eRpc) {
+        if (userId) await admin.auth.admin.updateUserById(userId, { email }).catch(() => {});
+        throw eRpc;
+      }
+      return json({ message: 'E-mail alterado', email: novoEmail });
     }
 
     if (action === 'delete') {

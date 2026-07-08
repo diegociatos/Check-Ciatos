@@ -17,6 +17,7 @@ interface ManageUsersViewProps {
   onResetPassword: (email: string) => void;
   onToggleStatus: (email: string) => void;
   onDeleteUser: (email: string) => void;
+  onChangeEmail: (email: string, novoEmail: string) => Promise<{ relogar: boolean }>;
   empresas?: { id: string; Nome: string }[];
   activeEmpresa?: string | null;
   onSetEmpresas?: (email: string, ids: string[]) => Promise<void>;
@@ -24,11 +25,31 @@ interface ManageUsersViewProps {
 }
 
 const ManageUsersView: React.FC<ManageUsersViewProps> = ({
-  users, currentUser, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser,
+  users, currentUser, onAddUser, onUpdateUser, onResetPassword, onToggleStatus, onDeleteUser, onChangeEmail,
   empresas = [], activeEmpresa, onSetEmpresas, getUserEmpresas
 }) => {
   // Gestor só cadastra COLABORADOR (vinculado a ele). Admin/Master/Plataforma criam qualquer papel.
   const souGestor = currentUser.Role === UserRole.GESTOR;
+  const [emailAlvo, setEmailAlvo] = useState<User | null>(null);
+  const [novoEmail, setNovoEmail] = useState('');
+  const [mudandoEmail, setMudandoEmail] = useState(false);
+  const [erroEmail, setErroEmail] = useState('');
+
+  const confirmarTrocaEmail = async () => {
+    setErroEmail('');
+    if (!novoEmail.includes('@')) return setErroEmail('E-mail inválido.');
+    setMudandoEmail(true);
+    try {
+      const r = await onChangeEmail(emailAlvo!.Email, novoEmail.trim().toLowerCase());
+      setEmailAlvo(null);
+      setNovoEmail('');
+      if (r?.relogar) alert('Seu e-mail foi alterado. Entre novamente com o novo e-mail.');
+    } catch (e: any) {
+      setErroEmail(e?.message || 'Não foi possível alterar o e-mail.');
+    } finally {
+      setMudandoEmail(false);
+    }
+  };
   // Empresas que o gestor atende (quando há mais de uma empresa para escolher)
   const [empresasGestor, setEmpresasGestor] = useState<string[]>([]);
   const multiEmpresa = empresas.length > 1;
@@ -185,6 +206,11 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                       <button onClick={() => handleResetPasswordAction(user.Email)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Resetar Senha para 123456">
                         <RefreshCw size={16} />
                       </button>
+                      {!souGestor && (
+                        <button onClick={() => { setEmailAlvo(user); setNovoEmail(''); setErroEmail(''); }} className="p-2 text-gray-400 hover:text-marca hover:bg-gray-50 rounded-xl transition-all" title="Alterar e-mail">
+                          <Mail size={16} />
+                        </button>
+                      )}
                       <button onClick={() => onToggleStatus(user.Email)} className={`p-2 rounded-xl transition-all ${user.Status === UserStatus.ATIVO ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`} title="Ativar/Inativar">
                         {user.Status === UserStatus.ATIVO ? <UserMinus size={16} /> : <UserCheck size={16} />}
                       </button>
@@ -290,6 +316,44 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
                   </button>
                </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: alterar e-mail (chave do usuário) */}
+      {emailAlvo && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+              <h3 className="font-titulo text-xl text-tinta">Alterar e-mail</h3>
+              <button onClick={() => setEmailAlvo(null)} className="text-gray-300 hover:text-gray-500"><X size={22} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-4">
+                <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Usuário</p>
+                <p className="text-sm text-tinta mt-0.5">{emailAlvo.Nome}</p>
+                <p className="text-xs text-stone-400">E-mail atual: {emailAlvo.Email}</p>
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Novo e-mail (login)</label>
+                <input
+                  type="email"
+                  autoFocus
+                  value={novoEmail}
+                  onChange={e => setNovoEmail(e.target.value)}
+                  placeholder="novo@empresa.com.br"
+                  className="mt-1.5 w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca/20"
+                />
+              </div>
+              <p className="text-xs text-stone-400">O novo e-mail passa a ser o login. As tarefas e pontos da pessoa são transferidos automaticamente. Ela deve usar o novo e-mail no próximo acesso.</p>
+              {erroEmail && <p className="text-sm text-erro">{erroEmail}</p>}
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setEmailAlvo(null)} className="flex-1 py-2.5 rounded-xl border border-stone-200 text-sm font-semibold text-tinta hover:bg-stone-50">Cancelar</button>
+                <button onClick={confirmarTrocaEmail} disabled={mudandoEmail} className="flex-1 py-2.5 rounded-xl bg-marca text-white text-sm font-semibold hover:bg-marca-escuro disabled:opacity-60">
+                  {mudandoEmail ? 'Alterando…' : 'Alterar e-mail'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

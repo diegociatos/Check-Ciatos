@@ -144,6 +144,7 @@ const App: React.FC = () => {
             onResetPassword={store.resetUserPassword}
             onToggleStatus={store.toggleUserStatus}
             onDeleteUser={store.deleteUser}
+            onChangeEmail={store.changeUserEmail}
             empresas={store.empresas}
             activeEmpresa={store.activeEmpresa}
             onSetEmpresas={store.setUserEmpresas}
