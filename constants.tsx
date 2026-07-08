@@ -9,6 +9,7 @@ import {
   Eye,
   Users,
   Zap,
+  FileBarChart,
   Activity
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
@@ -45,6 +46,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: 'Equipe', view: 'EQUIPE', section: 'GESTÃO', role: GESTAO, icon: <Users size={20} /> },
   { label: 'Gerar tarefas', view: 'MANAGE_TEMPLATES', section: 'GESTÃO', role: GESTAO, icon: <Zap size={20} /> },
   { label: 'Supervisão de tarefas', view: 'TASK_SUPERVISION', section: 'GESTÃO', role: GESTAO, icon: <Eye size={20} /> },
+  { label: 'Relatórios', view: 'RELATORIOS', section: 'GESTÃO', role: GESTAO, icon: <FileBarChart size={20} /> },
 
   // ===== ADMINISTRAÇÃO (admin/master) =====
   { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: [UserRole.ADMIN], icon: <UserCog size={20} /> },
