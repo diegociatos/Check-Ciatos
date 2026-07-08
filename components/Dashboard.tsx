@@ -169,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </p>
               {hojeTotal.length > 0 && (
                 <button
-                  onClick={() => onNavigateToTasks('MY_TASKS_TODAY')}
+                  onClick={() => onNavigateToTasks('MINHAS_TAREFAS')}
                   className="mt-6 inline-flex items-center gap-2 bg-marca text-white pl-6 pr-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]"
                 >
                   {tudoFeito ? 'Ver minhas obrigações' : 'Começar agora'}
