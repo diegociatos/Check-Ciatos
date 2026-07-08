@@ -4,6 +4,7 @@ import { Task, TaskStatus } from '../types';
 import { getTodayStr } from '../store';
 import { pontosAprovacao } from '../lib/scoreEngine';
 import { urlEvidencia, pareceArquivo } from '../lib/storage';
+import { showToast } from './ui';
 
 // Mostra a evidência anexada: link para abrir/baixar (URL assinada) ou o texto antigo.
 const AnexoEvidencia: React.FC<{ path: string }> = ({ path }) => {
@@ -58,12 +59,12 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
     if (!auditTask || !actionType) return;
     
     if (actionType !== TaskStatus.APROVADA && !justification.trim()) {
-      return alert("A justificativa técnica é obrigatória para reprovações.");
+      return showToast({ message: 'Explique o motivo para devolver a entrega.', tone: 'erro' });
     }
 
     const isAnticipated = auditTask.DataLimite_Date! > todayStr;
     if (actionType !== TaskStatus.APROVADA && !isAnticipated && !nextDeadline) {
-      return alert("É obrigatório definir um novo prazo para o cumprimento de tarefas vencidas.");
+      return showToast({ message: 'Defina um novo prazo para a tarefa vencida.', tone: 'erro' });
     }
 
     onAudit(auditTask.ID, actionType, justification, isAnticipated ? undefined : nextDeadline);
