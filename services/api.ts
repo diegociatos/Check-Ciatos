@@ -176,6 +176,12 @@ export const templatesApi = {
     return data;
   },
 
+  update: async (templateId: string, templateData: any) => {
+    const { data, error } = await supabase.from('task_templates').update(templateData).eq('ID', templateId).select().single();
+    if (error) throwSb(error, 'Erro ao salvar modelo');
+    return data;
+  },
+
   toggle: async (templateId: string) => {
     const { data, error } = await supabase.rpc('toggle_template', { p_id: templateId });
     if (error) throwSb(error, 'Erro ao alternar modelo');
