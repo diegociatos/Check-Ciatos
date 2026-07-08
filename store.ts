@@ -588,6 +588,24 @@ export const useStore = () => {
     setTemplates(prev => prev.filter(t => t.ID !== id));
   }, []);
 
+  const updateTemplate = useCallback(async (id: string, data: Omit<TaskTemplate, 'ID'>) => {
+    // Edita o modelo (ex.: corrigir pontos/prazo). Não altera empresa_id nem tarefas já geradas.
+    await templatesApi.update(id, {
+      Titulo: data.Titulo,
+      Descricao: data.Descricao,
+      Responsavel: data.Responsavel,
+      Prioridade: data.Prioridade,
+      PontosValor: data.PontosValor,
+      Recorrencia: data.Recorrencia,
+      DiasRecorrencia: data.DiasRecorrencia,
+      DiaDoMes: data.DiaDoMes,
+      DataInicio: data.DataInicio,
+      PularFinalDeSemana: data.PularFinalDeSemana,
+      Ativa: data.Ativa,
+    });
+    setTemplates(prev => prev.map(t => (t.ID === id ? { ...t, ...data } : t)));
+  }, []);
+
   const generateTaskFromTemplate = useCallback(async (templateId: string, force: boolean = false) => {
     try {
       const result = await templatesApi.generate(templateId, force);
@@ -787,6 +805,6 @@ export const useStore = () => {
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser,
     updateProfile, completeTask, auditTask, deleteTask,
-    addTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
+    addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate
   };
 };

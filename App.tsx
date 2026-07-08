@@ -142,10 +142,11 @@ const App: React.FC = () => {
 
       case 'MANAGE_TEMPLATES':
         return (
-          <TemplateManager 
+          <TemplateManager
             templates={templates}
             users={users}
             onAdd={store.addTemplate}
+            onUpdate={store.updateTemplate}
             onToggle={store.toggleTemplate}
             onDelete={store.deleteTemplate}
             onGenerateNow={store.generateTaskFromTemplate}
