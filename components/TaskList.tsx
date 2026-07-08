@@ -77,7 +77,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
       rejeitada: 'text-red-700 bg-red-50',
       atrasada: 'text-amber-700 bg-amber-50',
       aguardando: 'text-stone-500 bg-stone-100',
-      pendente: 'text-[#8B1B1F] bg-[#8B1B1F]/8',
+      pendente: 'text-marca bg-marca/8',
     };
     const key = task.Status === TaskStatus.APROVADA ? 'aprovada'
       : isRejected ? 'rejeitada'
@@ -103,7 +103,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                       {statusPill(task, isRejected)}
                       {task.Status === TaskStatus.APROVADA && conferBadge(task.ConferenciaStatus)}
                     </div>
-                    <span className="text-lg font-semibold text-[#8B1B1F] shrink-0">{task.PontosValor} pts</span>
+                    <span className="text-lg font-semibold text-marca shrink-0">{task.PontosValor} pts</span>
                   </div>
 
                   <h4 className="text-lg text-stone-900 leading-snug mt-4">{task.Titulo}</h4>
@@ -129,7 +129,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                   <div className="px-6 pb-6">
                     <button
                       onClick={() => abrirModal(task)}
-                      className="w-full bg-[#8B1B1F] text-white py-3.5 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
+                      className="w-full bg-marca text-white py-3.5 rounded-xl font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                       <CheckSquare size={18} /> {isRejected ? 'Refazer' : 'Concluir'}
                     </button>
@@ -159,12 +159,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
               <div className="bg-stone-50 border border-stone-100 p-4 rounded-xl">
                 <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Obrigação</p>
                 <p className="text-stone-900 mt-0.5">{selectedTask.Titulo}</p>
-                <p className="text-sm text-[#8B1B1F] mt-1">Vale {selectedTask.PontosValor} pts</p>
+                <p className="text-sm text-marca mt-1">Vale {selectedTask.PontosValor} pts</p>
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Nota de conclusão <span className="text-stone-300 normal-case">(opcional)</span></label>
                 <textarea
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#8B1B1F]/20 outline-none min-h-[110px]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-marca/20 outline-none min-h-[110px]"
                   placeholder="O que foi realizado?"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -175,12 +175,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                 <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Evidência <span className="text-stone-300 normal-case">(opcional — imagem ou PDF, até {MAX_MB}MB)</span></label>
                 {file ? (
                   <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl p-3">
-                    <FileText size={18} className="text-[#8B1B1F] shrink-0" />
+                    <FileText size={18} className="text-marca shrink-0" />
                     <span className="text-sm text-stone-700 truncate flex-1">{file.name}</span>
                     <button type="button" onClick={() => escolherArquivo(null)} className="text-stone-400 hover:text-stone-600"><X size={18} /></button>
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 justify-center bg-stone-50 border border-dashed border-stone-300 rounded-xl p-3.5 text-sm text-stone-500 cursor-pointer hover:border-[#8B1B1F]/40 hover:text-stone-700 transition-colors">
+                  <label className="flex items-center gap-2 justify-center bg-stone-50 border border-dashed border-stone-300 rounded-xl p-3.5 text-sm text-stone-500 cursor-pointer hover:border-marca/40 hover:text-stone-700 transition-colors">
                     <Paperclip size={16} /> Anexar arquivo
                     <input
                       type="file"
@@ -193,7 +193,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
                 {uploadError && <p className="text-[12px] text-[#C62828] mt-1.5">{uploadError}</p>}
               </div>
 
-              <button onClick={confirmar} disabled={uploading} className="w-full bg-[#8B1B1F] text-white py-4 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+              <button onClick={confirmar} disabled={uploading} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
                 {uploading ? (
                   <><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</>
                 ) : (
@@ -212,7 +212,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, currentUserEmail
             <div className="mx-auto h-20 w-20 rounded-full bg-emerald-50 flex items-center justify-center animate-in zoom-in duration-500">
               <CheckCircle2 size={44} className="text-emerald-600" />
             </div>
-            <div className="mt-5 flex items-center justify-center gap-2 text-[#8B1B1F]">
+            <div className="mt-5 flex items-center justify-center gap-2 text-marca">
               <PartyPopper size={20} />
               <span className="text-3xl font-semibold">+{celebrar.pontos} pts</span>
             </div>

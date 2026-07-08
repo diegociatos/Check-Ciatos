@@ -44,7 +44,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 placeholder="Filtrar equipe..."
-                className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-[#8B1B1F]/10"
+                className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-marca/10"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -53,7 +53,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             <button 
               onClick={() => setSelectedUserEmail(null)}
-              className={`w-full p-4 rounded-2xl flex items-center justify-between group transition-all ${!selectedUserEmail ? 'bg-[#8B1B1F] text-white' : 'hover:bg-gray-50 text-gray-500'}`}
+              className={`w-full p-4 rounded-2xl flex items-center justify-between group transition-all ${!selectedUserEmail ? 'bg-marca text-white' : 'hover:bg-gray-50 text-gray-500'}`}
             >
               <div className="flex items-center gap-3">
                 <LayoutDashboard size={16} />
@@ -65,10 +65,10 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
               <button 
                 key={user.Email}
                 onClick={() => setSelectedUserEmail(user.Email)}
-                className={`w-full p-4 rounded-2xl flex items-center justify-between group transition-all ${selectedUserEmail === user.Email ? 'bg-[#8B1B1F] text-white shadow-lg' : 'hover:bg-gray-50 text-gray-500'}`}
+                className={`w-full p-4 rounded-2xl flex items-center justify-between group transition-all ${selectedUserEmail === user.Email ? 'bg-marca text-white shadow-lg' : 'hover:bg-gray-50 text-gray-500'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-[10px] ${selectedUserEmail === user.Email ? 'bg-white/20 text-white' : 'bg-gray-100 text-[#8B1B1F]'}`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-[10px] ${selectedUserEmail === user.Email ? 'bg-white/20 text-white' : 'bg-gray-100 text-marca'}`}>
                     {user.Nome.charAt(0)}
                   </div>
                   <div className="text-left">
@@ -77,7 +77,7 @@ const ScoreSupervisionView: React.FC<ScoreSupervisionViewProps> = ({ ledger, use
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-xs font-black ${selectedUserEmail === user.Email ? 'text-white' : 'text-[#8B1B1F]'}`}>{user.PontosRealizadosMes} pts</p>
+                  <p className={`text-xs font-black ${selectedUserEmail === user.Email ? 'text-white' : 'text-marca'}`}>{user.PontosRealizadosMes} pts</p>
                 </div>
               </button>
             ))}

@@ -15,6 +15,21 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        // Marca Grupo Ciatos — vermelho editorial (ação + identidade).
+        marca: {
+          DEFAULT: '#8B1B1F',
+          escuro: '#6F0F14',
+          claro: '#A83236',
+        },
+        fundo: '#faf7f2', // off-white quente (predomínio 60%)
+        superficie: '#ffffff',
+        tinta: '#1c1917', // grafite quente para texto
+        // Semânticas de status (separadas da marca)
+        sucesso: '#15803d',
+        atraso: '#b45309',
+        erro: '#dc2626',
+      },
       fontFamily: {
         // Títulos/display: serifa editorial da marca (Book Antiqua).
         titulo: ['Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', 'serif'],

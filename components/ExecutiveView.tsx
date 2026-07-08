@@ -135,12 +135,12 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
       {/* Filtros Estratégicos */}
       <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 items-end">
         <div className="flex-1 space-y-2 w-full">
-          <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest flex items-center gap-2">
+          <label className="text-[10px] font-black text-marca uppercase tracking-widest flex items-center gap-2">
             <Users size={12} /> Equipe do Gestor
           </label>
           <div className="relative">
             <select 
-              className="w-full bg-[#F3F3F3] border-none rounded-2xl p-4 text-sm font-bold outline-none appearance-none cursor-pointer"
+              className="w-full bg-fundo border-none rounded-2xl p-4 text-sm font-bold outline-none appearance-none cursor-pointer"
               value={selectedGestor}
               onChange={e => setSelectedGestor(e.target.value)}
             >
@@ -151,16 +151,16 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
           </div>
         </div>
         <div className="w-full md:w-64 space-y-2">
-          <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest flex items-center gap-2">
+          <label className="text-[10px] font-black text-marca uppercase tracking-widest flex items-center gap-2">
             <Calendar size={12} /> Período de Análise
           </label>
-          <div className="flex bg-[#F3F3F3] rounded-2xl p-1">
+          <div className="flex bg-fundo rounded-2xl p-1">
             {(['Hoje', 'Esta Semana', 'Este Mês'] as Period[]).map(p => (
               <button
                 key={p}
                 onClick={() => setSelectedPeriod(p)}
                 className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase transition-all ${
-                  selectedPeriod === p ? 'bg-[#8B1B1F] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'
+                  selectedPeriod === p ? 'bg-marca text-white shadow-md' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 {p}
@@ -179,7 +179,7 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
             <HeartPulse size={24} className="text-green-500" />
           </div>
           <div className="flex flex-col">
-            <span className="text-6xl font-black text-[#8B1B1F] tracking-tighter">{completionRate.toFixed(1)}%</span>
+            <span className="text-6xl font-black text-marca tracking-tighter">{completionRate.toFixed(1)}%</span>
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mt-2">Obrigações Concluídas vs Possíveis</p>
           </div>
           <div className="h-2 w-full bg-gray-100 rounded-full mt-4 overflow-hidden">
@@ -225,7 +225,7 @@ const ExecutiveView: React.FC<ExecutiveViewProps> = ({ tasks, users }) => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
           <h3 className="text-lg font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Performance de Gestão por Equipe</h3>
-          <TrendingUp size={20} className="text-[#8B1B1F]" />
+          <TrendingUp size={20} className="text-marca" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">

@@ -62,7 +62,7 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]"
+          className="inline-flex items-center gap-2 bg-marca text-white pl-5 pr-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]"
         >
           <Plus size={18} /> Nova empresa
         </button>
@@ -91,7 +91,7 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
             return (
               <div key={e.id} className={`bg-white rounded-2xl border shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-6 flex flex-col ${suspensa ? 'border-amber-200 bg-amber-50/30' : 'border-[#E7E5E4]'}`}>
                 <div className="flex items-center gap-3">
-                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${suspensa ? 'bg-amber-100 text-amber-600' : 'bg-[#8B1B1F]/10 text-[#8B1B1F]'}`}>
+                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${suspensa ? 'bg-amber-100 text-amber-600' : 'bg-marca/10 text-marca'}`}>
                     <Building2 size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
                 <div className="mt-5 flex items-center gap-2">
                   <button
                     onClick={() => onEnter(e.id)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 border border-[#8B1B1F] text-[#8B1B1F] py-3 rounded-xl text-sm font-semibold hover:bg-[#8B1B1F] hover:text-white transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-2 border border-marca text-marca py-3 rounded-xl text-sm font-semibold hover:bg-marca hover:text-white transition-colors"
                   >
                     <LogIn size={16} /> Entrar
                   </button>
@@ -145,23 +145,23 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
             <form onSubmit={submit} className="p-6 space-y-5">
               <div>
                 <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Nome da empresa</label>
-                <input autoFocus className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-[#8B1B1F]/20" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex: Advocacia Silva" />
+                <input autoFocus className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex: Advocacia Silva" />
               </div>
               <div className="border-t border-stone-100 pt-5">
                 <p className="text-sm text-stone-500 mb-3">Responsável (Master) da empresa — quem vai administrá-la:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Nome</label>
-                    <input className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-[#8B1B1F]/20" value={form.masterNome} onChange={e => setForm({ ...form, masterNome: e.target.value })} />
+                    <input className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" value={form.masterNome} onChange={e => setForm({ ...form, masterNome: e.target.value })} />
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">E-mail</label>
-                    <input type="email" className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-[#8B1B1F]/20" value={form.masterEmail} onChange={e => setForm({ ...form, masterEmail: e.target.value })} />
+                    <input type="email" className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" value={form.masterEmail} onChange={e => setForm({ ...form, masterEmail: e.target.value })} />
                   </div>
                 </div>
                 <p className="text-xs text-stone-400 mt-3">O responsável entra com a senha provisória <span className="font-semibold">123456</span> e troca no primeiro acesso.</p>
               </div>
-              <button type="submit" disabled={saving} className="w-full bg-[#8B1B1F] text-white py-4 rounded-xl font-semibold hover:bg-[#6F0F14] transition-colors disabled:opacity-60">
+              <button type="submit" disabled={saving} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors disabled:opacity-60">
                 {saving ? 'Criando...' : 'Criar empresa'}
               </button>
             </form>

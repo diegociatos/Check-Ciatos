@@ -23,13 +23,13 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20 font-ciatos">
-      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
           <div className="relative group">
-            <div className="h-32 w-32 bg-white rounded-2xl flex items-center justify-center text-[#8B1B1F] text-4xl font-black shadow-xl overflow-hidden">
+            <div className="h-32 w-32 bg-white rounded-2xl flex items-center justify-center text-marca text-4xl font-black shadow-xl overflow-hidden">
               {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : user.Nome.charAt(0)}
             </div>
-            <button className="absolute -bottom-2 -right-2 p-3 bg-white text-[#8B1B1F] rounded-2xl shadow-lg hover:scale-110 transition-transform">
+            <button className="absolute -bottom-2 -right-2 p-3 bg-white text-marca rounded-2xl shadow-lg hover:scale-110 transition-transform">
               <Camera size={20} />
             </button>
           </div>
@@ -49,7 +49,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
             <div className="space-y-2">
               <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Nome Completo</label>
               <input 
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
                 value={formData.Nome}
                 onChange={e => setFormData({...formData, Nome: e.target.value})}
               />
@@ -57,7 +57,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
             <div className="space-y-2">
               <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Telefone / WhatsApp</label>
               <input 
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
                 value={formData.Telefone}
                 onChange={e => setFormData({...formData, Telefone: e.target.value})}
               />
@@ -65,7 +65,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
             <div className="space-y-2 md:col-span-2">
               <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Endereço Residencial</label>
               <input 
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
                 value={formData.Endereco}
                 onChange={e => setFormData({...formData, Endereco: e.target.value})}
               />
@@ -73,7 +73,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user, onUpdate }) => {
           </div>
           <button 
             onClick={handleSave}
-            className="w-full bg-[#8B1B1F] text-white py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-[#6F0F14] transition-all"
+            className="w-full bg-marca text-white py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-marca-escuro transition-all"
           >
             <Save size={20} /> Salvar Alterações
           </button>

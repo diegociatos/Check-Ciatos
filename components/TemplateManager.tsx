@@ -121,14 +121,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
         </div>
         <div className="flex items-center gap-3">
           <select
-            className="bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none appearance-none cursor-pointer text-stone-700 focus:ring-2 focus:ring-[#8B1B1F]/20"
+            className="bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none appearance-none cursor-pointer text-stone-700 focus:ring-2 focus:ring-marca/20"
             value={filterColaborador}
             onChange={e => setFilterColaborador(e.target.value)}
           >
             <option value="TODOS">Todas as pessoas</option>
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]">
+          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 bg-marca text-white pl-5 pr-6 py-3 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]">
             <Plus size={18} /> Nova tarefa
           </button>
         </div>
@@ -181,14 +181,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                 </>
               ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
                 <>
-                  <RotateCw size={12} className="text-[#8B1B1F]/50 flex-shrink-0" />
+                  <RotateCw size={12} className="text-marca/50 flex-shrink-0" />
                   <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider truncate">
                     {tmpl.DiasRecorrencia.join(', ')}
                   </span>
                 </>
               ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) ? (
                 <>
-                  <CalendarDays size={12} className="text-[#8B1B1F]/50 flex-shrink-0" />
+                  <CalendarDays size={12} className="text-marca/50 flex-shrink-0" />
                   <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider">
                     Dia {tmpl.DiaDoMes}/mês
                   </span>
@@ -218,7 +218,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
             <div className="flex items-center gap-1 justify-end w-full md:w-auto pl-5 md:pl-0">
               <button 
                 onClick={() => handleGenerateClick(tmpl.ID)}
-                className="flex items-center gap-1.5 bg-[#8B1B1F] text-white px-3 py-2 rounded-xl font-black uppercase tracking-wider text-[8px] shadow-sm hover:bg-[#6F0F14] transition-all"
+                className="flex items-center gap-1.5 bg-marca text-white px-3 py-2 rounded-xl font-black uppercase tracking-wider text-[8px] shadow-sm hover:bg-marca-escuro transition-all"
                 title="Gerar tarefa agora"
               >
                 <Zap size={11} className="fill-current" /> Gerar
@@ -243,8 +243,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                
-               <div className="bg-[#8B1B1F]/5 p-6 rounded-2xl border border-[#8B1B1F]/10 space-y-4">
-                  <div className="flex items-center gap-3 text-[10px] font-black text-[#8B1B1F] uppercase tracking-[0.2em] mb-2">
+               <div className="bg-marca/5 p-6 rounded-2xl border border-marca/10 space-y-4">
+                  <div className="flex items-center gap-3 text-[10px] font-black text-marca uppercase tracking-[0.2em] mb-2">
                     <Calendar size={14} /> Fluxo de Datas Previsto
                   </div>
                   <div className="flex items-center justify-between gap-4">
@@ -252,10 +252,10 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Solicitação (Hoje)</p>
                       <p className="text-sm font-black text-[#111111]">{today.split('-').reverse().join('/')}</p>
                     </div>
-                    <ArrowRightLeft size={16} className="text-[#8B1B1F] opacity-30" />
+                    <ArrowRightLeft size={16} className="text-marca opacity-30" />
                     <div className="flex-1 text-right">
                       <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Execução (Prazo)</p>
-                      <p className="text-sm font-black text-[#8B1B1F]">{previewDataExecucao}</p>
+                      <p className="text-sm font-black text-marca">{previewDataExecucao}</p>
                     </div>
                   </div>
                </div>
@@ -263,7 +263,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título da Tarefa Corporativa</label>
-                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
+                    <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -289,10 +289,10 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">
+                      <label className="text-[10px] font-black text-marca uppercase tracking-widest">
                         {formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? "Data de Execução" : "Data de Início"}
                       </label>
-                      <input type="date" required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-bold outline-none focus:border-[#8B1B1F]" value={formData.DataInicio} onChange={e => setFormData({...formData, DataInicio: e.target.value})} />
+                      <input type="date" required className="w-full bg-white border-2 border-marca/20 rounded-2xl p-4 text-sm font-bold outline-none focus:border-marca" value={formData.DataInicio} onChange={e => setFormData({...formData, DataInicio: e.target.value})} />
                     </div>
                   </div>
 
@@ -315,7 +315,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                   {/* Seletor de Dias da Semana para Semanal */}
                   {formData.Recorrencia === RecurrenceType.SEMANAL && (
                     <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Escolha os Dias da Semana *</label>
+                      <label className="text-[10px] font-black text-marca uppercase tracking-widest">Escolha os Dias da Semana *</label>
                       <div className="flex flex-wrap gap-2">
                         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(day => (
                           <button
@@ -324,8 +324,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                             onClick={() => toggleDay(day)}
                             className={`h-11 w-11 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${
                               formData.DiasRecorrencia.includes(day)
-                                ? 'bg-[#8B1B1F] border-[#8B1B1F] text-white shadow-md'
-                                : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-[#8B1B1F]/30'
+                                ? 'bg-marca border-marca text-white shadow-md'
+                                : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-marca/30'
                             }`}
                           >
                             {day.charAt(0)}
@@ -338,8 +338,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                   {/* Mostra Dia do Mês apenas se for Mensal ou Data Fixa Repetitiva */}
                   {(formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.POR_DATA_FIXA) && (
                     <div className="space-y-1 animate-in slide-in-from-top-2 duration-300">
-                      <label className="text-[10px] font-black text-[#8B1B1F] uppercase tracking-widest">Dia do Mês para Execução (1 a 31) *</label>
-                      <input type="number" min="1" max="31" required className="w-full bg-white border-2 border-[#8B1B1F]/20 rounded-2xl p-4 text-sm font-black outline-none" placeholder="Ex: 10" value={formData.DiaDoMes} onChange={e => setFormData({...formData, DiaDoMes: parseInt(e.target.value)})} />
+                      <label className="text-[10px] font-black text-marca uppercase tracking-widest">Dia do Mês para Execução (1 a 31) *</label>
+                      <input type="number" min="1" max="31" required className="w-full bg-white border-2 border-marca/20 rounded-2xl p-4 text-sm font-black outline-none" placeholder="Ex: 10" value={formData.DiaDoMes} onChange={e => setFormData({...formData, DiaDoMes: parseInt(e.target.value)})} />
                     </div>
                   )}
 
@@ -351,7 +351,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                         id="pularFds"
                         checked={formData.PularFinalDeSemana || false} 
                         onChange={e => setFormData({...formData, PularFinalDeSemana: e.target.checked})}
-                        className="h-5 w-5 rounded border-orange-300 text-[#8B1B1F] focus:ring-[#8B1B1F]"
+                        className="h-5 w-5 rounded border-orange-300 text-marca focus:ring-marca"
                       />
                       <label htmlFor="pularFds" className="text-xs font-bold text-orange-800 cursor-pointer">
                         Se a data cair em sábado ou domingo, transferir automaticamente para o próximo dia útil (segunda-feira)
@@ -361,7 +361,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
                </div>
 
                <div className="pt-6 border-t border-gray-100">
-                  <button type="submit" className="w-full bg-[#8B1B1F] text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-[#6F0F14] transition-all hover:scale-[1.01] active:scale-95">
+                  <button type="submit" className="w-full bg-marca text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-marca-escuro transition-all hover:scale-[1.01] active:scale-95">
                     <Save size={20} /> Salvar Modelo de Recorrência
                   </button>
                </div>

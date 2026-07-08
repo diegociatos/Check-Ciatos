@@ -73,7 +73,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      <div className="bg-[#8B1B1F] p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Relatórios Periódicos</h2>
           <p className="text-white/70 font-medium text-lg">Selecione os parâmetros para extração de dados analíticos.</p>
@@ -91,7 +91,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
               </label>
               <select 
                 required
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1B1F]/10"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
                 value={colaboradorEmail}
                 onChange={e => setColaboradorEmail(e.target.value)}
               >
@@ -114,7 +114,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
                     type="button"
                     onClick={() => setPeriodo(p)}
                     className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${
-                      periodo === p ? 'bg-[#8B1B1F] text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
+                      periodo === p ? 'bg-marca text-white shadow-lg' : 'text-gray-400 hover:text-[#111111]'
                     }`}
                   >
                     {p}
@@ -163,7 +163,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
                       type="button"
                       onClick={() => setTrimestre(q)}
                       className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${
-                        trimestre === q ? 'bg-[#8B1B1F] text-white' : 'text-gray-400'
+                        trimestre === q ? 'bg-marca text-white' : 'text-gray-400'
                       }`}
                     >
                       {q}
@@ -184,7 +184,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
                       type="button"
                       onClick={() => setSemestre(s)}
                       className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${
-                        semestre === s ? 'bg-[#8B1B1F] text-white' : 'text-gray-400'
+                        semestre === s ? 'bg-marca text-white' : 'text-gray-400'
                       }`}
                     >
                       {s}
@@ -197,7 +197,7 @@ const ReportFiltersView: React.FC<ReportFiltersViewProps> = ({ currentUser, user
 
           <button 
             type="submit" 
-            className="w-full bg-[#8B1B1F] text-white py-6 rounded-[35px] font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4"
+            className="w-full bg-marca text-white py-6 rounded-[35px] font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4"
           >
             Gerar Relatório de Performance <ChevronRight size={20} />
           </button>

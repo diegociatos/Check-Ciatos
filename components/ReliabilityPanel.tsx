@@ -23,7 +23,7 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, colla
           <h3 className="text-xl font-ciatos font-bold text-[#111111] uppercase tracking-tighter">Indicadores de Confiabilidade</h3>
           <p className="text-sm text-gray-400 font-medium">Monitoramento de precisão da sua equipe.</p>
         </div>
-        <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center text-[#8B1B1F]">
+        <div className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center text-marca">
            <ShieldCheck size={24} />
         </div>
       </div>
@@ -48,7 +48,7 @@ const ReliabilityPanel: React.FC<ReliabilityPanelProps> = ({ users, tasks, colla
                 <tr key={user.Email} className="hover:bg-gray-50/30 transition-colors">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-[#8B1B1F] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      <div className="h-10 w-10 bg-marca rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {user.Nome.charAt(0)}
                       </div>
                       <div>

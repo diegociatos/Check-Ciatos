@@ -61,7 +61,7 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
       {isManagerOrAdmin && (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-             <div className="h-10 w-10 bg-[#8B1B1F]/5 text-[#8B1B1F] rounded-xl flex items-center justify-center">
+             <div className="h-10 w-10 bg-marca/5 text-marca rounded-xl flex items-center justify-center">
                 <Filter size={20} />
              </div>
              <div>
@@ -71,14 +71,14 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
           </div>
           <div className="relative w-full md:w-80">
              <select 
-               className="w-full bg-[#F3F3F3] border-none rounded-2xl p-4 text-xs font-black uppercase tracking-widest outline-none appearance-none cursor-pointer text-[#111111] shadow-inner"
+               className="w-full bg-fundo border-none rounded-2xl p-4 text-xs font-black uppercase tracking-widest outline-none appearance-none cursor-pointer text-[#111111] shadow-inner"
                value={filterColaborador}
                onChange={e => setFilterColaborador(e.target.value)}
              >
                <option value="TODOS">TODOS OS COLABORADORES</option>
                {colaboradoresList.map(u => <option key={u.Email} value={u.Email}>{u.Nome.toUpperCase()}</option>)}
              </select>
-             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8B1B1F] pointer-events-none">
+             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-marca pointer-events-none">
                 <Search size={16} />
              </div>
           </div>
@@ -116,7 +116,7 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
                       {isManagerOrAdmin && (
                         <td className="px-8 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-7 w-7 bg-[#8B1B1F] rounded-lg flex items-center justify-center text-white text-[9px] font-black uppercase">
+                            <div className="h-7 w-7 bg-marca rounded-lg flex items-center justify-center text-white text-[9px] font-black uppercase">
                               {resp?.Nome.charAt(0) || task.Responsavel.charAt(0)}
                             </div>
                             <span className="text-[10px] font-bold text-[#111111] uppercase truncate">
@@ -147,7 +147,7 @@ const CompletedTasksView: React.FC<CompletedTasksViewProps> = ({ tasks, users, c
                         </div>
                       </td>
                       <td className="px-8 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1 text-[#8B1B1F]">
+                        <div className="flex items-center justify-center gap-1 text-marca">
                           <Star size={10} fill="currentColor" />
                           <span className="text-xs font-black">{task.PontosValor}</span>
                         </div>

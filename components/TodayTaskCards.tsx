@@ -65,7 +65,7 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center animate-in fade-in duration-700 opacity-60">
-        <div className="h-16 w-16 bg-[#F3F3F3] rounded-full flex items-center justify-center text-gray-300 mb-2">
+        <div className="h-16 w-16 bg-fundo rounded-full flex items-center justify-center text-gray-300 mb-2">
           <CheckCircle size={32} strokeWidth={1} />
         </div>
         <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Nenhuma tarefa pendente para este grupo</p>
@@ -170,14 +170,14 @@ const TodayTaskCards: React.FC<TodayTaskCardsProps> = ({
                 <>
                   <button 
                     onClick={() => onComplete(task.ID)}
-                    className="flex-1 bg-[#8B1B1F] hover:bg-[#6F0F14] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-[#8B1B1F]/20 transition-all hover:scale-[1.02] active:scale-95"
+                    className="flex-1 bg-marca hover:bg-marca-escuro text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-marca/20 transition-all hover:scale-[1.02] active:scale-95"
                   >
                     <CheckCircle size={16} /> {isReturn ? 'Reenviar Entrega' : 'Check / Concluir'}
                   </button>
                   {onNotify && (
                     <button 
                       onClick={() => onNotify(task.Titulo)}
-                      className="bg-gray-100 text-[#8B1B1F] p-4 rounded-2xl hover:bg-[#8B1B1F] hover:text-white transition-all shadow-md active:scale-90"
+                      className="bg-gray-100 text-marca p-4 rounded-2xl hover:bg-marca hover:text-white transition-all shadow-md active:scale-90"
                       title="Notificar Responsável"
                     >
                       <Bell size={18} />

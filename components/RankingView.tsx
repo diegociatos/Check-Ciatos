@@ -29,7 +29,7 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsLi
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="bg-[#8B1B1F] p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-marca p-10 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <h3 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Ranking Equipe</h3>
         <p className="text-white/60 font-medium">Reconhecimento baseado nos colaboradores sob sua gestão.</p>
         <div className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10">
@@ -58,7 +58,7 @@ const RankingView: React.FC<RankingViewProps> = ({ users, tasks, collaboratorsLi
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white bg-[#8B1B1F]">
+                      <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white bg-marca">
                         {user.Foto ? <img src={user.Foto} className="w-full h-full object-cover" /> : <UserIcon size={16} />}
                       </div>
                       <div>

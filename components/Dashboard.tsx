@@ -165,12 +165,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                   ? 'Você não tem obrigações para hoje. Aproveite para adiantar o que vem.'
                   : tudoFeito
                     ? 'Tudo em dia por hoje. Excelente constância.'
-                    : <>Você tem <span className="text-[#8B1B1F] font-semibold">{hojePendentes} {hojePendentes === 1 ? 'obrigação' : 'obrigações'}</span> para concluir hoje.</>}
+                    : <>Você tem <span className="text-marca font-semibold">{hojePendentes} {hojePendentes === 1 ? 'obrigação' : 'obrigações'}</span> para concluir hoje.</>}
               </p>
               {hojeTotal.length > 0 && (
                 <button
                   onClick={() => onNavigateToTasks('MY_TASKS_TODAY')}
-                  className="mt-6 inline-flex items-center gap-2 bg-[#8B1B1F] text-white pl-6 pr-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-[#6F0F14] transition-colors active:scale-[0.98]"
+                  className="mt-6 inline-flex items-center gap-2 bg-marca text-white pl-6 pr-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-marca-escuro transition-colors active:scale-[0.98]"
                 >
                   {tudoFeito ? 'Ver minhas obrigações' : 'Começar agora'}
                   <ChevronRight size={18} />
@@ -192,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <Card className="p-7">
             <div className="flex items-center justify-between">
               <Label>Sequência</Label>
-              <Flame size={18} className={streak > 0 ? 'text-[#8B1B1F]' : 'text-stone-300'} />
+              <Flame size={18} className={streak > 0 ? 'text-marca' : 'text-stone-300'} />
             </div>
             <p className="mt-4 font-titulo text-4xl font-semibold text-stone-900">{streak}</p>
             <p className="text-sm text-stone-500 mt-1">
@@ -204,11 +204,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           <Card className="p-7">
             <div className="flex items-center justify-between">
               <Label>Nível</Label>
-              <Award size={18} className="text-[#8B1B1F]" />
+              <Award size={18} className="text-marca" />
             </div>
             <p className="mt-4 font-titulo text-2xl font-semibold text-stone-900">{nivel.nome}</p>
             <div className="mt-3 h-1.5 rounded-full bg-stone-100 overflow-hidden">
-              <div className="h-full bg-[#8B1B1F] rounded-full transition-all duration-700" style={{ width: `${nivel.progresso}%` }} />
+              <div className="h-full bg-marca rounded-full transition-all duration-700" style={{ width: `${nivel.progresso}%` }} />
             </div>
             <p className="text-xs text-stone-400 mt-2">
               {nivel.proximo ? `${nivel.faltam} pts para ${nivel.proximo.nome}` : 'Nível máximo alcançado'}
@@ -219,11 +219,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           <Card className="p-7">
             <div className="flex items-center justify-between">
               <Label>Rumo ao bônus</Label>
-              <Target size={18} className={elegivel ? 'text-emerald-600' : 'text-[#8B1B1F]'} />
+              <Target size={18} className={elegivel ? 'text-emerald-600' : 'text-marca'} />
             </div>
             <p className="mt-4 font-titulo text-4xl font-semibold text-stone-900">{eficiencia}%</p>
             <div className="mt-3 h-1.5 rounded-full bg-stone-100 overflow-hidden">
-              <div className={`h-full rounded-full transition-all duration-700 ${elegivel ? 'bg-emerald-600' : 'bg-[#8B1B1F]'}`} style={{ width: `${bonusPct}%` }} />
+              <div className={`h-full rounded-full transition-all duration-700 ${elegivel ? 'bg-emerald-600' : 'bg-marca'}`} style={{ width: `${bonusPct}%` }} />
             </div>
             <p className="text-xs mt-2 text-stone-400">
               {elegivel ? '✓ Elegível ao bônus deste mês' : possiveis > 0 ? `Faltam ${ptsParaBonus} pts para 90%` : 'Sem obrigações no mês ainda'}
@@ -269,7 +269,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <button
               onClick={() => onNavigateToTasks('MY_SCORE')}
-              className="mt-6 inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-[#8B1B1F] hover:gap-2.5 transition-all"
+              className="mt-6 inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-marca hover:gap-2.5 transition-all"
             >
               Ver meu extrato de pontos <ArrowUpRight size={16} />
             </button>
@@ -303,7 +303,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-7 bg-[#8B1B1F] border-[#8B1B1F] text-white">
+        <Card className="p-7 bg-marca border-marca text-white">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold text-white/60 uppercase tracking-[0.14em]">Equipe</p>
             <Users size={18} className="text-white/70" />
@@ -340,13 +340,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="space-y-6">
           <Card className="p-8">
             <h3 className="text-lg text-stone-900 flex items-center gap-2 mb-5">
-              <Star size={18} className="text-[#8B1B1F]" fill="currentColor" /> Destaques do mês
+              <Star size={18} className="text-marca" fill="currentColor" /> Destaques do mês
             </h3>
             <div className="space-y-4">
               {top3.map((p, i) => (
                 <div key={p.Email} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`text-sm font-semibold w-5 ${i === 0 ? 'text-[#8B1B1F]' : 'text-stone-300'}`}>{i + 1}º</span>
+                    <span className={`text-sm font-semibold w-5 ${i === 0 ? 'text-marca' : 'text-stone-300'}`}>{i + 1}º</span>
                     <span className="text-sm text-stone-700">{p.Nome}</span>
                   </div>
                   <span className="text-sm font-semibold text-stone-900">{p.PontosRealizadosMes || 0} pts</span>
