@@ -41,18 +41,17 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
   const bottomItems: { view: ViewType; label: string; icon: React.ReactNode }[] = ehGestao
     ? [
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
-        { view: 'MY_TASKS_TODAY', label: 'Hoje', icon: <CheckCircle size={22} /> },
         { view: 'CHECK_DELIVERIES', label: 'Conferir', icon: <ClipboardCheck size={22} /> },
         { view: 'MANAGE_TEMPLATES', label: 'Gerar', icon: <Zap size={22} /> },
       ]
     : [
         { view: 'DASHBOARD', label: 'Início', icon: <Home size={22} /> },
-        { view: 'MY_TASKS_TODAY', label: 'Hoje', icon: <CheckCircle size={22} /> },
+        { view: 'MY_TASKS_TODAY', label: 'Tarefas', icon: <CheckCircle size={22} /> },
         { view: 'MY_SCORE', label: 'Pontos', icon: <Star size={22} /> },
       ];
   const myNotifications = notifications.filter(n => n.to === currentUser.Email);
 
-  const sections: NavigationSection[] = ['INÍCIO', 'COLABORADOR', 'GESTOR', 'ADMINISTRADOR'];
+  const sections: NavigationSection[] = ['GERAL', 'GESTÃO', 'ADMINISTRAÇÃO'];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FFFFFF]">

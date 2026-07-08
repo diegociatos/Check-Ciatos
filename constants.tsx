@@ -1,28 +1,15 @@
 
 import React from 'react';
-import { 
-  Home, 
-  CheckCircle, 
-  CheckCheck, 
-  Star, 
-  Users, 
-  BarChart3, 
-  List, 
-  UserCog, 
-  User as UserIcon, 
-  ShieldCheck, 
-  ClipboardCheck, 
-  CheckCircle2, 
-  TrendingUp, 
-  LayoutDashboard, 
-  CalendarClock, 
-  Eye, 
-  FileText, 
-  UserCheck, 
-  HelpCircle,
-  FileBarChart,
+import {
+  Home,
+  CheckCircle,
+  CheckCheck,
+  Star,
+  UserCog,
+  ClipboardCheck,
+  Eye,
+  FileText,
   Zap,
-  LineChart,
   CalendarDays,
   Activity
 } from 'lucide-react';
@@ -36,7 +23,7 @@ export const COLORS = {
   secondaryBg: '#F3F3F3'
 };
 
-export type NavigationSection = 'INÍCIO' | 'COLABORADOR' | 'GESTOR' | 'ADMINISTRADOR';
+export type NavigationSection = 'GERAL' | 'GESTÃO' | 'ADMINISTRAÇÃO';
 
 export interface NavigationItem {
   label: string;
@@ -46,159 +33,25 @@ export interface NavigationItem {
   section: NavigationSection;
 }
 
+const TODOS = [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN];
+const GESTAO = [UserRole.GESTOR, UserRole.ADMIN];
+
 export const NAVIGATION_ITEMS: NavigationItem[] = [
-  // SEÇÃO: INÍCIO
-  { 
-    label: 'Dashboard Principal', 
-    view: 'DASHBOARD', 
-    section: 'INÍCIO',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Home size={20} /> 
-  },
-  { 
-    label: 'Performance Mensal', 
-    view: 'MONTHLY_PERFORMANCE', 
-    section: 'INÍCIO',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <LineChart size={20} /> 
-  },
+  // ===== GERAL (colaborador e acima) =====
+  { label: 'Início', view: 'DASHBOARD', section: 'GERAL', role: TODOS, icon: <Home size={20} /> },
+  { label: 'Minhas tarefas', view: 'MY_TASKS_TODAY', section: 'GERAL', role: TODOS, icon: <CheckCircle size={20} /> },
+  { label: 'Planejamento futuro', view: 'UPCOMING_TASKS', section: 'GERAL', role: TODOS, icon: <CalendarDays size={20} /> },
+  { label: 'Tarefas concluídas', view: 'COMPLETED_TASKS', section: 'GERAL', role: TODOS, icon: <CheckCheck size={20} /> },
+  { label: 'Meus pontos', view: 'MY_SCORE', section: 'GERAL', role: TODOS, icon: <Star size={20} /> },
 
-  // SEÇÃO: COLABORADOR
-  { 
-    label: 'Minhas Tarefas de Hoje', 
-    view: 'MY_TASKS_TODAY', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <CheckCircle size={20} /> 
-  },
-  { 
-    label: 'Planejamento Futuro', 
-    view: 'UPCOMING_TASKS', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <CalendarDays size={20} /> 
-  },
-  { 
-    label: 'Tarefas Concluídas', 
-    view: 'COMPLETED_TASKS', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <CheckCheck size={20} /> 
-  },
-  { 
-    label: 'Minha Pontuação', 
-    view: 'MY_SCORE', 
-    section: 'COLABORADOR',
-    role: [UserRole.COLABORADOR, UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Star size={20} /> 
-  },
-  
-  // SEÇÃO: GESTOR
-  {
-    label: 'Pulso da Operação',
-    view: 'PULSO',
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN],
-    icon: <Activity size={20} />
-  },
-  {
-    label: 'Relatório por Colaborador',
-    view: 'PERIOD_REPORT_FILTERS',
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN],
-    icon: <FileBarChart size={20} />
-  },
-  { 
-    label: 'Supervisão de Tarefas', 
-    view: 'TASK_SUPERVISION', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Eye size={20} /> 
-  },
-  { 
-    label: 'Supervisão de Pontos', 
-    view: 'SCORE_SUPERVISION', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <FileText size={20} /> 
-  },
-  { 
-    label: 'Performance Individual', 
-    view: 'INDIVIDUAL_PERFORMANCE', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <UserCheck size={20} /> 
-  },
-  { 
-    label: 'Gestão de Performance', 
-    view: 'PERFORMANCE_MANAGEMENT', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <TrendingUp size={20} /> 
-  },
-  { 
-    label: 'Conferir Entregas', 
-    view: 'CHECK_DELIVERIES', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <ClipboardCheck size={20} /> 
-  },
-  {
-    label: 'Gerar Tarefas',
-    view: 'MANAGE_TEMPLATES',
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN],
-    icon: <Zap size={20} />
-  },
-  { 
-    label: 'Painel de Confiabilidade', 
-    view: 'RELIABILITY_PANEL', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <CheckCircle2 size={20} /> 
-  },
-  { 
-    label: 'Painel do Time', 
-    view: 'TEAM_PANEL', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Users size={20} /> 
-  },
-  { 
-    label: 'Ranking de Produtividade', 
-    view: 'RANKING', 
-    section: 'GESTOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <BarChart3 size={20} /> 
-  },
+  // ===== GESTÃO (gestor e admin) =====
+  { label: 'Conferir entregas', view: 'CHECK_DELIVERIES', section: 'GESTÃO', role: GESTAO, icon: <ClipboardCheck size={20} /> },
+  { label: 'Gerar tarefas', view: 'MANAGE_TEMPLATES', section: 'GESTÃO', role: GESTAO, icon: <Zap size={20} /> },
+  { label: 'Supervisão de tarefas', view: 'TASK_SUPERVISION', section: 'GESTÃO', role: GESTAO, icon: <Eye size={20} /> },
+  { label: 'Supervisão de pontos', view: 'SCORE_SUPERVISION', section: 'GESTÃO', role: GESTAO, icon: <FileText size={20} /> },
 
-  // SEÇÃO: ADMINISTRADOR
-  { 
-    label: 'Visão Executiva', 
-    view: 'EXECUTIVE_VIEW', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <LayoutDashboard size={20} /> 
-  },
-  { 
-    label: 'Logs de Automação', 
-    view: 'BOT_HISTORY', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.GESTOR, UserRole.ADMIN], 
-    icon: <Zap size={20} /> 
-  },
-  { 
-    label: 'Relatório Gerencial RH', 
-    view: 'REPORTS', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <List size={20} /> 
-  },
-  { 
-    label: 'Gerenciar Usuários', 
-    view: 'MANAGE_USERS', 
-    section: 'ADMINISTRADOR',
-    role: [UserRole.ADMIN], 
-    icon: <UserCog size={20} /> 
-  },
+  // ===== ADMINISTRAÇÃO (admin/master) =====
+  { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: [UserRole.ADMIN], icon: <UserCog size={20} /> },
+  { label: 'Automação', view: 'BOT_HISTORY', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <Activity size={20} /> },
 ];
+
