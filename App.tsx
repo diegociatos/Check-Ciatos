@@ -18,8 +18,9 @@ import PlatformClientsView from './components/PlatformClientsView.tsx';
 import EquipeView from './components/EquipeView.tsx';
 import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 import RelatoriosView from './components/RelatoriosView.tsx';
+import LandingPage from './components/landing/LandingPage.tsx';
 
-const App: React.FC = () => {
+const InternalApp: React.FC = () => {
   const store = useStore();
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
 
@@ -199,6 +200,16 @@ const App: React.FC = () => {
       {renderView()}
     </Layout>
   );
+};
+
+const App: React.FC = () => {
+  const pathname = window.location.pathname;
+
+  if (pathname === '/') {
+    return <LandingPage />;
+  }
+
+  return <InternalApp />;
 };
 
 export default App;
