@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA fallback.
+# Mantem rotas client-side como /login e /app funcionando ao atualizar a pagina.
+/* /index.html 200
