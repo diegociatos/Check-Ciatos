@@ -28,7 +28,7 @@ import {
 const WHATSAPP_NUMBER = '5531999999999'; // Substitua pelo numero comercial real do Check-Ciatos.
 
 type IconCard = { title: string; value?: string; icon: LucideIcon };
-type Plan = { name: string; description: string; items: string[]; featured?: boolean };
+type Plan = { name: string; description: string; items: string[]; featured?: boolean; note: string };
 
 const navLinks = [
   { label: 'Problema', href: '#problema' },
@@ -137,18 +137,29 @@ const securityCards: IconCard[] = [
 ];
 
 const plans: Plan[] = [
-  { name: 'Essencial', description: 'Para empresas que querem organizar a rotina operacional.', items: ['Gestao de tarefas', 'Tarefas recorrentes', 'Dashboard do colaborador', 'Aprovacao de entregas'] },
-  { name: 'Profissional', description: 'Para equipes que querem medir, auditar e reconhecer performance.', featured: true, items: ['Tudo do Essencial', 'Pontuacao e ranking', 'Relatorios', 'Evidencias', 'Dashboard do gestor'] },
-  { name: 'Enterprise', description: 'Para operacoes multiempresa com implantacao assistida.', items: ['Multiempresa', 'Personalizacao', 'Relatorios avancados', 'Suporte prioritario', 'Implantacao assistida'] },
+  {
+    name: 'Plano Controle',
+    description: 'Mais economico, para empresas que querem organizar tarefas, acompanhar entregas e pontuar colaboradores sem envio de documentos.',
+    note: 'Sem anexos: menor custo porque nao usa armazenamento de evidencias/documentos.',
+    items: ['Gestao de tarefas', 'Tarefas recorrentes', 'Status das entregas', 'Aprovacao pelo gestor', 'Pontuacao e ranking', 'Dashboards e relatorios'],
+  },
+  {
+    name: 'Plano Evidencias',
+    description: 'Mais completo, para empresas que precisam anexar documentos, comprovantes e evidencias nas entregas auditadas.',
+    note: 'Com anexos: plano mais caro por utilizar banco de dados, storage privado e maior volume de armazenamento.',
+    featured: true,
+    items: ['Tudo do Plano Controle', 'Anexo de documentos', 'Comprovantes e evidencias', 'Storage privado', 'Auditoria de entregas com arquivos', 'Historico documentado por tarefa'],
+  },
 ];
 
 const faqs = [
   ['O Check-Ciatos e so um app de tarefas?', 'Nao. Ele conecta tarefas, auditoria, indicadores, pontuacao e reconhecimento por performance em um unico fluxo de gestao.'],
   ['Preciso fazer uma demonstracao para entender o sistema?', 'Nao. Esta pagina explica o fluxo principal, as funcionalidades, os perfis de usuario, os planos e a forma como tarefas viram indicadores. Se sua empresa quiser contratar ou tirar uma duvida comercial, basta chamar pelo WhatsApp.'],
+  ['Qual a diferenca entre os planos?', 'O Plano Controle e mais barato e nao permite anexar documentos. O Plano Evidencias e mais completo, permite anexar documentos, comprovantes e evidencias, e por isso tem custo maior de banco de dados e armazenamento.'],
   ['Posso usar para bonificar colaboradores?', 'Sim. O sistema fornece indicadores para apoiar a politica interna de reconhecimento e bonificacao da empresa.'],
   ['O colaborador ve seus pontos?', 'Sim. O colaborador acompanha pontos, historico, evolucao e elegibilidade conforme as regras internas definidas pela empresa.'],
   ['O gestor aprova as entregas?', 'Sim. O gestor pode conferir entregas, aprovar, reprovar ou solicitar ajuste com historico organizado.'],
-  ['Da para anexar comprovantes?', 'Sim. As entregas podem receber evidencias para facilitar auditoria e reduzir discussoes informais.'],
+  ['Da para anexar comprovantes?', 'Sim, no Plano Evidencias. O Plano Controle nao inclui anexos para manter um custo menor para empresas que nao precisam armazenar documentos.'],
   ['Serve para contabilidade e advocacia?', 'Sim. O produto foi pensado para rotinas recorrentes de equipes administrativas, operacionais e de servicos profissionais.'],
   ['Cada empresa tem seus proprios dados?', 'Sim. O app trabalha com isolamento por empresa e controle por perfil de usuario.'],
   ['Posso criar tarefas recorrentes?', 'Sim. Voce pode criar modelos para tarefas diarias, semanais, mensais e por data especifica.'],
@@ -239,7 +250,7 @@ const UseCasesSection: React.FC = () => <section className="bg-white py-20 md:py
 
 const SecuritySection: React.FC = () => <section className="bg-[#F7F5F2] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8"><SectionHeading eyebrow="Seguranca e controle" title="Controle por perfil, dados isolados e gestao multiempresa." description="O Check-Ciatos foi construido para ambientes empresariais: cada papel acessa o que precisa, cada empresa opera com seus proprios dados e evidencias ficam em armazenamento privado." /><div className="grid gap-4 sm:grid-cols-2">{securityCards.map(({ title, icon: Icon }) => <div key={title} className="rounded-lg bg-white p-5 shadow-sm"><Icon className="text-marca" size={25} /><p className="mt-4 font-bold text-tinta">{title}</p></div>)}</div></div></section>;
 
-const PricingSection: React.FC = () => <section id="planos" className="bg-white py-20 md:py-28"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><SectionHeading center eyebrow="Planos" title="Escolha o nivel certo para a maturidade da sua operacao." description="Valores sob consulta para adequar usuarios, empresas, implantacao e suporte ao seu cenario." /><div className="grid gap-5 lg:grid-cols-3">{plans.map((plan) => <article key={plan.name} className={`rounded-lg border p-6 shadow-sm ${plan.featured ? 'border-marca bg-red-50' : 'border-stone-200 bg-[#F7F5F2]'}`}><h3 className="text-2xl font-bold text-tinta">{plan.name}</h3><p className="mt-3 min-h-14 leading-7 text-stone-600">{plan.description}</p><p className="mt-6 text-3xl font-black text-marca">Sob consulta</p><ul className="mt-6 space-y-3">{plan.items.map((item) => <li key={item} className="flex gap-3 text-stone-700"><CheckCircle2 className="mt-0.5 shrink-0 text-green-700" size={18} />{item}</li>)}</ul><div className="mt-8"><PrimaryButton href={contactUrl()}>Quero este plano</PrimaryButton></div></article>)}</div></div></section>;
+const PricingSection: React.FC = () => <section id="planos" className="bg-white py-20 md:py-28"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><SectionHeading center eyebrow="Planos" title="Dois planos: com anexos ou sem anexos." description="Escolha o plano mais barato quando sua empresa nao precisa armazenar documentos, ou o plano com evidencias quando precisa anexar comprovantes e arquivos nas tarefas." /><div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-2">{plans.map((plan) => <article key={plan.name} className={`rounded-lg border p-6 shadow-sm ${plan.featured ? 'border-marca bg-red-50' : 'border-stone-200 bg-[#F7F5F2]'}`}><h3 className="text-2xl font-bold text-tinta">{plan.name}</h3><p className="mt-3 min-h-20 leading-7 text-stone-600">{plan.description}</p><p className="mt-5 rounded-lg border border-stone-200 bg-white p-3 text-sm font-bold leading-6 text-marca">{plan.note}</p><p className="mt-6 text-3xl font-black text-marca">Sob consulta</p><ul className="mt-6 space-y-3">{plan.items.map((item) => <li key={item} className="flex gap-3 text-stone-700"><CheckCircle2 className="mt-0.5 shrink-0 text-green-700" size={18} />{item}</li>)}</ul><div className="mt-8"><PrimaryButton href={contactUrl()}>Quero este plano</PrimaryButton></div></article>)}</div></div></section>;
 
 const FAQSection: React.FC = () => <section id="faq" className="bg-[#F7F5F2] py-20 md:py-28"><div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8"><SectionHeading center eyebrow="FAQ" title="Perguntas frequentes." /><div className="space-y-4">{faqs.map(([question, answer]) => <details key={question} className="group rounded-lg border border-stone-200 bg-white p-5 shadow-sm"><summary className="cursor-pointer list-none text-lg font-bold text-tinta focus:outline-none focus:ring-4 focus:ring-marca/20">{question}</summary><p className="mt-4 leading-7 text-stone-600">{answer}</p></details>)}</div></div></section>;
 
