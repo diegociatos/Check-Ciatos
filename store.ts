@@ -3,6 +3,20 @@ import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority
 import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, bonusRulesApi, emailApi } from './services/api';
 import { supabase } from './lib/supabase';
 import { gerarNotificacoes } from './lib/notifications';
+import { showToast } from './components/ui';
+
+// Padrão único de ação de backend: executa a chamada e, em falha, AVISA o usuário
+// (toast) e relança o erro. NUNCA atualiza estado local aqui — o chamador só reflete
+// na UI após o sucesso (ou faz update otimista com rollback próprio). Evita a antiga
+// prática de "simular sucesso" no catch, que dessincronizava a tela do banco.
+async function acaoBackend<T>(fn: () => Promise<T>, msgErro: string): Promise<T> {
+  try {
+    return await fn();
+  } catch (e: any) {
+    showToast({ message: e?.message || msgErro, tone: 'erro' });
+    throw e;
+  }
+}
 
 // Funções utilitárias exportadas
 export const getTodayStr = () => {
@@ -19,11 +33,6 @@ export const toDateOnly = (dateStr: string): string => {
   // Fallback: usa meio-dia para evitar problemas de timezone
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('en-CA');
-};
-
-const getLocalTodayStr = () => {
-  const now = new Date();
-  return now.toLocaleDateString('en-CA');
 };
 
 // Normaliza Role para o formato do frontend
@@ -388,31 +397,18 @@ export const useStore = () => {
   }, []);
 
   const toggleUserStatus = useCallback(async (email: string) => {
-    try {
-      await authApi.toggleStatus(email);
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u
-      ));
-    } catch (err: any) {
-      console.error('Erro ao alterar status:', err);
-      // Fallback local
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u
-      ));
-    }
+    // Só reflete na UI após o backend confirmar (sem fallback que "simula" a troca).
+    await acaoBackend(() => authApi.toggleStatus(email), 'Não foi possível alterar o status.');
+    setBaseUsers(prev => prev.map(u =>
+      u.Email === email ? { ...u, Status: u.Status === UserStatus.ATIVO ? UserStatus.INATIVO : UserStatus.ATIVO } : u
+    ));
   }, []);
 
   const deleteUser = useCallback(async (email: string) => {
-    if (window.confirm(`Deletar ${email}?`)) {
-      try {
-        await authApi.deleteUser(email);
-        setBaseUsers(prev => prev.filter(u => u.Email !== email));
-      } catch (err: any) {
-        console.error('Erro ao deletar usuário:', err);
-        // Fallback local
-        setBaseUsers(prev => prev.filter(u => u.Email !== email));
-      }
-    }
+    if (!window.confirm(`Deletar ${email}?`)) return;
+    // Ação crítica: remove da UI SOMENTE após o backend confirmar a exclusão.
+    await acaoBackend(() => authApi.deleteUser(email), 'Não foi possível excluir o usuário.');
+    setBaseUsers(prev => prev.filter(u => u.Email !== email));
   }, []);
 
   const addUser = useCallback(async (userData: Partial<User>) => {
@@ -438,13 +434,8 @@ export const useStore = () => {
   }, [activeEmpresa]);
 
   const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
-    try {
-      await authApi.updateUser(email, updatedData);
-      setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
-    } catch (err: any) {
-      // Fallback local
-      setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
-    }
+    await acaoBackend(() => authApi.updateUser(email, updatedData), 'Não foi possível salvar as alterações.');
+    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
   }, []);
 
   // Alterar e-mail (chave do usuário) — renomeia no Auth + todas as tabelas.
@@ -471,28 +462,15 @@ export const useStore = () => {
 
   // ==================== TASK FUNCTIONS ====================
   const completeTask = useCallback(async (taskId: string, note: string, proof?: string) => {
-    try {
-      await tasksApi.complete(taskId, note, proof);
-      
-      setTasks(prev => prev.map(t => (t.ID === taskId ? { 
-        ...t, 
-        Status: TaskStatus.AGUARDANDO_APROVACAO, 
-        DataConclusao: new Date().toISOString(), 
-        CompletionNote: note, 
-        ProofAttachment: proof,
-        JustificativaGestor: undefined
-      } : t)));
-    } catch (err: any) {
-      console.error('Erro ao completar tarefa:', err);
-      // Fallback local
-      setTasks(prev => prev.map(t => (t.ID === taskId ? { 
-        ...t, 
-        Status: TaskStatus.AGUARDANDO_APROVACAO, 
-        DataConclusao: new Date().toISOString(), 
-        CompletionNote: note, 
-        ProofAttachment: proof,
-      } : t)));
-    }
+    await acaoBackend(() => tasksApi.complete(taskId, note, proof), 'Não foi possível enviar a tarefa para aprovação.');
+    setTasks(prev => prev.map(t => (t.ID === taskId ? {
+      ...t,
+      Status: TaskStatus.AGUARDANDO_APROVACAO,
+      DataConclusao: new Date().toISOString(),
+      CompletionNote: note,
+      ProofAttachment: proof,
+      JustificativaGestor: undefined
+    } : t)));
   }, []);
 
   // Situação de trabalho controlada pelo responsável (Pendente / Em andamento).
@@ -507,29 +485,35 @@ export const useStore = () => {
     if (status === TaskStatus.FEITA_ERRADA) apiStatus = 'ERRO_EXECUCAO';
     else if (status === TaskStatus.NAO_FEITA) apiStatus = 'NAO_CUMPRIU';
 
+    // Em reprovações, envia o novo prazo para o backend persistir no DataLimite
+    const novaDataLimite = status !== TaskStatus.APROVADA ? (nextDeadline || null) : null;
+    // Ação crítica (mexe em pontuação): só reflete na UI após o backend confirmar.
+    // NÃO há fallback local — pontos só existem quando o backend os grava (fonte da verdade).
+    const result = await acaoBackend(
+      () => tasksApi.audit(taskId, apiStatus, justification, novaDataLimite),
+      'Não foi possível registrar a auditoria.'
+    );
+
+    // Atualiza local (usa o prazo confirmado pelo backend quando houver)
+    setTasks(prev => prev.map(t => {
+      if (t.ID === taskId) {
+        const newDataLimite = (result as any)?.dataLimite || nextDeadline || t.DataLimite;
+        return {
+          ...t,
+          Status: status,
+          JustificativaGestor: justification,
+          DataLimite: newDataLimite,
+          DataLimite_Date: newDataLimite ? newDataLimite.split('T')[0] : t.DataLimite_Date,
+          Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
+          DataConclusao: status === TaskStatus.APROVADA ? t.DataConclusao : undefined
+        };
+      }
+      return t;
+    }));
+
+    // Recarrega o ledger do backend (fonte da verdade dos pontos). Falha aqui não desfaz
+    // a auditoria já gravada — apenas registra e mantém o ledger anterior até o próximo refresh.
     try {
-      // Em reprovações, envia o novo prazo para o backend persistir no DataLimite
-      const novaDataLimite = status !== TaskStatus.APROVADA ? (nextDeadline || null) : null;
-      const result = await tasksApi.audit(taskId, apiStatus, justification, novaDataLimite);
-
-      // Atualiza local (usa o prazo confirmado pelo backend quando houver)
-      setTasks(prev => prev.map(t => {
-        if (t.ID === taskId) {
-          const newDataLimite = (result as any)?.dataLimite || nextDeadline || t.DataLimite;
-          return { 
-            ...t, 
-            Status: status, 
-            JustificativaGestor: justification,
-            DataLimite: newDataLimite,
-            DataLimite_Date: newDataLimite ? newDataLimite.split('T')[0] : t.DataLimite_Date,
-            Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
-            DataConclusao: status === TaskStatus.APROVADA ? t.DataConclusao : undefined 
-          };
-        }
-        return t;
-      }));
-
-      // Recarrega ledger
       const ledgerData = await ledgerApi.getAll();
       setLedger(ledgerData.map((l: any) => ({
         ID: l.ID,
@@ -538,113 +522,58 @@ export const useStore = () => {
         Pontos: l.Pontos,
         Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
         Descricao: l.Descricao,
+        empresa_id: l.empresa_id,
       })));
-
-    } catch (err: any) {
-      console.error('Erro ao auditar tarefa:', err);
-      // Fallback local
-      setTasks(prev => prev.map(t => {
-        if (t.ID === taskId) {
-          let delta = 0;
-          let motive = "";
-          let type = ScoreType.GANHO;
-
-          if (status === TaskStatus.APROVADA) {
-            delta = t.PontosValor;
-            motive = `Aprovação: ${t.Titulo}`;
-          } else if (status === TaskStatus.FEITA_ERRADA) {
-            delta = -Math.ceil(t.PontosValor * 0.5);
-            motive = `Pena – Erro: ${t.Titulo}`;
-            type = ScoreType.PENALIDADE;
-          } else if (status === TaskStatus.NAO_FEITA) {
-            delta = -(t.PontosValor);
-            motive = `Penalidade – Não Concluída: ${t.Titulo}`;
-            type = ScoreType.PENALIDADE;
-          }
-
-          setLedger(prev => [...prev, { 
-            ID: Math.random().toString(36).substr(2, 9), 
-            UserEmail: t.Responsavel, 
-            Data: new Date().toISOString(), 
-            Pontos: delta, 
-            Tipo: type, 
-            Descricao: motive 
-          }]);
-
-          return { 
-            ...t, 
-            Status: status, 
-            JustificativaGestor: justification,
-            DataLimite: nextDeadline || t.DataLimite,
-            DataLimite_Date: nextDeadline ? nextDeadline.split('T')[0] : t.DataLimite_Date,
-            Tentativas: status !== TaskStatus.APROVADA ? (t.Tentativas || 0) + 1 : t.Tentativas,
-          };
-        }
-        return t;
-      }));
+    } catch (err) {
+      console.warn('Auditoria gravada, mas falhou ao recarregar o extrato de pontos:', err);
     }
   }, []);
 
   const deleteTask = useCallback(async (taskId: string) => {
-    if (window.confirm("Excluir tarefa?")) {
-      try {
-        await tasksApi.delete(taskId);
-      } catch (err) {
-        console.error('Erro ao deletar no backend:', err);
-      }
-      setTasks(prev => prev.filter(t => t.ID !== taskId));
-    }
+    if (!window.confirm("Excluir tarefa?")) return;
+    // Remove da UI SOMENTE após o backend confirmar (antes, apagava mesmo em erro).
+    await acaoBackend(() => tasksApi.delete(taskId), 'Não foi possível excluir a tarefa.');
+    setTasks(prev => prev.filter(t => t.ID !== taskId));
   }, []);
 
   // ==================== TEMPLATE FUNCTIONS ====================
   const addTemplate = useCallback(async (templateData: Omit<TaskTemplate, 'ID'>) => {
-    try {
-      const newTemplate = await templatesApi.create({
-        Titulo: templateData.Titulo,
-        Descricao: templateData.Descricao,
-        Responsavel: templateData.Responsavel,
-        Prioridade: templateData.Prioridade,
-        PontosValor: templateData.PontosValor,
-        Recorrencia: templateData.Recorrencia,
-        DiasRecorrencia: templateData.DiasRecorrencia,
-        DiaDoMes: templateData.DiaDoMes,
-        DataInicio: templateData.DataInicio,
-        PularFinalDeSemana: templateData.PularFinalDeSemana,
-        CriadoPor: currentUserEmail,
-        empresa_id: activeEmpresa, // cria o modelo na empresa que está aberta (não a "casa")
-      });
+    // Sem fallback: o modelo só aparece na UI quando o backend o cria (com ID real).
+    const newTemplate = await acaoBackend(() => templatesApi.create({
+      Titulo: templateData.Titulo,
+      Descricao: templateData.Descricao,
+      Responsavel: templateData.Responsavel,
+      Prioridade: templateData.Prioridade,
+      PontosValor: templateData.PontosValor,
+      Recorrencia: templateData.Recorrencia,
+      DiasRecorrencia: templateData.DiasRecorrencia,
+      DiaDoMes: templateData.DiaDoMes,
+      DataInicio: templateData.DataInicio,
+      PularFinalDeSemana: templateData.PularFinalDeSemana,
+      CriadoPor: currentUserEmail,
+      empresa_id: activeEmpresa, // cria o modelo na empresa que está aberta (não a "casa")
+    }), 'Não foi possível criar o modelo.');
 
-      setTemplates(prev => [...prev, {
-        ...newTemplate,
-        Ativa: true,
-      }]);
-    } catch (err: any) {
-      console.error('Erro ao criar template:', err);
-      // Fallback local
-      setTemplates(prev => [...prev, {
-        ...templateData,
-        ID: Math.random().toString(36).substr(2, 9),
-        Ativa: true,
-      }]);
-    }
+    setTemplates(prev => [...prev, { ...newTemplate, Ativa: true }]);
   }, [currentUserEmail, activeEmpresa]);
 
   const toggleTemplate = useCallback(async (id: string) => {
+    // Update otimista com ROLLBACK: alterna na hora e desfaz se o backend falhar.
+    const anterior = templates;
+    setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t));
     try {
       const result = await templatesApi.toggle(id);
       setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: result.ativa } : t));
-    } catch (err) {
-      // Fallback local
-      setTemplates(prev => prev.map(t => t.ID === id ? { ...t, Ativa: !t.Ativa } : t));
+    } catch (e: any) {
+      setTemplates(anterior); // rollback
+      showToast({ message: e?.message || 'Não foi possível alterar o modelo.', tone: 'erro' });
+      throw e;
     }
-  }, []);
+  }, [templates]);
 
   const deleteTemplate = useCallback(async (id: string) => {
-    try {
-      await templatesApi.delete(id);
-    } catch (err) {
-      console.error('Erro ao deletar template:', err);
-    }
+    // Remove da UI SOMENTE após o backend confirmar (antes, apagava mesmo em erro).
+    await acaoBackend(() => templatesApi.delete(id), 'Não foi possível excluir o modelo.');
     setTemplates(prev => prev.filter(t => t.ID !== id));
   }, []);
 
@@ -702,49 +631,16 @@ export const useStore = () => {
 
       return true;
     } catch (err: any) {
+      // 409 = anti-duplicata do backend: não é falha, é aviso de que já existe hoje.
       if (err.message?.includes('409')) {
         const tmpl = templates.find(t => t.ID === templateId);
         return { duplicate: true, template: tmpl };
       }
-      console.error('Erro ao gerar tarefa:', err);
-      
-      // Fallback local
-      const tmpl = templates.find(t => t.ID === templateId);
-      if (!tmpl) return false;
-      
-      const todayStr = getLocalTodayStr();
-      const alreadyExists = tasks.some(t => 
-        t.Titulo === tmpl.Titulo && 
-        t.Responsavel === tmpl.Responsavel && 
-        new Date(t.DataLimite).toLocaleDateString('en-CA') === todayStr
-      );
-      
-      if (alreadyExists && !force) return { duplicate: true, template: tmpl };
-      
-      const dueDateTime = new Date(); 
-      dueDateTime.setHours(23, 59, 59, 999);
-      const nowIso = new Date().toISOString();
-      
-      const newTask: Task = {
-        ID: Math.random().toString(36).substr(2, 9),
-        TemplateID: tmpl.ID,
-        Titulo: tmpl.Titulo,
-        Descricao: tmpl.Descricao,
-        Responsavel: tmpl.Responsavel,
-        DataLimite: dueDateTime.toISOString(),
-        DataLimite_Date: dueDateTime.toISOString().split('T')[0],
-        DataGeracao: nowIso,
-        DataCriacao: nowIso,
-        Prioridade: tmpl.Prioridade,
-        PontosValor: tmpl.PontosValor,
-        Status: TaskStatus.PENDENTE,
-        Tentativas: 0
-      };
-      
-      setTasks(prev => [...prev, newTask]);
-      return true;
+      // Sem fallback: não fabricamos a tarefa localmente. Avisa e não altera a UI.
+      showToast({ message: err?.message || 'Não foi possível gerar a tarefa.', tone: 'erro' });
+      return false;
     }
-  }, [templates, tasks, baseUsers, empresas]);
+  }, [templates, baseUsers, empresas]);
 
   // Função para recarregar dados
   const refreshData = useCallback(async () => {
@@ -831,7 +727,8 @@ export const useStore = () => {
   }, []);
 
   const valorarTarefaPessoal = useCallback(async (taskId: string, pontos: number, obs?: string) => {
-    await tasksApi.valorarPessoal(taskId, pontos, obs);
+    // Ação crítica (altera pontos): só reflete na UI após o backend confirmar.
+    await acaoBackend(() => tasksApi.valorarPessoal(taskId, pontos, obs), 'Não foi possível valorar a tarefa.');
     setTasks(prev => prev.map(t => t.ID === taskId
       ? { ...t, PontosValor: pontos, Status: TaskStatus.APROVADA, ObservacaoGestor: obs } : t));
     await refreshData(); // reflete os pontos no extrato/relatórios/ranking
@@ -898,11 +795,12 @@ export const useStore = () => {
 
   // Plataforma: suspender/reativar e excluir empresa
   const suspenderEmpresa = useCallback(async (id: string, suspender: boolean) => {
-    await empresasApi.setStatus(id, suspender ? 'Suspensa' : 'Ativa');
+    await acaoBackend(() => empresasApi.setStatus(id, suspender ? 'Suspensa' : 'Ativa'), 'Não foi possível alterar o status da empresa.');
     setEmpresas(prev => prev.map(e => e.id === id ? { ...e, Status: suspender ? 'Suspensa' : 'Ativa' } : e));
   }, []);
   const excluirEmpresa = useCallback(async (id: string) => {
-    await empresasApi.remove(id);
+    // Ação crítica: remove da UI SOMENTE após o backend confirmar a exclusão.
+    await acaoBackend(() => empresasApi.remove(id), 'Não foi possível excluir a empresa.');
     setEmpresas(prev => prev.filter(e => e.id !== id));
   }, []);
 
