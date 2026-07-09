@@ -50,7 +50,8 @@ export const authApi = {
     if (e1) throw new Error('Senha atual incorreta');
     const { error: e2 } = await supabase.auth.updateUser({ password: novaSenha });
     if (e2) throwSb(e2, 'Não foi possível alterar a senha');
-    await supabase.rpc('clear_senha_provisoria');
+    const { error: e3 } = await supabase.rpc('clear_senha_provisoria');
+    if (e3) throwSb(e3, 'Senha alterada, mas não foi possível concluir o primeiro acesso');
     return { message: 'Senha alterada com sucesso' };
   },
 
@@ -58,7 +59,8 @@ export const authApi = {
   definirNovaSenha: async (novaSenha: string) => {
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     if (error) throwSb(error, 'Não foi possível definir a senha');
-    await supabase.rpc('clear_senha_provisoria');
+    const { error: e2 } = await supabase.rpc('clear_senha_provisoria');
+    if (e2) throwSb(e2, 'Senha definida, mas não foi possível concluir o primeiro acesso');
     return { message: 'Senha definida com sucesso' };
   },
 
