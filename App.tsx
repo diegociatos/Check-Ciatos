@@ -133,7 +133,7 @@ const App: React.FC = () => {
         );
 
       case 'RELATORIOS':
-        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} />;
+        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} empresaNome={store.empresaAtual?.Nome} />;
 
       case 'BONUS_RULES':
         return (

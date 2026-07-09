@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole, BonusRules } from '../types';
-import { Download, TrendingUp, TrendingDown, Scale, Award, Coins } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Scale, Award, Coins, FileText } from 'lucide-react';
 import { PageHeader, Card, StatCard, EmptyState, Btn, Pill } from './ui';
 import { calcularBonus } from '../lib/scoreEngine';
+import { pdfConsolidado, pdfColaborador, LinhaPdf } from '../lib/bonusPdf';
+import { pareceArquivo } from '../lib/storage';
 
 interface RelatoriosViewProps {
   tasks: Task[];
@@ -10,6 +12,7 @@ interface RelatoriosViewProps {
   users: User[];
   collaboratorsList: User[];
   bonusRules: BonusRules;
+  empresaNome?: string;
 }
 
 type Periodo = 'MES' | 'TRIMESTRE' | 'SEMESTRE' | 'ANO';
@@ -24,6 +27,7 @@ interface LinhaRel {
   aprovadas: number;
   erros: number;
   naoFeitas: number;
+  refeitas: number;
   ganhos: number;
   penalidades: number;
   saldo: number;
@@ -32,7 +36,7 @@ interface LinhaRel {
   elegivel: boolean;
 }
 
-const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList, bonusRules }) => {
+const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList, bonusRules, empresaNome }) => {
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth(); // 0-11
   const [periodo, setPeriodo] = useState<Periodo>('MES');
@@ -74,6 +78,7 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
           aprovadas: ut.filter((t) => t.Status === TaskStatus.APROVADA).length,
           erros: ut.filter((t) => t.Status === TaskStatus.FEITA_ERRADA).length,
           naoFeitas: ut.filter((t) => t.Status === TaskStatus.NAO_FEITA).length,
+          refeitas: ut.filter((t) => (t.Tentativas || 0) > 0).length,
           ganhos,
           penalidades,
           saldo,
@@ -102,6 +107,21 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
     [ledger, inicio, fim]
   );
 
+  const toLinhaPdf = (r: LinhaRel): LinhaPdf => ({
+    nome: r.user.Nome, time: r.user.Time,
+    aprovadas: r.aprovadas, erros: r.erros, naoFeitas: r.naoFeitas, refeitas: r.refeitas,
+    ganhos: r.ganhos, penalidades: r.penalidades, saldo: r.saldo,
+    eficiencia: r.eficiencia, bonus: r.bonus, elegivel: r.elegivel,
+  });
+
+  const gerarPdfEquipe = () => pdfConsolidado(empresaNome || 'Empresa', label, linhas.map(toLinhaPdf));
+
+  const gerarPdfColab = (r: LinhaRel) => {
+    const ut = tasks.filter((t) => t.Responsavel === r.user.Email && noPeriodo(t.DataLimite_Date || t.DataLimite));
+    const tarefas = ut.map((t) => ({ titulo: t.Titulo, status: t.Status, evidencia: pareceArquivo(t.ProofAttachment) }));
+    pdfColaborador(empresaNome || 'Empresa', label, toLinhaPdf(r), tarefas);
+  };
+
   const baixarCSV = () => {
     const cab = ['Colaborador', 'Time', 'Aprovadas', 'Erros', 'Não feitas', 'Pontos ganhos', 'Penalidades', 'Saldo', 'Eficiência (%)', 'Bônus'];
     const corpo = linhas.map((r) => [r.user.Nome, r.user.Time || '', r.aprovadas, r.erros, r.naoFeitas, r.ganhos, r.penalidades, r.saldo, Math.round(r.eficiencia), r.elegivel ? r.bonus : 0]);
@@ -127,7 +147,12 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
         kicker="Gestão"
         title="Relatórios"
         subtitle="Desempenho e pontuação da equipe por período."
-        action={<Btn variant="secondary" onClick={baixarCSV}><Download size={16} /> Exportar CSV</Btn>}
+        action={
+          <div className="flex items-center gap-2">
+            <Btn variant="secondary" onClick={baixarCSV}><Download size={16} /> CSV</Btn>
+            <Btn variant="primary" onClick={gerarPdfEquipe}><FileText size={16} /> Gerar PDF</Btn>
+          </div>
+        }
       />
 
       {/* Filtro de período */}
@@ -195,6 +220,7 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                     <th className="px-6 py-3 font-semibold text-right">Saldo</th>
                     <th className="px-6 py-3 font-semibold text-right">Efic.</th>
                     <th className="px-6 py-3 font-semibold text-right">Bônus</th>
+                    <th className="px-6 py-3 font-semibold text-center">PDF</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
@@ -220,6 +246,12 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                         {r.elegivel
                           ? <span className="font-semibold text-emerald-600">+{r.bonus}</span>
                           : <span className="text-stone-300">—</span>}
+                      </td>
+                      <td className="px-6 py-3 text-center">
+                        <button onClick={() => gerarPdfColab(r)} title="Gerar PDF individual"
+                          className="inline-flex items-center justify-center p-1.5 rounded-lg text-stone-400 hover:text-marca hover:bg-marca/10">
+                          <FileText size={15} />
+                        </button>
                       </td>
                     </tr>
                   ))}
