@@ -29,14 +29,12 @@ const App: React.FC = () => {
   // Hooks must be called before any conditional returns
   const visibleTasks = useMemo(() => {
     if (!store.currentUser) return [];
-    const { currentUser, tasks, users } = store;
-    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER].includes(currentUser.Role)) return tasks;
-    if (currentUser.Role === UserRole.GESTOR) {
-      const myCollaborators = users.filter(u => u.Gestor === currentUser.Email).map(u => u.Email);
-      return tasks.filter(t => t.Responsavel === currentUser.Email || myCollaborators.includes(t.Responsavel));
-    }
+    const { currentUser, tasks } = store;
+    // Gestão (inclui Gestor) supervisiona a empresa inteira: vê todas as tarefas em escopo
+    // (a RLS já isola por empresa), inclusive as que o Master cria para qualquer responsável.
+    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER, UserRole.GESTOR].includes(currentUser.Role)) return tasks;
     return tasks.filter(t => t.Responsavel === currentUser.Email);
-  }, [store.tasks, store.currentUser, store.users]);
+  }, [store.tasks, store.currentUser]);
 
   const collaboratorsList = useMemo(() => {
     if (!store.currentUser) return [];
