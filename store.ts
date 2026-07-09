@@ -641,7 +641,28 @@ export const useStore = () => {
       Ativa: data.Ativa,
     });
     setTemplates(prev => prev.map(t => (t.ID === id ? { ...t, ...data } : t)));
-  }, []);
+
+    // Tarefa avulsa (Data Específica) é 1:1 com o modelo: propaga a edição para
+    // a(s) tarefa(s) já gerada(s) que ainda estão abertas (Pendente/Atrasada).
+    // Não mexe em tarefas em aprovação ou já concluídas (evita alterar algo em avaliação).
+    if (data.Recorrencia === RecurrenceType.DATA_ESPECIFICA) {
+      const abertos = [TaskStatus.PENDENTE, TaskStatus.ATRASADA];
+      const campos = {
+        Titulo: data.Titulo,
+        Descricao: data.Descricao,
+        Responsavel: data.Responsavel,
+        Prioridade: data.Prioridade,
+        PontosValor: data.PontosValor,
+      };
+      const alvo = tasks.filter(t => t.TemplateID === id && abertos.includes(t.Status));
+      if (alvo.length) {
+        await Promise.all(alvo.map(t => tasksApi.update(t.ID, campos).catch(() => {})));
+        setTasks(prev => prev.map(t =>
+          (t.TemplateID === id && abertos.includes(t.Status)) ? { ...t, ...campos } : t
+        ));
+      }
+    }
+  }, [tasks]);
 
   const generateTaskFromTemplate = useCallback(async (templateId: string, force: boolean = false) => {
     try {

@@ -157,6 +157,13 @@ export const tasksApi = {
     return data;
   },
 
+  // Edita campos de uma tarefa já gerada (gestor/master, via RLS tasks_manage).
+  update: async (taskId: string, fields: any) => {
+    const { error } = await supabase.from('tasks').update(fields).eq('ID', taskId);
+    if (error) throwSb(error, 'Erro ao atualizar tarefa');
+    return { ok: true };
+  },
+
   definirAndamento: async (taskId: string, andamento: string) => {
     const { error } = await supabase.rpc('definir_andamento', { p_id: taskId, p_andamento: andamento });
     if (error) throwSb(error, 'Erro ao mudar a situação');
