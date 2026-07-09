@@ -11,11 +11,11 @@ O projeto agora separa a área pública comercial do sistema interno:
 
 | Rota | O que abre |
 |---|---|
-| `/` | Landing page comercial do Check-Ciatos. Não exige login. |
+| `/` | Landing page comercial autoexplicativa do Check-Ciatos. Não exige login. |
 | `/app` | App interno existente, com login e fluxo operacional. |
 | `/login` | Mesmo app interno, iniciando pelo fluxo de autenticação quando não houver usuário logado. |
 
-Os botões **Entrar** e **Entrar no sistema** apontam para `/login`. Os botões comerciais e o formulário de interesse abrem o WhatsApp com uma mensagem formatada.
+Os botões **Entrar** e **Entrar no sistema** apontam para `/login`. Os botões comerciais e o formulário de interesse abrem o WhatsApp com uma mensagem formatada para contratação, planos e implantação.
 
 Para alterar o número comercial do WhatsApp, edite a constante `WHATSAPP_NUMBER` em `components/landing/LandingPage.tsx`:
 
