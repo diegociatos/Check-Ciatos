@@ -3,7 +3,7 @@
 SaaS multi-empresa de **checklist diário com pontuação de colaboradores**. Cada empresa-cliente tem sua própria equipe e dados totalmente isolados. O objetivo é aumentar a produtividade deixando claro o que precisa ser feito e recompensando com pontos o que foi entregue e aprovado.
 
 **Stack:** React 19 + Vite + TypeScript + TailwindCSS + Supabase (Postgres, Auth, Storage, Edge Functions).
-**Deploy:** Netlify (frontend estático) + Supabase (backend gerenciado).
+**Deploy:** Cloudflare Pages (frontend estático) + Supabase (backend gerenciado).
 
 ## Site comercial e app interno
 
@@ -65,6 +65,30 @@ As variáveis (ver `.env.example`):
 | `npm run lint` | ESLint. |
 | `npm run check` | typecheck + lint. |
 
+## Deploy do frontend na Cloudflare Pages
+
+No painel da Cloudflare, crie um projeto em **Workers & Pages > Pages > Import from Git** e conecte este repositório.
+
+Configuração de build:
+
+| Campo | Valor |
+|---|---|
+| Framework preset | Vite |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | `/` |
+
+Variáveis de ambiente em **Settings > Environment variables**:
+
+| Variável | Valor |
+|---|---|
+| `VITE_SUPABASE_URL` | URL do projeto Supabase |
+| `VITE_SUPABASE_ANON_KEY` | anon key pública do Supabase |
+
+O arquivo `public/_redirects` garante o fallback de SPA no Cloudflare Pages, mantendo rotas como `/login` e `/app` funcionando mesmo ao atualizar a página ou acessar por link direto.
+
+Depois do primeiro deploy, conecte o domínio em **Custom domains**. O frontend fica no Cloudflare Pages; o backend continua no Supabase.
+
 ## Backend (Supabase)
 
 Todo o schema, RLS, funções (RPCs), Edge Function e Storage estão versionados em `supabase/`. Aplicar no projeto:
@@ -77,16 +101,12 @@ supabase functions deploy admin-users
 
 Detalhes das tabelas, funções e políticas em **[docs/SUPABASE.md](docs/SUPABASE.md)**.
 
-## Deploy
-
-- **Frontend:** push em `main` → a Netlify publica automaticamente. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (em `netlify.toml` ou nas variáveis do site).
-- **Backend:** `supabase db push` aplica as migrations; `supabase functions deploy` publica a Edge Function.
-
 ## Estrutura
 
 ```
 App.tsx                 → separa landing pública e app interno por pathname
 components/landing/     → landing page comercial do Check-Ciatos
+public/_redirects       → fallback de SPA para Cloudflare Pages
 store.ts                → estado global (dados, empresa ativa, notificações)
 services/api.ts         → camada de dados (supabase-js)
 lib/
