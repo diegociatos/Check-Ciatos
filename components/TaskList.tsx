@@ -112,7 +112,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
 
                   <div className="mt-5 pt-4 border-t border-stone-100 flex items-center gap-2 text-sm text-stone-500">
                     <Clock size={15} className="text-stone-400" />
-                    Prazo: {new Date(task.DataLimite).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    Prazo: {new Date(((task.DataLimite_Date || task.DataLimite?.split('T')[0] || '')) + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                   </div>
                 </div>
 
