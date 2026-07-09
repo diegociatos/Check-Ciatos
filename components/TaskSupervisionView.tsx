@@ -1,267 +1,312 @@
-
 import React, { useState, useMemo } from 'react';
-import { Task, User, TaskStatus, UserRole } from '../types';
-import { Filter, CheckCircle2, Calendar, FileCode, AlertCircle, User as UserIcon, Clock, Target, Trash2, Copy, XCircle, Send } from 'lucide-react';
+import { Task, User, TaskStatus, UserRole, TaskPriority } from '../types';
+import {
+  Inbox, Clock, RotateCcw, Copy, ImageOff, Star, ListChecks,
+  Trash2, Check, X, XCircle, Send, Paperclip, MessageSquare, ShieldCheck, CalendarClock,
+} from 'lucide-react';
 import { getTodayStr } from '../store';
-import { useUndoableDelete } from './ui';
+import { PageHeader, Card, Pill, EmptyState, Btn, showToast, useUndoableDelete } from './ui';
+import { urlEvidencia, pareceArquivo } from '../lib/storage';
 
 interface TaskSupervisionViewProps {
   tasks: Task[];
   users: User[];
   onDeleteTask: (taskId: string) => void;
-  onAuditTask?: (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => void;
+  onAuditTask?: (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => void | Promise<any>;
+  onValorar?: (taskId: string, pontos: number, obs?: string) => Promise<any>;
   currentUserRole?: UserRole;
 }
 
-const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users, onDeleteTask, onAuditTask, currentUserRole }) => {
-  const [filterResponsavel, setFilterResponsavel] = useState<string>('TODOS');
-  const [markNotDoneTask, setMarkNotDoneTask] = useState<Task | null>(null);
-  const [notDoneJustification, setNotDoneJustification] = useState('');
-  const todayStr = getTodayStr();
+type TabKey = 'AGUARDANDO' | 'ATRASADAS' | 'REPROVADAS' | 'DUPLICADAS' | 'SEM_EVIDENCIA' | 'PESSOAIS' | 'TODAS';
+type AuditMode = 'REPROVAR' | 'NAO_FEITA' | 'AJUSTE';
+
+const brDate = (d?: string) => d ? (d.substring(0, 10).split('-').reverse().join('/')) : '—';
+
+const statusTone = (s: TaskStatus): React.ComponentProps<typeof Pill>['tone'] => {
+  switch (s) {
+    case TaskStatus.AGUARDANDO_APROVACAO: return 'info';
+    case TaskStatus.APROVADA: return 'sucesso';
+    case TaskStatus.FEITA_ERRADA: return 'atraso';
+    case TaskStatus.NAO_FEITA: return 'erro';
+    case TaskStatus.ATRASADA: return 'erro';
+    default: return 'neutral';
+  }
+};
+
+const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users, onDeleteTask, onAuditTask, onValorar }) => {
+  const hoje = getTodayStr();
+  const [tab, setTab] = useState<TabKey>('AGUARDANDO');
+  const [fResp, setFResp] = useState('TODOS');
+  const [fTime, setFTime] = useState('TODOS');
+  const [fPrio, setFPrio] = useState('TODOS');
+  const [fData, setFData] = useState('');
   const { pendentes: excluindo, remover: excluirTarefa } = useUndoableDelete(onDeleteTask, 'Tarefa');
 
-  const collaborators = useMemo(() => {
-    return users.filter(u => u.Role === UserRole.COLABORADOR);
-  }, [users]);
+  // Modal de auditoria (reprovar / não feita / pedir ajuste)
+  const [auditTask, setAuditTask] = useState<Task | null>(null);
+  const [auditMode, setAuditMode] = useState<AuditMode>('REPROVAR');
+  const [auditObs, setAuditObs] = useState('');
+  const [auditPrazo, setAuditPrazo] = useState('');
+  // Modal de valoração de tarefa pessoal
+  const [valorarTask, setValorarTask] = useState<Task | null>(null);
+  const [valorPts, setValorPts] = useState<number>(10);
+  const [valorObs, setValorObs] = useState('');
 
-  // Estrutura de Agrupamento: [Responsavel] -> [DataLimite_Date] -> Task[]
-  const groupedData = useMemo(() => {
-    let filtered = tasks.filter(t => t.Status !== TaskStatus.APROVADA && !excluindo.has(t.ID));
+  const nome = (email: string) => users.find(u => u.Email === email)?.Nome || email;
+  const collaborators = useMemo(() => users.filter(u => u.Role === UserRole.COLABORADOR), [users]);
+  const times = useMemo(() => Array.from(new Set(users.map(u => u.Time).filter(Boolean))) as string[], [users]);
 
-    if (filterResponsavel !== 'TODOS') {
-      filtered = filtered.filter(t => t.Responsavel === filterResponsavel);
-    }
+  const isAtrasada = (t: Task) => t.Status === TaskStatus.ATRASADA || (t.Status === TaskStatus.PENDENTE && (t.DataLimite_Date || '') < hoje);
+  const semEvidencia = (t: Task) => t.Status === TaskStatus.AGUARDANDO_APROVACAO && !pareceArquivo(t.ProofAttachment);
+  const pessoalAValorar = (t: Task) => !!t.Pessoal && (t.PontosValor || 0) === 0 && t.Status !== TaskStatus.PENDENTE;
 
-    const structure: Record<string, Record<string, Task[]>> = {};
-
-    filtered.forEach(task => {
-      const resp = task.Responsavel;
-      // Usa DataLimite_Date ou extrai a data de DataLimite
-      const date = task.DataLimite_Date || (task.DataLimite ? task.DataLimite.split('T')[0] : 'Sem Data');
-
-      if (!structure[resp]) structure[resp] = {};
-      if (!structure[resp][date]) structure[resp][date] = [];
-      
-      structure[resp][date].push(task);
-    });
-
-    const sortedResp = Object.keys(structure).sort();
-    const finalStructure: Record<string, Record<string, Task[]>> = {};
-
-    sortedResp.forEach(resp => {
-      const sortedDates = Object.keys(structure[resp]).sort();
-      finalStructure[resp] = {};
-      sortedDates.forEach(date => {
-        finalStructure[resp][date] = structure[resp][date].sort((a, b) => a.Titulo.localeCompare(b.Titulo));
-      });
-    });
-
-    return finalStructure;
-  }, [tasks, filterResponsavel, excluindo]);
-
-  // Detectar tarefas duplicadas (mesmo título + mesmo responsável + mesma data)
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();
-    const seen = new Map<string, string>(); // key -> first task ID
-    tasks.forEach(task => {
-      const date = task.DataLimite_Date || (task.DataLimite ? task.DataLimite.split('T')[0] : '');
-      const key = `${task.Titulo.trim().toLowerCase()}|${task.Responsavel}|${date}`;
-      if (seen.has(key)) {
-        ids.add(seen.get(key)!);
-        ids.add(task.ID);
-      } else {
-        seen.set(key, task.ID);
-      }
+    const seen = new Map<string, string>();
+    tasks.forEach(t => {
+      const date = t.DataLimite_Date || (t.DataLimite ? t.DataLimite.split('T')[0] : '');
+      const key = `${t.Titulo.trim().toLowerCase()}|${t.Responsavel}|${date}`;
+      if (seen.has(key)) { ids.add(seen.get(key)!); ids.add(t.ID); } else { seen.set(key, t.ID); }
     });
     return ids;
   }, [tasks]);
 
-  const getStatusStyle = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.AGUARDANDO_APROVACAO: return 'bg-blue-100 text-blue-700 border-blue-200';
-      case TaskStatus.FEITA_ERRADA: return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case TaskStatus.NAO_FEITA: return 'bg-red-100 text-red-700 border-red-200';
-      case TaskStatus.ATRASADA: return 'bg-red-50 text-red-600 border-red-100';
-      default: return 'bg-gray-100 text-gray-500 border-gray-200';
-    }
+  // Aplica os filtros de controle (responsável, time, prioridade, data).
+  const passaFiltros = (t: Task) => {
+    if (excluindo.has(t.ID)) return false;
+    if (fResp !== 'TODOS' && t.Responsavel !== fResp) return false;
+    if (fTime !== 'TODOS' && users.find(u => u.Email === t.Responsavel)?.Time !== fTime) return false;
+    if (fPrio !== 'TODOS' && t.Prioridade !== fPrio) return false;
+    if (fData && (t.DataLimite_Date || t.DataLimite?.split('T')[0] || '') !== fData) return false;
+    return true;
   };
 
+  const predicados: Record<TabKey, (t: Task) => boolean> = {
+    AGUARDANDO: t => t.Status === TaskStatus.AGUARDANDO_APROVACAO && !t.Pessoal,
+    ATRASADAS: t => isAtrasada(t) && !t.Pessoal,
+    REPROVADAS: t => t.Status === TaskStatus.FEITA_ERRADA && !t.Pessoal,
+    DUPLICADAS: t => duplicateIds.has(t.ID),
+    SEM_EVIDENCIA: t => semEvidencia(t) && !t.Pessoal,
+    PESSOAIS: t => pessoalAValorar(t),
+    TODAS: () => true,
+  };
+
+  const base = useMemo(() => tasks.filter(passaFiltros), [tasks, fResp, fTime, fPrio, fData, excluindo]);
+  const contagem = (k: TabKey) => base.filter(predicados[k]).length;
+  const lista = useMemo(
+    () => base.filter(predicados[tab]).sort((a, b) => (a.DataLimite_Date || '').localeCompare(b.DataLimite_Date || '')),
+    [base, tab, duplicateIds]
+  );
+
+  const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+    { key: 'AGUARDANDO', label: 'Aguardando aprovação', icon: <Inbox size={15} /> },
+    { key: 'ATRASADAS', label: 'Atrasadas', icon: <Clock size={15} /> },
+    { key: 'REPROVADAS', label: 'Reprovadas / refazer', icon: <RotateCcw size={15} /> },
+    { key: 'DUPLICADAS', label: 'Duplicadas', icon: <Copy size={15} /> },
+    { key: 'SEM_EVIDENCIA', label: 'Sem evidência', icon: <ImageOff size={15} /> },
+    { key: 'PESSOAIS', label: 'Pessoais a valorar', icon: <Star size={15} /> },
+    { key: 'TODAS', label: 'Todas', icon: <ListChecks size={15} /> },
+  ];
+
+  const abrirAudit = (t: Task, mode: AuditMode) => {
+    setAuditTask(t); setAuditMode(mode); setAuditObs('');
+    setAuditPrazo(mode === 'AJUSTE' ? (t.DataLimite_Date || '') : '');
+  };
+
+  const confirmarAudit = () => {
+    if (!auditTask || !onAuditTask) return;
+    if (auditMode === 'AJUSTE' && !auditPrazo) { showToast({ message: 'Defina o novo prazo para o ajuste.', tone: 'erro' }); return; }
+    const status = auditMode === 'NAO_FEITA' ? TaskStatus.NAO_FEITA : TaskStatus.FEITA_ERRADA;
+    const obsPadrao = auditMode === 'NAO_FEITA' ? 'Tarefa não executada dentro do prazo.'
+      : auditMode === 'AJUSTE' ? 'Ajuste solicitado pelo gestor.' : 'Reprovada — refazer.';
+    onAuditTask(auditTask.ID, status, auditObs || obsPadrao, auditMode === 'REPROVAR' ? undefined : (auditPrazo || undefined));
+    setAuditTask(null);
+  };
+
+  const aprovar = (t: Task) => { if (onAuditTask) onAuditTask(t.ID, TaskStatus.APROVADA, ''); };
+
+  const confirmarValor = async () => {
+    if (!valorarTask || !onValorar) return;
+    if (valorPts < 0) { showToast({ message: 'A pontuação não pode ser negativa.', tone: 'erro' }); return; }
+    try {
+      await onValorar(valorarTask.ID, valorPts, valorObs || undefined);
+      showToast({ message: 'Tarefa valorada.', tone: 'sucesso' });
+      setValorarTask(null);
+    } catch { /* toast já emitido pela store */ }
+  };
+
+  const abrirEvidencia = async (path?: string) => {
+    const url = await urlEvidencia(path);
+    if (url) window.open(url, '_blank'); else showToast({ message: 'Não foi possível abrir a evidência.', tone: 'erro' });
+  };
+
+  const selectCls = 'bg-superficie border border-stone-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-marca/20';
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-ciatos">
-      {/* Header e Filtros */}
-      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h3 className="text-2xl text-stone-900">Supervisão de Tarefas</h3>
-          <p className="text-sm text-gray-400 font-medium italic">Visão total de obrigações por colaborador e fluxo de datas.</p>
-        </div>
-        <div className="relative w-full md:w-72">
-          <select 
-            className="w-full bg-fundo border-none rounded-2xl p-4 text-sm font-bold outline-none appearance-none cursor-pointer text-[#111111]"
-            value={filterResponsavel}
-            onChange={e => setFilterResponsavel(e.target.value)}
-          >
-            <option value="TODOS">Todos os Colaboradores</option>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-24 lg:pb-10 font-ciatos">
+      <PageHeader kicker="Gestão" title="Central de auditoria" subtitle="Confira as entregas do dia e mantenha a pontuação correta." />
+
+      {/* Filtros */}
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <select className={selectCls} value={fResp} onChange={e => setFResp(e.target.value)}>
+            <option value="TODOS">Todos os colaboradores</option>
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
-          <Filter size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <select className={selectCls} value={fTime} onChange={e => setFTime(e.target.value)}>
+            <option value="TODOS">Todos os times</option>
+            {times.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select className={selectCls} value={fPrio} onChange={e => setFPrio(e.target.value)}>
+            <option value="TODOS">Todas as prioridades</option>
+            {[TaskPriority.URGENTE, TaskPriority.ALTA, TaskPriority.MEDIA, TaskPriority.BAIXA].map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <input type="date" className={selectCls} value={fData} onChange={e => setFData(e.target.value)} />
+          {(fResp !== 'TODOS' || fTime !== 'TODOS' || fPrio !== 'TODOS' || fData) && (
+            <button onClick={() => { setFResp('TODOS'); setFTime('TODOS'); setFPrio('TODOS'); setFData(''); }}
+              className="text-xs font-semibold text-marca hover:underline ml-auto">Limpar filtros</button>
+          )}
         </div>
+      </Card>
+
+      {/* Abas */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {TABS.map(tb => {
+          const n = contagem(tb.key);
+          const active = tab === tb.key;
+          return (
+            <button key={tb.key} onClick={() => setTab(tb.key)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors ${active ? 'bg-marca text-white shadow-md shadow-marca/20' : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'}`}>
+              {tb.icon}{tb.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-stone-100 text-stone-500'}`}>{n}</span>
+            </button>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left table-fixed">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider w-1/3">Obrigação / Datas de Fluxo</th>
-                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Status</th>
-                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Pontos</th>
-                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-32">Modelo ID</th>
-                <th className="px-8 py-4 text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-center w-24">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {Object.keys(groupedData).length > 0 ? (
-                Object.entries(groupedData).map(([email, dateGroups]) => {
-                  const user = users.find(u => u.Email === email);
-                  return (
-                    <React.Fragment key={email}>
-                      <tr className="bg-marca/5">
-                        <td colSpan={5} className="px-8 py-3">
-                           <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 bg-marca rounded-xl flex items-center justify-center text-white text-xs font-black">
-                                 {user?.Nome.charAt(0) || email.charAt(0)}
-                              </div>
-                              <span className="text-xs font-black text-marca uppercase tracking-widest">
-                                 {user?.Nome || email}
-                              </span>
-                              <div className="h-px flex-1 bg-marca/10"></div>
-                           </div>
-                        </td>
-                      </tr>
-                      
-                      {Object.entries(dateGroups).map(([date, items]) => (
-                        <React.Fragment key={`${email}-${date}`}>
-                           {items.map(task => {
-                             const isDuplicate = duplicateIds.has(task.ID);
-                             return (
-                             <tr key={task.ID} className={`hover:bg-gray-50/50 transition-colors group ${isDuplicate ? 'bg-orange-50/60 border-l-4 border-l-orange-400' : ''}`}>
-                               <td className="px-8 py-5">
-                                 <div className="flex flex-col gap-2">
-                                   <div className="flex items-center gap-2">
-                                     <span className="text-sm font-bold text-[#111111] leading-tight">{task.Titulo}</span>
-                                     {isDuplicate && (
-                                       <span className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-[8px] font-black uppercase tracking-wider">
-                                         <Copy size={8} /> Duplicada
-                                       </span>
-                                     )}
-                                   </div>
-                                   <div className="flex items-center gap-4 flex-wrap">
-                                      <div className="flex items-center gap-1.5 text-[9px] font-semibold text-stone-400 uppercase tracking-wider">
-                                         <Clock size={10} className="opacity-50" />
-                                         Solicitação: {task.DataGeracao ? new Date(task.DataGeracao).toLocaleDateString('pt-BR') : 'Manual'}
-                                      </div>
-                                      <div className="flex items-center gap-1.5 text-[9px] font-black text-marca uppercase tracking-widest">
-                                         <Target size={10} className="opacity-50" />
-                                         Execução: {(task.DataLimite_Date || task.DataLimite?.split('T')[0] || 'Sem Data').split('-').reverse().join('/')}
-                                      </div>
-                                      <div className="text-[8px] font-mono text-gray-300 uppercase">
-                                         ID: {task.ID.substring(0, 8)}
-                                      </div>
-                                   </div>
-                                 </div>
-                               </td>
-                               <td className="px-8 py-5 text-center">
-                                 <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(task.Status)}`}>
-                                   {task.Status}
-                                 </span>
-                               </td>
-                               <td className="px-8 py-5 text-center font-black text-marca text-sm">
-                                 {task.PontosValor}
-                               </td>
-                               <td className="px-8 py-5 text-center">
-                                  <div className="flex items-center justify-center gap-1.5 text-[9px] font-mono text-gray-400 uppercase">
-                                    <FileCode size={10} />
-                                    {task.OrigemModelo || 'MANUAL'}
-                                  </div>
-                               </td>
-                               <td className="px-8 py-5 text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    {/* Botão "Não Concluída" para tarefas PENDENTE atrasadas */}
-                                    {task.Status === TaskStatus.PENDENTE && task.DataLimite_Date && task.DataLimite_Date < todayStr && onAuditTask && (
-                                      <button
-                                        onClick={() => setMarkNotDoneTask(task)}
-                                        className="p-2 rounded-xl text-red-500 hover:text-white hover:bg-red-600 transition-all duration-200 opacity-70 hover:opacity-100"
-                                        title="Marcar como Não Concluída (com penalização)"
-                                      >
-                                        <XCircle size={16} />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => excluirTarefa(task.ID)}
-                                      className="p-2 rounded-xl text-gray-300 hover:text-red-600 hover:bg-red-50 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                      title={`Excluir tarefa ${task.Titulo}`}
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </div>
-                               </td>
-                             </tr>
-                           );
-                           })}
-                        </React.Fragment>
-                      ))}
-                    </React.Fragment>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-32 text-center text-gray-300 uppercase font-black text-xs">Nenhuma tarefa ativa.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Lista */}
+      {lista.length === 0 ? (
+        <Card><EmptyState title="Nada por aqui" message="Nenhuma tarefa nesta aba com os filtros atuais." /></Card>
+      ) : (
+        <div className="space-y-3">
+          {lista.map(t => {
+            const dup = duplicateIds.has(t.ID);
+            const atras = isAtrasada(t);
+            const temEvid = pareceArquivo(t.ProofAttachment);
+            const podeAuditar = !!onAuditTask && !t.Pessoal;
+            return (
+              <Card key={t.ID} className={`p-5 ${dup ? 'border-l-4 border-l-amber-400' : ''}`}>
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-tinta">{t.Titulo}</span>
+                      <Pill tone={statusTone(t.Status)}>{t.Status}</Pill>
+                      {atras && t.Status !== TaskStatus.ATRASADA && <Pill tone="erro">Atrasada</Pill>}
+                      {dup && <Pill tone="atraso"><Copy size={11} /> Duplicada</Pill>}
+                      {t.Pessoal && <Pill tone="marca">Pessoal</Pill>}
+                    </div>
+                    <div className="flex items-center gap-4 flex-wrap mt-2 text-xs text-stone-500">
+                      <span>{nome(t.Responsavel)}</span>
+                      <span className="inline-flex items-center gap-1"><CalendarClock size={12} /> Prazo {brDate(t.DataLimite_Date || t.DataLimite)}</span>
+                      <span className="inline-flex items-center gap-1"><Star size={12} /> {t.PontosValor} pts</span>
+                      <span>Tentativas: {t.Tentativas || 0}</span>
+                      {temEvid
+                        ? <button onClick={() => abrirEvidencia(t.ProofAttachment)} className="inline-flex items-center gap-1 text-marca font-semibold hover:underline"><Paperclip size={12} /> Ver evidência</button>
+                        : <span className="inline-flex items-center gap-1 text-amber-600"><ImageOff size={12} /> Sem evidência</span>}
+                    </div>
+                    {t.CompletionNote && (
+                      <p className="mt-2 text-xs text-stone-600 bg-stone-50 rounded-lg px-3 py-2 inline-flex items-start gap-1.5">
+                        <MessageSquare size={12} className="mt-0.5 shrink-0 text-stone-400" /> <span><b>Colaborador:</b> {t.CompletionNote}</span>
+                      </p>
+                    )}
+                    {(t.JustificativaGestor || t.ObservacaoGestor) && (
+                      <p className="mt-2 text-xs text-stone-600 bg-amber-50 rounded-lg px-3 py-2 inline-flex items-start gap-1.5">
+                        <ShieldCheck size={12} className="mt-0.5 shrink-0 text-amber-500" /> <span><b>Gestor:</b> {t.JustificativaGestor || t.ObservacaoGestor}</span>
+                      </p>
+                    )}
+                  </div>
 
-      {/* Modal "Marcar como Não Concluída" */}
-      {markNotDoneTask && onAuditTask && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-8 border-b border-white/10 flex items-center justify-between text-white bg-red-600">
-               <div className="flex items-center gap-3">
-                  <XCircle size={24}/>
-                  <h3 className="text-xl font-bold uppercase tracking-tighter">Marcar como Não Concluída</h3>
-               </div>
-               <button onClick={() => { setMarkNotDoneTask(null); setNotDoneJustification(''); }} className="text-white/70 hover:text-white">✕</button>
+                  {/* Ações rápidas */}
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    {t.Pessoal && pessoalAValorar(t) && onValorar && (
+                      <Btn variant="primary" onClick={() => { setValorarTask(t); setValorPts(10); setValorObs(''); }}><Star size={15} /> Valorar</Btn>
+                    )}
+                    {podeAuditar && (
+                      <>
+                        <button onClick={() => aprovar(t)} title="Aprovar" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:brightness-95 active:scale-[0.98]"><Check size={15} /> Aprovar</button>
+                        <button onClick={() => abrirAudit(t, 'REPROVAR')} title="Reprovar (refazer)" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 active:scale-[0.98]"><RotateCcw size={15} /> Reprovar</button>
+                        <button onClick={() => abrirAudit(t, 'AJUSTE')} title="Pedir ajuste (novo prazo)" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-sky-100 text-sky-700 hover:bg-sky-200 active:scale-[0.98]"><Send size={15} /> Pedir ajuste</button>
+                        <button onClick={() => abrirAudit(t, 'NAO_FEITA')} title="Marcar não feita (penaliza)" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200 active:scale-[0.98]"><XCircle size={15} /> Não feita</button>
+                      </>
+                    )}
+                    <button onClick={() => excluirTarefa(t.ID)} title="Excluir" className="p-2 rounded-xl text-stone-300 hover:text-red-600 hover:bg-red-50"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal auditoria */}
+      {auditTask && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50" onClick={() => setAuditTask(null)}>
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="font-titulo text-lg text-tinta">
+                {auditMode === 'NAO_FEITA' ? 'Marcar como não feita' : auditMode === 'AJUSTE' ? 'Pedir ajuste' : 'Reprovar (refazer)'}
+              </h3>
+              <button onClick={() => setAuditTask(null)} className="text-stone-400 hover:text-stone-600"><X size={18} /></button>
             </div>
-            
-            <div className="p-8 space-y-6">
-               <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-                  <p className="text-[10px] font-black text-red-700 uppercase mb-2 tracking-widest">Tarefa não executada no prazo:</p>
-                  <p className="text-lg font-bold text-[#111111]">{markNotDoneTask.Titulo}</p>
-                  <p className="text-xs text-gray-500 mt-1">Responsável: {users.find(u => u.Email === markNotDoneTask.Responsavel)?.Nome || markNotDoneTask.Responsavel}</p>
-                  <p className="text-xs text-gray-500">Prazo: {(markNotDoneTask.DataLimite_Date || '').split('-').reverse().join('/')}</p>
-                  <p className="text-xs font-bold text-red-600 mt-2">Penalidade: -{markNotDoneTask.PontosValor} pontos</p>
-               </div>
-               <div className="space-y-2">
-                  <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Observação do Gestor (opcional)</label>
-                  <textarea 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-red-100 outline-none min-h-[80px]"
-                    placeholder="Motivo ou observação sobre a não execução..."
-                    value={notDoneJustification}
-                    onChange={(e) => setNotDoneJustification(e.target.value)}
-                  />
-               </div>
-               <button 
-                  onClick={() => {
-                    onAuditTask(markNotDoneTask.ID, TaskStatus.NAO_FEITA, notDoneJustification || 'Tarefa não executada dentro do prazo.');
-                    setMarkNotDoneTask(null);
-                    setNotDoneJustification('');
-                  }}
-                  className="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 bg-red-600 hover:brightness-90 hover:scale-[1.01] active:scale-95"
-               >
-                  <Send size={20} /> Confirmar Penalização
-               </button>
+            <div className="p-6 space-y-4">
+              <div className="bg-stone-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-tinta">{auditTask.Titulo}</p>
+                <p className="text-xs text-stone-500 mt-0.5">{nome(auditTask.Responsavel)} · {auditTask.PontosValor} pts</p>
+                {auditMode === 'NAO_FEITA' && <p className="text-xs font-semibold text-red-600 mt-1">Penalidade: -{auditTask.PontosValor} pts</p>}
+                {auditMode === 'REPROVAR' && <p className="text-xs font-semibold text-amber-600 mt-1">Penalidade por erro: -{Math.ceil(auditTask.PontosValor * 0.5)} pts</p>}
+              </div>
+              {(auditMode === 'AJUSTE' || auditMode === 'REPROVAR') && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">
+                    Novo prazo {auditMode === 'AJUSTE' ? '(obrigatório)' : '(opcional — reentrega)'}
+                  </label>
+                  <input type="date" value={auditPrazo} onChange={e => setAuditPrazo(e.target.value)} className={selectCls + ' w-full'} />
+                </div>
+              )}
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Observação do gestor</label>
+                <textarea value={auditObs} onChange={e => setAuditObs(e.target.value)} placeholder="Motivo / orientação ao colaborador…"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-marca/20 min-h-[80px]" />
+              </div>
+              <Btn variant="primary" full onClick={confirmarAudit}><Send size={16} /> Confirmar</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal valoração */}
+      {valorarTask && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50" onClick={() => setValorarTask(null)}>
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="font-titulo text-lg text-tinta">Valorar tarefa pessoal</h3>
+              <button onClick={() => setValorarTask(null)} className="text-stone-400 hover:text-stone-600"><X size={18} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-stone-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-tinta">{valorarTask.Titulo}</p>
+                <p className="text-xs text-stone-500 mt-0.5">{nome(valorarTask.Responsavel)}</p>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Pontos a creditar</label>
+                <input type="number" min={0} value={valorPts} onChange={e => setValorPts(Number(e.target.value))} className={selectCls + ' w-32'} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Observação (opcional)</label>
+                <textarea value={valorObs} onChange={e => setValorObs(e.target.value)} className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-marca/20 min-h-[70px]" />
+              </div>
+              <Btn variant="primary" full onClick={confirmarValor}><Star size={16} /> Creditar pontos</Btn>
             </div>
           </div>
         </div>

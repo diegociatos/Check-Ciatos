@@ -191,7 +191,7 @@ const App: React.FC = () => {
         );
 
       case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} onAuditTask={store.auditTask} />;
+        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} onAuditTask={store.auditTask} onValorar={store.valorarTarefaPessoal} />;
 
       case 'HELP_CENTER':
         return <HelpCenterView currentUser={currentUser} />;
