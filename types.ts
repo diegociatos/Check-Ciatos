@@ -198,6 +198,27 @@ export interface BonusRules {
   fechamento_dia: number;                   // dia do fechamento mensal (1..28)
 }
 
+// ---- Fechamento Mensal de Pontuação ----
+export type ClosingStatus = 'aberto' | 'em_revisao' | 'fechado' | 'pago';
+
+export interface MonthlyClosing {
+  id?: string;
+  empresa_id?: string;
+  ano: number;
+  mes: number;                          // 1-12
+  colaborador: string;                  // e-mail
+  pontos_possiveis: number;
+  pontos_realizados: number;
+  eficiencia: number;
+  penalidades: number;
+  saldo_final: number;
+  status_bonus: 'elegivel' | 'nao_elegivel';
+  bonus_sugerido: number;
+  status_fechamento: ClosingStatus;
+  fechado_por?: string;
+  fechado_em?: string;
+}
+
 // Defaults = comportamento atual do app (compatibilidade quando a empresa não configurou).
 export const DEFAULT_BONUS_RULES: BonusRules = {
   eficiencia_minima: 90,
@@ -225,4 +246,5 @@ export type ViewType =
   | 'RELATORIOS'
   | 'MINHAS_TAREFAS'
   | 'BONUS_RULES'
-  | 'EXECUTIVE_DASHBOARD';
+  | 'EXECUTIVE_DASHBOARD'
+  | 'MONTHLY_CLOSING';

@@ -12,7 +12,8 @@ import {
   FileBarChart,
   Activity,
   Coins,
-  Gauge
+  Gauge,
+  CalendarCheck
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -53,6 +54,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: 'Relatórios', view: 'RELATORIOS', section: 'GESTÃO', role: GESTAO, icon: <FileBarChart size={20} /> },
 
   // ===== ADMINISTRAÇÃO (admin/master) =====
+  { label: 'Fechamento mensal', view: 'MONTHLY_CLOSING', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <CalendarCheck size={20} /> },
   { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <UserCog size={20} /> },
   // Regras de bonificação: só Master e Plataforma (mapeados p/ ADMIN); Gestor não configura.
   { label: 'Regras de bonificação', view: 'BONUS_RULES', section: 'ADMINISTRAÇÃO', role: [UserRole.ADMIN], icon: <Coins size={20} /> },

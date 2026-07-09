@@ -21,6 +21,7 @@ Depois, criar o primeiro usuário **Plataforma** (via SQL / painel): um registro
 | `score_ledger` | Extrato de pontos. `UserEmail, Data, Pontos, Tipo (GANHO/PENALIDADE), Descricao, task_id, empresa_id`. |
 | `user_empresas` | Vínculo usuário↔empresas (acesso multi-empresa). `email, empresa_id`. |
 | `bonus_rules` | Regras de pontuação/bonificação por empresa (1 linha por empresa). Ver seção abaixo. |
+| `monthly_score_closings` | Fechamento mensal de pontuação (1 linha por empresa/ano/mês/colaborador). Ver seção abaixo. |
 
 ## Isolamento (RLS)
 
@@ -81,6 +82,18 @@ Cada empresa configura as próprias regras de pontuação/bonificação (migrati
 - `bonus_rules_manage` — escrita apenas para **Master** (`app_role()='master'` na empresa) e **Plataforma** (`app_is_plataforma()`). Gestor **não** configura.
 
 Aplicação no frontend: o motor puro em `lib/scoreEngine.ts` (`multiplicadorPrioridade`, `calcularBonus`) consome as regras; `store.ts` deriva `bonusRules` da empresa ativa; a tela `components/BonusRulesView.tsx` (rota `BONUS_RULES`, menu Administração) edita; **Dashboard** e **Relatórios** aplicam nos cálculos de elegibilidade e valor do bônus.
+
+## Fechamento Mensal (`monthly_score_closings`)
+
+Master/Gestor fecha oficialmente a pontuação do mês para bonificação (migration `20260709130000_monthly_closings.sql`). **1 linha por (empresa, ano, mês, colaborador)** — `unique(empresa_id, ano, mes, colaborador)`. Campos: `pontos_possiveis, pontos_realizados, eficiencia, penalidades, saldo_final, status_bonus (elegivel|nao_elegivel), bonus_sugerido, status_fechamento (aberto|em_revisao|fechado|pago), fechado_por, fechado_em`.
+
+**RLS:**
+- `closings_select` — leitura por acesso à empresa + plataforma.
+- `closings_manage` — escrita para gestão (`app_is_manager()`) na empresa + plataforma.
+
+**Trava retroativa (o ponto central):** a migration recria a RPC `audit_task` **idêntica à versão vigente** (`20260707180000`) e apenas **adiciona** uma checagem: se existe um `monthly_score_closings` com `status_fechamento in ('fechado','pago')` para o período (ano/mês do `DataLimite`) e colaborador da tarefa, e o chamador **não é Plataforma** (`app_is_plataforma()`), a auditoria é bloqueada com exceção. A trava é **dormante** enquanto nenhum período estiver fechado — comportamento idêntico ao atual. Reabrir/alterar período fechado é gesto de Plataforma (a tela só oferece "Reabrir" para Plataforma).
+
+Frontend: tela `components/MonthlyClosingView.tsx` (rota `MONTHLY_CLOSING`, menu Administração) com filtros mês/ano, revisão por colaborador, botões "Em revisão", "Fechar período", "Marcar como pago" e (Plataforma) "Reabrir", além de extrato PDF. O `store.ts` carrega `closings` (escopo por empresa) e expõe `salvarFechamento`/`setStatusFechamento`. Os **Relatórios** exibem se o mês está aberto/fechado.
 
 ## Storage
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa, BonusRules, DEFAULT_BONUS_RULES } from './types';
-import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, bonusRulesApi, emailApi } from './services/api';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa, BonusRules, DEFAULT_BONUS_RULES, MonthlyClosing } from './types';
+import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, bonusRulesApi, monthlyClosingsApi, emailApi } from './services/api';
 import { supabase } from './lib/supabase';
 import { gerarNotificacoes } from './lib/notifications';
 import { showToast } from './components/ui';
@@ -88,6 +88,7 @@ export const useStore = () => {
   const [botLog, setBotLog] = useState<BotLog[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [bonusRulesAll, setBonusRulesAll] = useState<BonusRules[]>([]);
+  const [closingsAll, setClosingsAll] = useState<MonthlyClosing[]>([]);
   const [activeEmpresa, setActiveEmpresa] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,17 +105,19 @@ export const useStore = () => {
         setError(null);
 
         // Carregar dados em paralelo
-        const [usersData, tasksData, templatesData, ledgerData, empresasData, bonusRulesData] = await Promise.all([
+        const [usersData, tasksData, templatesData, ledgerData, empresasData, bonusRulesData, closingsData] = await Promise.all([
           authApi.getUsers().catch(() => []),
           tasksApi.getAll().catch(() => []),
           templatesApi.getAll().catch(() => []),
           ledgerApi.getAll().catch(() => []),
           empresasApi.getAll().catch(() => []),
           bonusRulesApi.getAll().catch(() => []),
+          monthlyClosingsApi.getAll().catch(() => []),
         ]);
 
         setEmpresas(empresasData as Empresa[]);
         setBonusRulesAll((bonusRulesData as any[]).map(normalizeBonusRules));
+        setClosingsAll(closingsData as MonthlyClosing[]);
 
         // Normalizar usuários
         setBaseUsers(usersData.map((u: any) => ({
@@ -235,6 +238,9 @@ export const useStore = () => {
     () => bonusRulesAll.find(r => r.empresa_id === activeEmpresa) ?? DEFAULT_BONUS_RULES,
     [bonusRulesAll, activeEmpresa]
   );
+
+  // Fechamentos mensais da empresa em escopo.
+  const closings = useMemo(() => closingsAll.filter(c => emScopo(c.empresa_id)), [closingsAll, activeEmpresa]);
 
   // Calcula usuários com métricas (dentro da empresa em escopo)
   const users = useMemo(() => {
@@ -825,6 +831,40 @@ export const useStore = () => {
     return norm;
   }, [activeEmpresa]);
 
+  // ==================== FECHAMENTO MENSAL ====================
+  // Salva/atualiza os fechamentos do período com o status desejado. Só reflete
+  // na UI após o backend confirmar (sem fallback).
+  const salvarFechamento = useCallback(async (linhas: MonthlyClosing[], status: MonthlyClosing['status_fechamento']) => {
+    if (!activeEmpresa) throw new Error('Abra uma empresa para fechar o período.');
+    const fechando = status === 'fechado' || status === 'pago';
+    const rows = linhas.map(l => ({
+      empresa_id: activeEmpresa,
+      ano: l.ano, mes: l.mes, colaborador: l.colaborador,
+      pontos_possiveis: l.pontos_possiveis, pontos_realizados: l.pontos_realizados,
+      eficiencia: l.eficiencia, penalidades: l.penalidades, saldo_final: l.saldo_final,
+      status_bonus: l.status_bonus, bonus_sugerido: l.bonus_sugerido,
+      status_fechamento: status,
+      fechado_por: fechando ? currentUserEmail : null,
+      fechado_em: fechando ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    }));
+    const salvos = await acaoBackend(() => monthlyClosingsApi.upsert(rows), 'Não foi possível salvar o fechamento.');
+    setClosingsAll(prev => {
+      const chaves = new Set((salvos as MonthlyClosing[]).map(s => `${s.empresa_id}|${s.ano}|${s.mes}|${s.colaborador}`));
+      const outros = prev.filter(c => !chaves.has(`${c.empresa_id}|${c.ano}|${c.mes}|${c.colaborador}`));
+      return [...outros, ...(salvos as MonthlyClosing[])];
+    });
+    return salvos;
+  }, [activeEmpresa, currentUserEmail]);
+
+  const setStatusFechamento = useCallback(async (id: string, status: MonthlyClosing['status_fechamento']) => {
+    const fechando = status === 'fechado' || status === 'pago';
+    const extra = fechando ? { fechado_por: currentUserEmail, fechado_em: new Date().toISOString() } : {};
+    const salvo = await acaoBackend(() => monthlyClosingsApi.setStatus(id, status, extra), 'Não foi possível atualizar o status.');
+    setClosingsAll(prev => prev.map(c => c.id === id ? (salvo as MonthlyClosing) : c));
+    return salvo;
+  }, [currentUserEmail]);
+
   return {
     currentUser, users,
     tasks: scopedTasks, templates: scopedTemplates, ledger: scopedLedger,
@@ -832,6 +872,7 @@ export const useStore = () => {
     empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
     bonusRules, saveBonusRules,
+    closings, salvarFechamento, setStatusFechamento,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole, BonusRules } from '../types';
+import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole, BonusRules, MonthlyClosing } from '../types';
 import { Download, TrendingUp, TrendingDown, Scale, Award, Coins, FileText } from 'lucide-react';
 import { PageHeader, Card, StatCard, EmptyState, Btn, Pill } from './ui';
 import { calcularBonus } from '../lib/scoreEngine';
@@ -13,6 +13,7 @@ interface RelatoriosViewProps {
   collaboratorsList: User[];
   bonusRules: BonusRules;
   empresaNome?: string;
+  closings?: MonthlyClosing[];
 }
 
 type Periodo = 'MES' | 'TRIMESTRE' | 'SEMESTRE' | 'ANO';
@@ -36,7 +37,7 @@ interface LinhaRel {
   elegivel: boolean;
 }
 
-const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList, bonusRules, empresaNome }) => {
+const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList, bonusRules, empresaNome, closings = [] }) => {
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth(); // 0-11
   const [periodo, setPeriodo] = useState<Periodo>('MES');
@@ -106,6 +107,18 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
         .sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime()),
     [ledger, inicio, fim]
   );
+
+  // Status de fechamento do mês selecionado (só faz sentido no período "Mês").
+  const fechamento = useMemo(() => {
+    if (periodo !== 'MES') return null;
+    const cs = closings.filter(c => c.ano === ano && c.mes === mes + 1);
+    if (!cs.length) return 'aberto';
+    if (cs.every(c => c.status_fechamento === 'pago')) return 'pago';
+    if (cs.every(c => c.status_fechamento === 'fechado' || c.status_fechamento === 'pago')) return 'fechado';
+    if (cs.some(c => ['em_revisao', 'fechado', 'pago'].includes(c.status_fechamento))) return 'em_revisao';
+    return 'aberto';
+  }, [closings, ano, mes, periodo]);
+  const fechamentoLabel: Record<string, string> = { aberto: 'Período aberto', em_revisao: 'Em revisão', fechado: 'Período fechado', pago: 'Pago' };
 
   const toLinhaPdf = (r: LinhaRel): LinhaPdf => ({
     nome: r.user.Nome, time: r.user.Time,
@@ -185,7 +198,14 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
             {[anoAtual, anoAtual - 1, anoAtual - 2].map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
 
-          <Pill tone="marca" className="ml-auto">{label}</Pill>
+          <div className="ml-auto flex items-center gap-2">
+            {fechamento && (
+              <Pill tone={fechamento === 'fechado' ? 'marca' : fechamento === 'pago' ? 'sucesso' : fechamento === 'em_revisao' ? 'info' : 'neutral'}>
+                {fechamentoLabel[fechamento]}
+              </Pill>
+            )}
+            <Pill tone="marca">{label}</Pill>
+          </div>
         </div>
       </Card>
 

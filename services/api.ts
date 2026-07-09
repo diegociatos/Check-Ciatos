@@ -338,6 +338,33 @@ export const bonusRulesApi = {
   },
 };
 
+// ==================== FECHAMENTO MENSAL DE PONTUAÇÃO ====================
+export const monthlyClosingsApi = {
+  getAll: async () => {
+    const { data, error } = await supabase.from('monthly_score_closings').select('*');
+    if (error) throwSb(error);
+    return data ?? [];
+  },
+
+  // Cria/atualiza os fechamentos do período (Gestor/Master/Plataforma, via RLS).
+  upsert: async (rows: any[]) => {
+    if (!rows.length) return [];
+    const { data, error } = await supabase.from('monthly_score_closings')
+      .upsert(rows, { onConflict: 'empresa_id,ano,mes,colaborador' }).select();
+    if (error) throwSb(error, 'Erro ao salvar o fechamento');
+    return data ?? [];
+  },
+
+  // Muda o status de um fechamento (aberto/em_revisao/fechado/pago).
+  setStatus: async (id: string, status: string, extra?: Record<string, any>) => {
+    const { data, error } = await supabase.from('monthly_score_closings')
+      .update({ status_fechamento: status, updated_at: new Date().toISOString(), ...(extra || {}) })
+      .eq('id', id).select().single();
+    if (error) throwSb(error, 'Erro ao atualizar o status do fechamento');
+    return data;
+  },
+};
+
 // ==================== E-MAIL (Resend via Edge Function) ====================
 export const emailApi = {
   // Notifica o responsável sobre uma nova obrigação. Nunca bloqueia a criação da tarefa.
@@ -350,4 +377,4 @@ export const emailApi = {
   },
 };
 
-export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, bonusRules: bonusRulesApi, email: emailApi };
+export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, bonusRules: bonusRulesApi, closings: monthlyClosingsApi, email: emailApi };

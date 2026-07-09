@@ -20,6 +20,7 @@ import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 import RelatoriosView from './components/RelatoriosView.tsx';
 import BonusRulesView from './components/BonusRulesView.tsx';
 import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
+import MonthlyClosingView from './components/MonthlyClosingView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -133,7 +134,7 @@ const App: React.FC = () => {
         );
 
       case 'RELATORIOS':
-        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} empresaNome={store.empresaAtual?.Nome} />;
+        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} empresaNome={store.empresaAtual?.Nome} closings={store.closings} />;
 
       case 'BONUS_RULES':
         return (
@@ -153,6 +154,21 @@ const App: React.FC = () => {
             collaborators={collaboratorsList}
             bonusRules={store.bonusRules}
             empresaNome={store.empresaAtual?.Nome}
+          />
+        );
+
+      case 'MONTHLY_CLOSING':
+        return (
+          <MonthlyClosingView
+            tasks={tasks}
+            ledger={ledger}
+            collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
+            closings={store.closings}
+            empresaNome={store.empresaAtual?.Nome}
+            currentUserRole={currentUser.Role}
+            onSalvar={store.salvarFechamento}
+            onSetStatus={store.setStatusFechamento}
           />
         );
 
