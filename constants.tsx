@@ -11,7 +11,8 @@ import {
   Zap,
   FileBarChart,
   Activity,
-  Coins
+  Coins,
+  Gauge
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -43,6 +44,8 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: 'Meus pontos', view: 'MY_SCORE', section: 'GERAL', role: TODOS, icon: <Star size={20} /> },
 
   // ===== GESTÃO (gestor e admin) =====
+  // Visão executiva: só Master e Plataforma (mapeados p/ ADMIN).
+  { label: 'Visão executiva', view: 'EXECUTIVE_DASHBOARD', section: 'GESTÃO', role: [UserRole.ADMIN], icon: <Gauge size={20} /> },
   { label: 'Conferir entregas', view: 'CHECK_DELIVERIES', section: 'GESTÃO', role: GESTAO, icon: <ClipboardCheck size={20} /> },
   { label: 'Equipe', view: 'EQUIPE', section: 'GESTÃO', role: GESTAO, icon: <Users size={20} /> },
   { label: 'Gerar tarefas', view: 'MANAGE_TEMPLATES', section: 'GESTÃO', role: GESTAO, icon: <Zap size={20} /> },

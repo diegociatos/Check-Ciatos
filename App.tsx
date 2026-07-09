@@ -19,6 +19,7 @@ import EquipeView from './components/EquipeView.tsx';
 import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 import RelatoriosView from './components/RelatoriosView.tsx';
 import BonusRulesView from './components/BonusRulesView.tsx';
+import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -141,6 +142,17 @@ const App: React.FC = () => {
             onSave={store.saveBonusRules}
             empresaNome={store.empresaAtual?.Nome}
             activeEmpresa={store.activeEmpresa}
+          />
+        );
+
+      case 'EXECUTIVE_DASHBOARD':
+        return (
+          <ExecutiveDashboardView
+            tasks={tasks}
+            ledger={ledger}
+            collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
+            empresaNome={store.empresaAtual?.Nome}
           />
         );
 

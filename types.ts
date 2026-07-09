@@ -224,4 +224,5 @@ export type ViewType =
   | 'EQUIPE'
   | 'RELATORIOS'
   | 'MINHAS_TAREFAS'
-  | 'BONUS_RULES';
+  | 'BONUS_RULES'
+  | 'EXECUTIVE_DASHBOARD';
