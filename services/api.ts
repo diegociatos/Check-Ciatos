@@ -73,7 +73,8 @@ export const authApi = {
       body: { action: 'create', user: userData },
     });
     if (error) throwSb(error, 'Erro ao criar usuário');
-    return data.user;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data; // { user, invited, inviteLink, vinculado? }
   },
 
   updateUser: async (email: string, userData: any) => {
@@ -96,7 +97,8 @@ export const authApi = {
       body: { action: 'reset-password', email },
     });
     if (error) throwSb(error, 'Erro ao resetar senha');
-    return { message: data?.message || 'Senha resetada' };
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data as { message: string; invited?: boolean; inviteLink?: string | null };
   },
 
   changeEmail: async (email: string, novoEmail: string) => {

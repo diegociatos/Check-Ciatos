@@ -12,9 +12,52 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-// Senha provisória FIXA, igual ao design original do app (a tela promete "123456"
-// e o usuário deve trocá-la no primeiro acesso). SenhaProvisoria=true marca a troca.
-const SENHA_PROVISORIA = '123456';
+// Senha ALEATÓRIA e forte para a conta recém-criada. O usuário NUNCA a usa — ele
+// define a própria senha pelo link de convite. Nada previsível/hardcoded (req. de segurança).
+function senhaAleatoria(): string {
+  const b = new Uint8Array(24);
+  crypto.getRandomValues(b);
+  const base = btoa(String.fromCharCode(...b)).replace(/[^a-zA-Z0-9]/g, '');
+  return `${base}Aa1!`; // garante maiúscula, minúscula, número e símbolo
+}
+
+// Link seguro de convite/definição de senha. O Supabase gera um token com expiração
+// nativa. Sem redirect_to explícito => usa a Site URL do projeto (já configurada).
+async function gerarLinkConvite(admin: any, email: string): Promise<string | null> {
+  try {
+    const { data, error } = await admin.auth.admin.generateLink({ type: 'recovery', email });
+    if (error) return null;
+    return (data as any)?.properties?.action_link ?? null;
+  } catch { return null; }
+}
+
+// Envia o convite por e-mail (Resend). Retorna true se o Resend aceitou o envio.
+async function enviarEmailConvite(email: string, nome: string | undefined, link: string): Promise<boolean> {
+  const key = Deno.env.get('RESEND_API_KEY');
+  const from = Deno.env.get('RESEND_FROM') || 'Check-Ciatos <onboarding@resend.dev>';
+  if (!key || !link) return false;
+  const nomeSeguro = String(nome ?? '').replace(/[<>&]/g, '');
+  const html = `
+    <div style="font-family: Georgia, 'Times New Roman', serif; color:#1c1917; max-width:520px; margin:0 auto;">
+      <div style="background:#8B1B1F; color:#fff; padding:20px 24px; border-radius:12px 12px 0 0;">
+        <h1 style="margin:0; font-size:20px;">Bem-vindo ao Checklist Diário</h1>
+      </div>
+      <div style="border:1px solid #e7e5e4; border-top:0; border-radius:0 0 12px 12px; padding:24px;">
+        <p style="margin:0 0 12px;">Olá${nomeSeguro ? ', ' + nomeSeguro : ''},</p>
+        <p style="margin:0 0 16px;">Sua conta foi criada. Clique no botão abaixo para <strong>definir sua senha</strong> e acessar. O link é pessoal e expira.</p>
+        <p style="margin:0 0 20px;"><a href="${link}" style="background:#8B1B1F; color:#fff; text-decoration:none; padding:12px 20px; border-radius:10px; font-weight:600; display:inline-block;">Definir minha senha</a></p>
+        <p style="margin:0; color:#78716c; font-size:13px;">Se você não esperava este convite, ignore este e-mail.</p>
+      </div>
+    </div>`;
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: [email], subject: 'Convite — defina sua senha no Checklist Diário', html }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -76,9 +119,9 @@ Deno.serve(async (req) => {
         return json({ user: existente, tempPassword: null, vinculado: true });
       }
 
-      const pass = SENHA_PROVISORIA;
+      // Conta criada com senha ALEATÓRIA (o usuário definirá a dele pelo convite).
       const { data: created, error: e1 } = await admin.auth.admin.createUser({
-        email: user.Email, password: pass, email_confirm: true,
+        email: user.Email, password: senhaAleatoria(), email_confirm: true,
       });
       if (e1) throw e1;
       const row = {
@@ -92,7 +135,11 @@ Deno.serve(async (req) => {
         { email: user.Email, empresa_id: empresaAlvo, papel: user.Role ?? 'Colaborador' },
         { onConflict: 'email,empresa_id' }
       );
-      return json({ user: inserted, tempPassword: pass });
+      // Convite seguro: link com expiração enviado por e-mail. Se o e-mail falhar,
+      // devolve o link ao admin (fallback) para nenhum usuário ficar sem acesso.
+      const link = await gerarLinkConvite(admin, user.Email);
+      const enviado = link ? await enviarEmailConvite(user.Email, user.Nome, link) : false;
+      return json({ user: inserted, invited: enviado, inviteLink: enviado ? null : link });
     }
 
     // Define exatamente quais empresas (entre as que o chamador administra) um usuário acessa.
@@ -119,15 +166,17 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'reset-password') {
-      const { data: row } = await admin.from('users').select('user_id').ilike('Email', email).maybeSingle();
-      const pass = SENHA_PROVISORIA;
+      const { data: row } = await admin.from('users').select('user_id, "Nome"').ilike('Email', email).maybeSingle();
+      // Invalida a senha atual com uma aleatória e envia um novo link de definição de senha.
       if ((row as any)?.user_id) {
-        const { error } = await admin.auth.admin.updateUserById((row as any).user_id, { password: pass });
+        const { error } = await admin.auth.admin.updateUserById((row as any).user_id, { password: senhaAleatoria() });
         if (error) throw error;
       }
       await admin.from('users').update({ SenhaProvisoria: true, Status: 'Ativo', TentativasFalhadas: 0 })
         .ilike('Email', email);
-      return json({ message: 'Senha resetada', tempPassword: pass });
+      const link = await gerarLinkConvite(admin, email);
+      const enviado = link ? await enviarEmailConvite(email, (row as any)?.Nome, link) : false;
+      return json({ message: enviado ? 'Convite de nova senha enviado por e-mail' : 'Senha redefinida — envie o link ao usuário', invited: enviado, inviteLink: enviado ? null : link });
     }
 
     if (action === 'toggle-status') {

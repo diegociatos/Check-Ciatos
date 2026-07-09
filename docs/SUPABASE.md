@@ -52,9 +52,9 @@ Regras de pontuação: ver `lib/scoreEngine.ts` (fonte das regras) — a `audit_
 
 Operações privilegiadas (service role), autorizadas pelo papel do chamador. Ações (`body.action`):
 
-- `create` — cria usuário (auth + perfil) na empresa; idempotente (mesmo e-mail em outra empresa vira vínculo). Senha provisória `123456`.
+- `create` — cria usuário (auth + perfil) na empresa; idempotente (mesmo e-mail em outra empresa vira vínculo). Gera **senha aleatória forte** (o usuário nunca a usa) e envia **convite por e-mail (Resend)** com link de definição de senha; se o e-mail falhar, retorna `inviteLink` ao admin (fallback). Não há mais senha fixa.
 - `update` — edita um usuário.
-- `reset-password` — redefine para `123456` + `SenhaProvisoria`.
+- `reset-password` — invalida a senha atual (aleatória) + `SenhaProvisoria=true` e envia novo **link de definição de senha** por e-mail (fallback `inviteLink`).
 - `toggle-status` — Ativo/Inativo.
 - `delete` — exclui usuário (perfil + auth).
 - `set-empresas` — define quais empresas (entre as do chamador) um usuário acessa (Master concede ao Gestor).
@@ -101,4 +101,6 @@ Bucket **privado** `evidencias` (limite 5 MB; imagem/PDF). Caminho `{empresa_id}
 
 ## Autenticação
 
-Supabase Auth (e-mail/senha). Login barrado se o usuário estiver Bloqueado/Inativo ou se a empresa estiver **Suspensa**. Senha provisória `123456` para novos usuários e resets.
+Supabase Auth (e-mail/senha). Login barrado se o usuário estiver Bloqueado/Inativo ou se a empresa estiver **Suspensa**.
+
+**Convite seguro (sem senha fixa):** ao criar/resetar um usuário, a Edge Function gera uma senha aleatória forte (descartável) e um **link de convite** (`generateLink` type `recovery`, com expiração nativa do Supabase) enviado por **Resend** (`RESEND_API_KEY`/`RESEND_FROM`). O usuário clica, cai na tela `PrimeiroAcesso` (via sessão do link) e define a própria senha — que passa por **validação forte** (≥8, maiúscula, minúscula, número). A flag `SenhaProvisoria=true` continua marcando "primeiro acesso" e a RPC `clear_senha_provisoria()` a zera após a definição. **Compatibilidade:** usuários antigos com `SenhaProvisoria=true` (senha `123456`) seguem funcionando normalmente. Deploy: `supabase functions deploy admin-users` (requer `RESEND_API_KEY` e a Site URL do projeto configurada para o link).

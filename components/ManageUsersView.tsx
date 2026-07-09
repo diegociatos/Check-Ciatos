@@ -86,10 +86,11 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
       const email = editingEmail || formData.Email!;
       const ehGestor = formData.Role === UserRole.GESTOR;
 
+      let addRes: any = null;
       if (editingEmail) {
         await Promise.resolve(onUpdateUser(editingEmail, formData));
       } else {
-        await Promise.resolve(onAddUser(formData));
+        addRes = await Promise.resolve(onAddUser(formData));
       }
 
       // Gestor multi-empresa: concede acesso às empresas escolhidas (+ a empresa atual)
@@ -101,17 +102,25 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
       setIsModalOpen(false);
       resetForm();
       if (!editingEmail) {
-        alert("Usuário cadastrado com sucesso.\n\nSenha provisória: 123456\nO usuário deverá alterá-la no primeiro acesso.");
+        if (addRes?.vinculado) alert("Usuário vinculado a esta empresa com sucesso.");
+        else if (addRes?.invited) alert("Usuário cadastrado.\n\nUm convite para o usuário definir a própria senha foi enviado por e-mail (o link expira).");
+        else if (addRes?.inviteLink) window.prompt("Usuário cadastrado, mas não foi possível enviar o e-mail.\nCopie e envie este link de convite ao usuário (expira):", addRes.inviteLink);
+        else alert("Usuário cadastrado com sucesso. Um convite para definir a senha foi enviado por e-mail.");
       }
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar.');
     }
   };
 
-  const handleResetPasswordAction = (email: string) => {
-    if (window.confirm(`Deseja realmente resetar a senha do usuário ${email}?`)) {
-      onResetPassword(email);
-      alert("Senha redefinida com sucesso para o padrão: 123456");
+  const handleResetPasswordAction = async (email: string) => {
+    if (!window.confirm(`Deseja realmente resetar a senha do usuário ${email}?`)) return;
+    try {
+      const res: any = await Promise.resolve(onResetPassword(email));
+      if (res?.invited) alert("Convite de nova senha enviado por e-mail (o link expira).");
+      else if (res?.inviteLink) window.prompt("Não foi possível enviar o e-mail.\nCopie e envie este link ao usuário (expira):", res.inviteLink);
+      else alert(res?.message || "Senha redefinida. Um convite foi enviado por e-mail.");
+    } catch (e: any) {
+      alert(e?.message || 'Erro ao resetar a senha.');
     }
   };
 

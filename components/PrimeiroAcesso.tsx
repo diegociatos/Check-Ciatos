@@ -16,17 +16,19 @@ const PrimeiroAcesso: React.FC<PrimeiroAcessoProps> = ({ user, onDefinir, onLogo
   const [erro, setErro] = useState('');
 
   const regras = {
-    tamanho: senha.length >= 6,
-    diferente: senha !== '123456' && senha.length > 0,
+    tamanho: senha.length >= 8,
+    maiuscula: /[A-Z]/.test(senha),
+    minuscula: /[a-z]/.test(senha),
+    numero: /[0-9]/.test(senha),
     confere: senha.length > 0 && senha === confirma,
   };
-  const valido = regras.tamanho && regras.diferente && regras.confere;
+  const valido = regras.tamanho && regras.maiuscula && regras.minuscula && regras.numero && regras.confere;
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro('');
-    if (!regras.tamanho) return setErro('A senha precisa ter ao menos 6 caracteres.');
-    if (!regras.diferente) return setErro('Escolha uma senha diferente da padrão (123456).');
+    if (!regras.tamanho) return setErro('A senha precisa ter ao menos 8 caracteres.');
+    if (!regras.maiuscula || !regras.minuscula || !regras.numero) return setErro('Use letras maiúsculas, minúsculas e números.');
     if (!regras.confere) return setErro('As senhas não conferem.');
     setSalvando(true);
     try {
@@ -91,8 +93,10 @@ const PrimeiroAcesso: React.FC<PrimeiroAcessoProps> = ({ user, onDefinir, onLogo
           </div>
 
           <ul className="space-y-1.5 pt-1">
-            <Regra ok={regras.tamanho}>Ao menos 6 caracteres</Regra>
-            <Regra ok={regras.diferente}>Diferente da senha padrão</Regra>
+            <Regra ok={regras.tamanho}>Ao menos 8 caracteres</Regra>
+            <Regra ok={regras.maiuscula}>Uma letra maiúscula</Regra>
+            <Regra ok={regras.minuscula}>Uma letra minúscula</Regra>
+            <Regra ok={regras.numero}>Um número</Regra>
             <Regra ok={regras.confere}>As duas senhas conferem</Regra>
           </ul>
 

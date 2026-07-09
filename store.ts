@@ -391,15 +391,11 @@ export const useStore = () => {
   }, [currentUserEmail]);
 
   const resetUserPassword = useCallback(async (email: string) => {
-    try {
-      await authApi.resetPassword(email);
-      setBaseUsers(prev => prev.map(u => 
-        u.Email === email ? { ...u, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 } : u
-      ));
-    } catch (err: any) {
-      console.error('Erro ao resetar senha:', err);
-      throw new Error(err.message || 'Erro ao resetar senha');
-    }
+    const res = await acaoBackend(() => authApi.resetPassword(email), 'Erro ao resetar senha');
+    setBaseUsers(prev => prev.map(u =>
+      u.Email === email ? { ...u, SenhaProvisoria: true, Status: UserStatus.ATIVO, TentativasFalhadas: 0 } : u
+    ));
+    return res; // { message, invited, inviteLink }
   }, []);
 
   const toggleUserStatus = useCallback(async (email: string) => {
@@ -418,25 +414,24 @@ export const useStore = () => {
   }, []);
 
   const addUser = useCallback(async (userData: Partial<User>) => {
-    try {
-      const newUser = await authApi.createUser({
-        Email: userData.Email,
-        Nome: userData.Nome,
-        Role: userData.Role,
-        Time: userData.Time,
-        Gestor: userData.Gestor,
-        empresa_id: userData.empresa_id || activeEmpresa, // cria na empresa aberta
-      });
+    const res = await acaoBackend(() => authApi.createUser({
+      Email: userData.Email,
+      Nome: userData.Nome,
+      Role: userData.Role,
+      Time: userData.Time,
+      Gestor: userData.Gestor,
+      empresa_id: userData.empresa_id || activeEmpresa, // cria na empresa aberta
+    }), 'Erro ao criar usuário');
 
-      setBaseUsers(prev => [...prev, {
-        ...newUser,
-        Role: normalizeRole(newUser.Role),
-        Status: normalizeUserStatus(newUser.Status),
-        TentativasFalhadas: 0,
-      }]);
-    } catch (err: any) {
-      throw new Error(err.message || 'Erro ao criar usuário');
+    const novo = (res as any).user;
+    if (novo) {
+      setBaseUsers(prev => {
+        const semDup = prev.filter(u => u.Email.toLowerCase() !== String(novo.Email).toLowerCase());
+        return [...semDup, { ...novo, Role: normalizeRole(novo.Role), Status: normalizeUserStatus(novo.Status), TentativasFalhadas: 0 }];
+      });
     }
+    // { invited, inviteLink } chega ao componente para exibir o status do convite.
+    return res;
   }, [activeEmpresa]);
 
   const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
