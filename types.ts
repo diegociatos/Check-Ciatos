@@ -183,6 +183,33 @@ export interface Notification {
   date: string;
 }
 
+// ---- Regras de Bonificação (configuração de pontuação por empresa) ----
+export type BonusTipo = 'FIXO' | 'PERCENTUAL';
+
+export interface BonusRules {
+  empresa_id?: string;
+  eficiencia_minima: number;               // % mínimo de eficiência para o bônus
+  bonus_tipo: BonusTipo;                    // 'FIXO' (pontos) ou 'PERCENTUAL' (% dos pontos realizados)
+  bonus_valor: number;                      // valor do bônus (pontos fixos ou %)
+  bonus_com_atraso: boolean;               // permitir bônus com tarefas atrasadas
+  peso_prioridade: Record<string, number>; // multiplicador por prioridade (ganho)
+  reentrega_fator: number;                  // fator dos pontos em reentrega/atraso (0..1)
+  pessoal_valorada: boolean;               // tarefas pessoais valoradas entram na base
+  fechamento_dia: number;                   // dia do fechamento mensal (1..28)
+}
+
+// Defaults = comportamento atual do app (compatibilidade quando a empresa não configurou).
+export const DEFAULT_BONUS_RULES: BonusRules = {
+  eficiencia_minima: 90,
+  bonus_tipo: 'PERCENTUAL',
+  bonus_valor: 10,
+  bonus_com_atraso: false,
+  peso_prioridade: { Urgente: 1.25, Alta: 1.10, Media: 1.0, Baixa: 1.0 },
+  reentrega_fator: 0.5,
+  pessoal_valorada: true,
+  fechamento_dia: 1,
+};
+
 export type ViewType =
   | 'DASHBOARD'
   | 'MY_SCORE'
@@ -196,4 +223,5 @@ export type ViewType =
   | 'CLIENTES'
   | 'EQUIPE'
   | 'RELATORIOS'
-  | 'MINHAS_TAREFAS';
+  | 'MINHAS_TAREFAS'
+  | 'BONUS_RULES';

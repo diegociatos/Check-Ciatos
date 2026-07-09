@@ -312,6 +312,32 @@ export const empresasApi = {
   },
 };
 
+// ==================== REGRAS DE BONIFICAÇÃO (por empresa) ====================
+export const bonusRulesApi = {
+  // Todas as regras visíveis (RLS já isola por empresa; plataforma vê todas).
+  getAll: async () => {
+    const { data, error } = await supabase.from('bonus_rules').select('*');
+    if (error) throwSb(error);
+    return data ?? [];
+  },
+
+  // Regra de uma empresa específica (ou null se ainda não configurada).
+  get: async (empresaId: string) => {
+    const { data, error } = await supabase.from('bonus_rules').select('*').eq('empresa_id', empresaId).maybeSingle();
+    if (error) throwSb(error);
+    return data;
+  },
+
+  // Cria/atualiza a regra da empresa (Master/Plataforma, via RLS bonus_rules_manage).
+  upsert: async (empresaId: string, rules: any) => {
+    const payload = { ...rules, empresa_id: empresaId, updated_at: new Date().toISOString() };
+    const { data, error } = await supabase
+      .from('bonus_rules').upsert(payload, { onConflict: 'empresa_id' }).select().single();
+    if (error) throwSb(error, 'Erro ao salvar as regras de bonificação');
+    return data;
+  },
+};
+
 // ==================== E-MAIL (Resend via Edge Function) ====================
 export const emailApi = {
   // Notifica o responsável sobre uma nova obrigação. Nunca bloqueia a criação da tarefa.
@@ -324,4 +350,4 @@ export const emailApi = {
   },
 };
 
-export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, email: emailApi };
+export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, bonusRules: bonusRulesApi, email: emailApi };

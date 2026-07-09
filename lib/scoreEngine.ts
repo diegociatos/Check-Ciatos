@@ -3,18 +3,19 @@
 // na RPC audit_task (Supabase) e segue EXATAMENTE estas mesmas fórmulas.
 // Mantê-las aqui evita regras espalhadas pelos componentes (usado para prévia/exibição).
 
+import type { BonusRules } from '../types';
+import { DEFAULT_BONUS_RULES } from '../types';
+
 export type ResultadoAuditoria = 'APROVADO' | 'ERRO_EXECUCAO' | 'NAO_CUMPRIU';
 
 // Prioridade influencia apenas o GANHO (aprovação). Penalidades não são multiplicadas.
-const MULT_PRIORIDADE: Record<string, number> = {
-  Urgente: 1.25,
-  Alta: 1.10,
-  Media: 1.0,
-  Baixa: 1.0,
-};
+// Os pesos podem ser sobrescritos pela empresa (Regras de Bonificação); o default
+// abaixo mantém o comportamento histórico caso a empresa não tenha configuração.
+const MULT_PRIORIDADE: Record<string, number> = DEFAULT_BONUS_RULES.peso_prioridade;
 
-export function multiplicadorPrioridade(prioridade?: string): number {
-  return MULT_PRIORIDADE[prioridade ?? 'Media'] ?? 1.0;
+export function multiplicadorPrioridade(prioridade?: string, pesos?: Record<string, number>): number {
+  const tabela = pesos ?? MULT_PRIORIDADE;
+  return tabela[prioridade ?? 'Media'] ?? 1.0;
 }
 
 export interface ContextoScore {
@@ -60,4 +61,38 @@ export function calcularAuditoria(
     case 'NAO_CUMPRIU':
       return { pontos: pontosNaoCumpriu(ctx.pontosBase), tipo: 'PENALIDADE', descricao: `Penalidade – Não Concluída: ${titulo}` };
   }
+}
+
+// ---- Bonificação por eficiência (Regras de Bonificação) --------------------
+export interface ContextoBonus {
+  eficiencia: number;        // % de eficiência no período (0..100)
+  pontosRealizados: number;  // pontos realizados no período (base do bônus percentual)
+  temAtraso?: boolean;       // possui tarefas atrasadas no período
+}
+
+export interface ResultadoBonus {
+  elegivel: boolean;
+  valor: number;             // pontos de bônus (0 quando não elegível)
+  motivo: string;            // explicação legível
+}
+
+// Calcula o bônus de um colaborador a partir das regras da empresa. Regras ausentes
+// caem no DEFAULT_BONUS_RULES (comportamento atual: 90% de eficiência, sem bônus com atraso).
+export function calcularBonus(ctx: ContextoBonus, regras?: BonusRules | null): ResultadoBonus {
+  const r = regras ?? DEFAULT_BONUS_RULES;
+  const ef = Math.round(ctx.eficiencia);
+
+  if (ef < r.eficiencia_minima) {
+    return { elegivel: false, valor: 0, motivo: `Eficiência ${ef}% abaixo do mínimo de ${r.eficiencia_minima}%.` };
+  }
+  if (ctx.temAtraso && !r.bonus_com_atraso) {
+    return { elegivel: false, valor: 0, motivo: 'Possui tarefas atrasadas no período (bônus com atraso desabilitado).' };
+  }
+
+  const valor = r.bonus_tipo === 'FIXO'
+    ? Math.round(r.bonus_valor)
+    : Math.round((ctx.pontosRealizados * r.bonus_valor) / 100);
+
+  const descrValor = r.bonus_tipo === 'FIXO' ? `${valor} pts (fixo)` : `${valor} pts (${r.bonus_valor}% de ${ctx.pontosRealizados})`;
+  return { elegivel: true, valor, motivo: `Elegível — bônus de ${descrValor}.` };
 }

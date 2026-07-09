@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa } from './types';
-import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, emailApi } from './services/api';
+import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa, BonusRules, DEFAULT_BONUS_RULES } from './types';
+import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, bonusRulesApi, emailApi } from './services/api';
 import { supabase } from './lib/supabase';
 import { gerarNotificacoes } from './lib/notifications';
 
@@ -57,6 +57,20 @@ const normalizeTaskStatus = (status: string): TaskStatus => {
   return TaskStatus.PENDENTE;
 };
 
+// Normaliza uma linha de bonus_rules do backend, preenchendo com defaults o que faltar.
+const normalizeBonusRules = (r: any): BonusRules => ({
+  empresa_id: r.empresa_id,
+  eficiencia_minima: r.eficiencia_minima ?? DEFAULT_BONUS_RULES.eficiencia_minima,
+  bonus_tipo: r.bonus_tipo === 'FIXO' ? 'FIXO' : 'PERCENTUAL',
+  bonus_valor: r.bonus_valor ?? DEFAULT_BONUS_RULES.bonus_valor,
+  bonus_com_atraso: !!r.bonus_com_atraso,
+  peso_prioridade: (r.peso_prioridade && typeof r.peso_prioridade === 'object')
+    ? r.peso_prioridade : DEFAULT_BONUS_RULES.peso_prioridade,
+  reentrega_fator: r.reentrega_fator ?? DEFAULT_BONUS_RULES.reentrega_fator,
+  pessoal_valorada: r.pessoal_valorada ?? DEFAULT_BONUS_RULES.pessoal_valorada,
+  fechamento_dia: r.fechamento_dia ?? DEFAULT_BONUS_RULES.fechamento_dia,
+});
+
 export const useStore = () => {
   const [baseUsers, setBaseUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -64,6 +78,7 @@ export const useStore = () => {
   const [ledger, setLedger] = useState<ScoreLedger[]>([]);
   const [botLog, setBotLog] = useState<BotLog[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [bonusRulesAll, setBonusRulesAll] = useState<BonusRules[]>([]);
   const [activeEmpresa, setActiveEmpresa] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,15 +95,17 @@ export const useStore = () => {
         setError(null);
 
         // Carregar dados em paralelo
-        const [usersData, tasksData, templatesData, ledgerData, empresasData] = await Promise.all([
+        const [usersData, tasksData, templatesData, ledgerData, empresasData, bonusRulesData] = await Promise.all([
           authApi.getUsers().catch(() => []),
           tasksApi.getAll().catch(() => []),
           templatesApi.getAll().catch(() => []),
           ledgerApi.getAll().catch(() => []),
           empresasApi.getAll().catch(() => []),
+          bonusRulesApi.getAll().catch(() => []),
         ]);
 
         setEmpresas(empresasData as Empresa[]);
+        setBonusRulesAll((bonusRulesData as any[]).map(normalizeBonusRules));
 
         // Normalizar usuários
         setBaseUsers(usersData.map((u: any) => ({
@@ -204,6 +221,12 @@ export const useStore = () => {
   const scopedLedger = useMemo(() => ledger.filter(l => emScopo(l.empresa_id)), [ledger, isPlataforma, activeEmpresa]);
   const empresaAtual = useMemo(() => empresas.find(e => e.id === activeEmpresa) || null, [empresas, activeEmpresa]);
 
+  // Regras de bonificação da empresa ativa (ou defaults, se ainda não configurada).
+  const bonusRules = useMemo<BonusRules>(
+    () => bonusRulesAll.find(r => r.empresa_id === activeEmpresa) ?? DEFAULT_BONUS_RULES,
+    [bonusRulesAll, activeEmpresa]
+  );
+
   // Calcula usuários com métricas (dentro da empresa em escopo)
   const users = useMemo(() => {
     const now = new Date();
@@ -240,10 +263,10 @@ export const useStore = () => {
         EficienciaMes: eficienciaMes,
         ScoreConfiabilidade: confiabilidade,
         TemAtrasos: hasOverdue,
-        StatusRH: eficienciaMes >= 90 ? '💰 ELEGÍVEL PARA BÔNUS' : '✅ DESEMPENHO ADEQUADO'
+        StatusRH: eficienciaMes >= bonusRules.eficiencia_minima ? '💰 ELEGÍVEL PARA BÔNUS' : '✅ DESEMPENHO ADEQUADO'
       };
     });
-  }, [scopedBaseUsers, scopedTasks, scopedLedger]);
+  }, [scopedBaseUsers, scopedTasks, scopedLedger, bonusRules]);
 
   // currentUser vem da lista completa (a plataforma não pode ser filtrada pra fora ao entrar noutra empresa)
   const currentUser = useMemo(
@@ -883,12 +906,34 @@ export const useStore = () => {
     setEmpresas(prev => prev.filter(e => e.id !== id));
   }, []);
 
+  // ==================== REGRAS DE BONIFICAÇÃO (Master/Plataforma) ====================
+  const saveBonusRules = useCallback(async (rules: BonusRules) => {
+    if (!activeEmpresa) throw new Error('Abra uma empresa para configurar as regras de bonificação.');
+    const salvo = await bonusRulesApi.upsert(activeEmpresa, {
+      eficiencia_minima: rules.eficiencia_minima,
+      bonus_tipo: rules.bonus_tipo,
+      bonus_valor: rules.bonus_valor,
+      bonus_com_atraso: rules.bonus_com_atraso,
+      peso_prioridade: rules.peso_prioridade,
+      reentrega_fator: rules.reentrega_fator,
+      pessoal_valorada: rules.pessoal_valorada,
+      fechamento_dia: rules.fechamento_dia,
+    });
+    const norm = normalizeBonusRules(salvo);
+    setBonusRulesAll(prev => {
+      const outras = prev.filter(r => r.empresa_id !== activeEmpresa);
+      return [...outras, norm];
+    });
+    return norm;
+  }, [activeEmpresa]);
+
   return {
     currentUser, users,
     tasks: scopedTasks, templates: scopedTemplates, ledger: scopedLedger,
     minhasTarefas, botLog,
     empresas, activeEmpresa, setActiveEmpresa, empresaAtual, isPlataforma, createEmpresa,
     setUserEmpresas, getUserEmpresas, suspenderEmpresa, excluirEmpresa,
+    bonusRules, saveBonusRules,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,

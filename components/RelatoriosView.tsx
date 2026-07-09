@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole } from '../types';
-import { Download, TrendingUp, TrendingDown, Scale, Award } from 'lucide-react';
+import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole, BonusRules } from '../types';
+import { Download, TrendingUp, TrendingDown, Scale, Award, Coins } from 'lucide-react';
 import { PageHeader, Card, StatCard, EmptyState, Btn, Pill } from './ui';
+import { calcularBonus } from '../lib/scoreEngine';
 
 interface RelatoriosViewProps {
   tasks: Task[];
   ledger: ScoreLedger[];
   users: User[];
   collaboratorsList: User[];
+  bonusRules: BonusRules;
 }
 
 type Periodo = 'MES' | 'TRIMESTRE' | 'SEMESTRE' | 'ANO';
@@ -25,9 +27,12 @@ interface LinhaRel {
   ganhos: number;
   penalidades: number;
   saldo: number;
+  eficiencia: number;
+  bonus: number;
+  elegivel: boolean;
 }
 
-const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList }) => {
+const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, collaboratorsList, bonusRules }) => {
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth(); // 0-11
   const [periodo, setPeriodo] = useState<Periodo>('MES');
@@ -58,6 +63,12 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
         const lg = ledger.filter((l) => l.UserEmail === user.Email && noPeriodo(l.Data));
         const ganhos = lg.filter((l) => l.Tipo === ScoreType.GANHO).reduce((s, l) => s + l.Pontos, 0);
         const penalidades = lg.filter((l) => l.Tipo === ScoreType.PENALIDADE).reduce((s, l) => s + l.Pontos, 0);
+        const saldo = ganhos + penalidades;
+        // Eficiência e bônus no período, segundo as Regras de Bonificação da empresa.
+        const possiveis = ut.reduce((s, t) => s + (t.PontosValor || 0), 0);
+        const eficiencia = possiveis > 0 ? (saldo / possiveis) * 100 : 0;
+        const temAtraso = ut.some((t) => t.Status === TaskStatus.ATRASADA);
+        const b = calcularBonus({ eficiencia, pontosRealizados: Math.max(0, saldo), temAtraso }, bonusRules);
         return {
           user,
           aprovadas: ut.filter((t) => t.Status === TaskStatus.APROVADA).length,
@@ -65,17 +76,22 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
           naoFeitas: ut.filter((t) => t.Status === TaskStatus.NAO_FEITA).length,
           ganhos,
           penalidades,
-          saldo: ganhos + penalidades,
+          saldo,
+          eficiencia,
+          bonus: b.valor,
+          elegivel: b.elegivel,
         };
       })
       .sort((a, b) => b.saldo - a.saldo);
-  }, [collaboratorsList, tasks, ledger, inicio, fim]);
+  }, [collaboratorsList, tasks, ledger, inicio, fim, bonusRules]);
 
   const totais = useMemo(() => {
     const ganhos = linhas.reduce((s, r) => s + r.ganhos, 0);
     const penalidades = linhas.reduce((s, r) => s + r.penalidades, 0);
     const aprovadas = linhas.reduce((s, r) => s + r.aprovadas, 0);
-    return { ganhos, penalidades, saldo: ganhos + penalidades, aprovadas };
+    const bonus = linhas.reduce((s, r) => s + r.bonus, 0);
+    const elegiveis = linhas.filter((r) => r.elegivel).length;
+    return { ganhos, penalidades, saldo: ganhos + penalidades, aprovadas, bonus, elegiveis };
   }, [linhas]);
 
   const extrato = useMemo(
@@ -87,8 +103,8 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
   );
 
   const baixarCSV = () => {
-    const cab = ['Colaborador', 'Time', 'Aprovadas', 'Erros', 'Não feitas', 'Pontos ganhos', 'Penalidades', 'Saldo'];
-    const corpo = linhas.map((r) => [r.user.Nome, r.user.Time || '', r.aprovadas, r.erros, r.naoFeitas, r.ganhos, r.penalidades, r.saldo]);
+    const cab = ['Colaborador', 'Time', 'Aprovadas', 'Erros', 'Não feitas', 'Pontos ganhos', 'Penalidades', 'Saldo', 'Eficiência (%)', 'Bônus'];
+    const corpo = linhas.map((r) => [r.user.Nome, r.user.Time || '', r.aprovadas, r.erros, r.naoFeitas, r.ganhos, r.penalidades, r.saldo, Math.round(r.eficiencia), r.elegivel ? r.bonus : 0]);
     const csv = [cab, ...corpo]
       .map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';'))
       .join('\n');
@@ -149,11 +165,12 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
       </Card>
 
       {/* Consolidado */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard label="Pontos ganhos" value={totais.ganhos} icon={<TrendingUp size={18} />} />
         <StatCard label="Penalidades" value={totais.penalidades} icon={<TrendingDown size={18} />} />
         <StatCard label="Saldo" value={totais.saldo} icon={<Scale size={18} />} tone="marca" />
         <StatCard label="Tarefas aprovadas" value={totais.aprovadas} icon={<Award size={18} />} />
+        <StatCard label="Bônus previsto" value={`+${totais.bonus}`} hint={`${totais.elegiveis} elegíve${totais.elegiveis === 1 ? 'l' : 'is'}`} icon={<Coins size={18} />} />
       </div>
 
       {collaboratorsList.length === 0 ? (
@@ -176,6 +193,8 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                     <th className="px-6 py-3 font-semibold text-right">Ganhos</th>
                     <th className="px-6 py-3 font-semibold text-right">Penal.</th>
                     <th className="px-6 py-3 font-semibold text-right">Saldo</th>
+                    <th className="px-6 py-3 font-semibold text-right">Efic.</th>
+                    <th className="px-6 py-3 font-semibold text-right">Bônus</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
@@ -196,6 +215,12 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                       <td className="px-6 py-3 text-right text-emerald-600 font-medium">+{r.ganhos}</td>
                       <td className="px-6 py-3 text-right text-erro font-medium">{r.penalidades}</td>
                       <td className="px-6 py-3 text-right font-titulo text-base text-tinta">{r.saldo}</td>
+                      <td className="px-6 py-3 text-right text-stone-600">{Math.round(r.eficiencia)}%</td>
+                      <td className="px-6 py-3 text-right">
+                        {r.elegivel
+                          ? <span className="font-semibold text-emerald-600">+{r.bonus}</span>
+                          : <span className="text-stone-300">—</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

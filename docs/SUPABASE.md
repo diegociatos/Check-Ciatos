@@ -20,6 +20,7 @@ Depois, criar o primeiro usuário **Plataforma** (via SQL / painel): um registro
 | `task_templates` | Modelos recorrentes. `Recorrencia, DiasRecorrencia, DiaDoMes, DataInicio, PularFinalDeSemana, Ativa, empresa_id`. |
 | `score_ledger` | Extrato de pontos. `UserEmail, Data, Pontos, Tipo (GANHO/PENALIDADE), Descricao, task_id, empresa_id`. |
 | `user_empresas` | Vínculo usuário↔empresas (acesso multi-empresa). `email, empresa_id`. |
+| `bonus_rules` | Regras de pontuação/bonificação por empresa (1 linha por empresa). Ver seção abaixo. |
 
 ## Isolamento (RLS)
 
@@ -57,6 +58,29 @@ Operações privilegiadas (service role), autorizadas pelo papel do chamador. A�
 - `delete` — exclui usuário (perfil + auth).
 - `set-empresas` — define quais empresas (entre as do chamador) um usuário acessa (Master concede ao Gestor).
 - `delete-empresa` — (plataforma) exclui a empresa e seus dados; usuários exclusivos são removidos, multi-empresa realocados; nunca apaga a plataforma.
+
+## Regras de Bonificação (`bonus_rules`)
+
+Cada empresa configura as próprias regras de pontuação/bonificação (migration `20260709120000_bonus_rules.sql`). **1 linha por empresa** (PK = `empresa_id`). Se a empresa não tiver linha, o app usa `DEFAULT_BONUS_RULES` (em `types.ts`), que espelha o comportamento histórico — **compatibilidade garantida**.
+
+| Campo | Tipo | Default | Significado |
+|---|---|---|---|
+| `empresa_id` | text (PK, FK `empresas`) | — | Empresa dona da regra. |
+| `eficiencia_minima` | numeric (0–100) | 90 | % mínimo de eficiência para ficar elegível ao bônus. |
+| `bonus_tipo` | text (`FIXO`\|`PERCENTUAL`) | `PERCENTUAL` | Bônus fixo (pontos) ou percentual sobre os pontos realizados. |
+| `bonus_valor` | numeric (≥0) | 10 | Valor do bônus (pontos fixos ou %). |
+| `bonus_com_atraso` | boolean | false | Permitir bônus mesmo com tarefas atrasadas no período. |
+| `peso_prioridade` | jsonb | `{Urgente:1.25,Alta:1.10,Media:1.0,Baixa:1.0}` | Multiplicador por prioridade aplicado no ganho. |
+| `reentrega_fator` | numeric (0–1) | 0.5 | Fator dos pontos em reentrega/atraso. |
+| `pessoal_valorada` | boolean | true | Tarefas pessoais valoradas entram na base do bônus. |
+| `fechamento_dia` | int (1–28) | 1 | Dia do fechamento mensal do período. |
+| `updated_at`, `updated_by` | — | now() | Auditoria da última alteração. |
+
+**RLS:**
+- `bonus_rules_select` — leitura para quem tem acesso à empresa (`app_tem_acesso`) e plataforma. O dashboard/relatórios de cada usuário lê a regra da própria empresa.
+- `bonus_rules_manage` — escrita apenas para **Master** (`app_role()='master'` na empresa) e **Plataforma** (`app_is_plataforma()`). Gestor **não** configura.
+
+Aplicação no frontend: o motor puro em `lib/scoreEngine.ts` (`multiplicadorPrioridade`, `calcularBonus`) consome as regras; `store.ts` deriva `bonusRules` da empresa ativa; a tela `components/BonusRulesView.tsx` (rota `BONUS_RULES`, menu Administração) edita; **Dashboard** e **Relatórios** aplicam nos cálculos de elegibilidade e valor do bônus.
 
 ## Storage
 

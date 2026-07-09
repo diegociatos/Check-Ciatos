@@ -18,6 +18,7 @@ import PlatformClientsView from './components/PlatformClientsView.tsx';
 import EquipeView from './components/EquipeView.tsx';
 import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 import RelatoriosView from './components/RelatoriosView.tsx';
+import BonusRulesView from './components/BonusRulesView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -101,6 +102,7 @@ const App: React.FC = () => {
             tasks={visibleTasks}
             currentUserRole={currentUser.Role}
             collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
           />
         );
 
@@ -130,7 +132,17 @@ const App: React.FC = () => {
         );
 
       case 'RELATORIOS':
-        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} />;
+        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} />;
+
+      case 'BONUS_RULES':
+        return (
+          <BonusRulesView
+            rules={store.bonusRules}
+            onSave={store.saveBonusRules}
+            empresaNome={store.empresaAtual?.Nome}
+            activeEmpresa={store.activeEmpresa}
+          />
+        );
 
       case 'CHECK_DELIVERIES':
         return <DeliveryChecklist tasks={visibleTasks} onAudit={store.auditTask} />;

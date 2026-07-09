@@ -10,7 +10,8 @@ import {
   Users,
   Zap,
   FileBarChart,
-  Activity
+  Activity,
+  Coins
 } from 'lucide-react';
 import { UserRole, ViewType } from './types';
 
@@ -50,6 +51,8 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
 
   // ===== ADMINISTRAÇÃO (admin/master) =====
   { label: 'Gerenciar usuários', view: 'MANAGE_USERS', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <UserCog size={20} /> },
+  // Regras de bonificação: só Master e Plataforma (mapeados p/ ADMIN); Gestor não configura.
+  { label: 'Regras de bonificação', view: 'BONUS_RULES', section: 'ADMINISTRAÇÃO', role: [UserRole.ADMIN], icon: <Coins size={20} /> },
   { label: 'Automação', view: 'BOT_HISTORY', section: 'ADMINISTRAÇÃO', role: GESTAO, icon: <Activity size={20} /> },
 ];
 
