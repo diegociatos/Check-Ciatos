@@ -14,6 +14,9 @@ export interface Empresa {
   Status?: string;
   Plano?: string;
   DataCriacao?: string;
+  StorageLimitMB?: number;
+  StorageUsedMB?: number;
+  StorageExtraMB?: number;
 }
 
 export enum UserStatus {
@@ -247,4 +250,5 @@ export type ViewType =
   | 'MINHAS_TAREFAS'
   | 'BONUS_RULES'
   | 'EXECUTIVE_DASHBOARD'
-  | 'MONTHLY_CLOSING';
+  | 'MONTHLY_CLOSING'
+  | 'PLANO';
