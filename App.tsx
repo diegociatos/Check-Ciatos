@@ -195,6 +195,7 @@ const App: React.FC = () => {
         return (
           <TemplateManager
             templates={templates}
+            tasks={visibleTasks}
             users={users}
             onAdd={store.addTemplate}
             onUpdate={store.updateTemplate}

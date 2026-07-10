@@ -1,12 +1,13 @@
 
 import React, { useState, useMemo } from 'react';
-import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole } from '../types';
+import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole, Task, TaskStatus } from '../types';
 import { getTodayStr, toDateOnly } from '../store';
-import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil } from 'lucide-react';
+import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil, ChevronDown } from 'lucide-react';
 import { useUndoableDelete } from './ui';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
+  tasks: Task[];
   users: User[];
   onAdd: (template: Omit<TaskTemplate, 'ID'>) => void;
   onUpdate: (id: string, template: Omit<TaskTemplate, 'ID'>) => void;
@@ -15,7 +16,10 @@ interface TemplateManagerProps {
   onGenerateNow: (id: string, force?: boolean) => any;
 }
 
-const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onAdd, onUpdate, onToggle, onDelete, onGenerateNow }) => {
+// Situação exibida para um modelo, com base na tarefa gerada (quando houver).
+interface SituacaoModelo { label: string; cls: string; gerou: boolean; concluida: boolean; }
+
+const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, users, onAdd, onUpdate, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
@@ -35,6 +39,103 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
   const masterList = users.filter(u => u.Role === UserRole.MASTER || u.Role === UserRole.PLATAFORMA);
   const filteredTemplates = (filterColaborador === 'TODOS' ? templates : templates.filter(t => t.Responsavel === filterColaborador))
     .filter(t => !excluindo.has(t.ID));
+
+  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
+  const ehAvulsa = (tmpl: TaskTemplate) => tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA;
+
+  // Situação de um modelo a partir da tarefa mais recente gerada por ele.
+  const situacaoDe = (tmpl: TaskTemplate): SituacaoModelo => {
+    const t = tasks
+      .filter(x => x.TemplateID === tmpl.ID)
+      .sort((a, b) => (b.DataGeracao || '').localeCompare(a.DataGeracao || ''))[0];
+    if (!t) {
+      return ehAvulsa(tmpl)
+        ? { label: 'A gerar', cls: 'text-stone-500 bg-stone-50 border-stone-200', gerou: false, concluida: false }
+        : { label: tmpl.Ativa ? 'Ativo' : 'Pausado', cls: tmpl.Ativa ? 'text-green-700 bg-green-50 border-green-200' : 'text-gray-400 bg-gray-50 border-gray-200', gerou: false, concluida: false };
+    }
+    const atrasada = t.Status === TaskStatus.ATRASADA || (t.Status === TaskStatus.PENDENTE && (t.DataLimite_Date || '') < today);
+    let label = 'A fazer', cls = 'text-stone-500 bg-stone-50 border-stone-200';
+    if (t.Status === TaskStatus.APROVADA) { label = 'Concluída'; cls = 'text-green-700 bg-green-50 border-green-200'; }
+    else if (t.Status === TaskStatus.AGUARDANDO_APROVACAO) { label = 'Aguardando aprovação'; cls = 'text-blue-700 bg-blue-50 border-blue-200'; }
+    else if (atrasada) { label = 'Atrasada'; cls = 'text-red-700 bg-red-50 border-red-200'; }
+    else if ((t.Andamento || 'Pendente') === 'Em andamento') { label = 'Em andamento'; cls = 'text-sky-700 bg-sky-50 border-sky-200'; }
+    else if (t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA) { label = 'Refazer'; cls = 'text-amber-700 bg-amber-50 border-amber-200'; }
+    return { label, cls, gerou: true, concluida: t.Status === TaskStatus.APROVADA };
+  };
+
+  const comSituacao = filteredTemplates.map(tmpl => ({ tmpl, sit: situacaoDe(tmpl) }));
+  // Avulsa já concluída sai do fluxo ativo (vira histórico); o resto fica no topo.
+  const ativos = comSituacao.filter(x => !(ehAvulsa(x.tmpl) && x.sit.concluida));
+  const concluidos = comSituacao.filter(x => ehAvulsa(x.tmpl) && x.sit.concluida);
+
+  const renderRow = (tmpl: TaskTemplate, sit: SituacaoModelo, index: number, total: number) => (
+    <div
+      key={tmpl.ID}
+      className={`flex flex-col md:grid md:grid-cols-[1fr_160px_180px_120px_160px] gap-2 md:gap-4 items-start md:items-center px-6 py-4 transition-colors hover:bg-gray-50/50 ${index < total - 1 ? 'border-b border-gray-50' : ''} ${sit.concluida ? 'opacity-60' : !tmpl.Ativa ? 'opacity-40' : ''}`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sit.concluida ? '#22c55e' : tmpl.Ativa ? '#22c55e' : '#d1d5db' }}></div>
+        <span className="text-sm font-bold text-[#111111] truncate">{tmpl.Titulo}</span>
+      </div>
+
+      <div className="flex items-center gap-2 pl-5 md:pl-0">
+        <UserIcon size={12} className="text-gray-300 flex-shrink-0" />
+        <span className="text-[11px] font-semibold text-gray-500 truncate">
+          {users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 pl-5 md:pl-0">
+        {tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? (
+          <>
+            <Calendar size={12} className="text-blue-400 flex-shrink-0" />
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">{toDateOnly(tmpl.DataInicio).split('-').reverse().join('/')}</span>
+          </>
+        ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
+          <>
+            <RotateCw size={12} className="text-marca/50 flex-shrink-0" />
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider truncate">{tmpl.DiasRecorrencia.join(', ')}</span>
+          </>
+        ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) ? (
+          <>
+            <CalendarDays size={12} className="text-marca/50 flex-shrink-0" />
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider">Dia {tmpl.DiaDoMes}/mês</span>
+          </>
+        ) : (
+          <>
+            <Clock size={12} className="text-gray-400 flex-shrink-0" />
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{tmpl.Recorrencia}</span>
+          </>
+        )}
+      </div>
+
+      {/* Status da tarefa gerada (ou do modelo) */}
+      <div className="pl-5 md:pl-0">
+        <span className={`inline-block text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${sit.cls}`}>{sit.label}</span>
+      </div>
+
+      <div className="flex items-center gap-1 justify-end w-full md:w-auto pl-5 md:pl-0">
+        {(!ehAvulsa(tmpl) || !sit.gerou) && (
+          <button
+            onClick={() => handleGenerateClick(tmpl.ID)}
+            className="flex items-center gap-1.5 bg-marca text-white px-3 py-2 rounded-xl font-black uppercase tracking-wider text-[8px] shadow-sm hover:bg-marca-escuro transition-all"
+            title="Gerar tarefa agora"
+          >
+            <Zap size={11} className="fill-current" /> Gerar
+          </button>
+        )}
+        <button onClick={() => abrirEdicao(tmpl)} className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl transition-colors" title="Editar modelo">
+          <Pencil size={14} />
+        </button>
+        <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title={tmpl.Ativa ? 'Pausar' : 'Ativar'}>
+          <RotateCw size={14} />
+        </button>
+        <button onClick={() => excluirModelo(tmpl.ID)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Excluir modelo">
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
+  );
   
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
     Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
@@ -166,7 +267,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Header da Lista */}
-        <div className="hidden md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
+        <div className="hidden md:grid md:grid-cols-[1fr_160px_180px_120px_160px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título</span>
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável</span>
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Recorrência</span>
@@ -174,98 +275,38 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, users, onA
           <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider text-right">Ações</span>
         </div>
 
-        {filteredTemplates.length === 0 && (
+        {ativos.length === 0 && concluidos.length === 0 && (
           <div className="px-6 py-16 text-center">
             <p className="text-stone-600 text-lg">Nenhuma tarefa configurada ainda.</p>
             <p className="text-stone-400 text-sm mt-1">Crie a primeira — recorrente ou avulsa — para começar.</p>
           </div>
         )}
+        {ativos.length === 0 && concluidos.length > 0 && (
+          <div className="px-6 py-10 text-center text-stone-400 text-sm">Nenhum modelo ativo — veja as concluídas abaixo.</div>
+        )}
 
-        {filteredTemplates.map((tmpl, index) => (
-          <div 
-            key={tmpl.ID} 
-            className={`flex flex-col md:grid md:grid-cols-[1fr_160px_180px_100px_160px] gap-2 md:gap-4 items-start md:items-center px-6 py-4 transition-colors hover:bg-gray-50/50 ${index < filteredTemplates.length - 1 ? 'border-b border-gray-50' : ''} ${!tmpl.Ativa ? 'opacity-40' : ''}`}
-          >
-            {/* Título */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tmpl.Ativa ? '#22c55e' : '#d1d5db' }}></div>
-              <span className="text-sm font-bold text-[#111111] truncate">{tmpl.Titulo}</span>
-            </div>
-
-            {/* Responsável */}
-            <div className="flex items-center gap-2 pl-5 md:pl-0">
-              <UserIcon size={12} className="text-gray-300 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-gray-500 truncate">
-                {users.find(u => u.Email === tmpl.Responsavel)?.Nome || tmpl.Responsavel}
-              </span>
-            </div>
-
-            {/* Recorrência / Detalhe */}
-            <div className="flex items-center gap-2 pl-5 md:pl-0">
-              {tmpl.Recorrencia === RecurrenceType.DATA_ESPECIFICA ? (
-                <>
-                  <Calendar size={12} className="text-blue-400 flex-shrink-0" />
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">
-                    {toDateOnly(tmpl.DataInicio).split('-').reverse().join('/')}
-                  </span>
-                </>
-              ) : tmpl.Recorrencia === RecurrenceType.SEMANAL ? (
-                <>
-                  <RotateCw size={12} className="text-marca/50 flex-shrink-0" />
-                  <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider truncate">
-                    {tmpl.DiasRecorrencia.join(', ')}
-                  </span>
-                </>
-              ) : (tmpl.Recorrencia === RecurrenceType.POR_DATA_FIXA || tmpl.Recorrencia === RecurrenceType.MENSAL) ? (
-                <>
-                  <CalendarDays size={12} className="text-marca/50 flex-shrink-0" />
-                  <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider">
-                    Dia {tmpl.DiaDoMes}/mês
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Clock size={12} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                    {tmpl.Recorrencia}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Status Badge */}
-            <div className="pl-5 md:pl-0">
-              <span className={`inline-block text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-                tmpl.Ativa 
-                  ? 'text-green-700 bg-green-50 border-green-200' 
-                  : 'text-gray-400 bg-gray-50 border-gray-200'
-              }`}>
-                {tmpl.Ativa ? 'Ativo' : 'Pausado'}
-              </span>
-            </div>
-
-            {/* Ações */}
-            <div className="flex items-center gap-1 justify-end w-full md:w-auto pl-5 md:pl-0">
-              <button 
-                onClick={() => handleGenerateClick(tmpl.ID)}
-                className="flex items-center gap-1.5 bg-marca text-white px-3 py-2 rounded-xl font-black uppercase tracking-wider text-[8px] shadow-sm hover:bg-marca-escuro transition-all"
-                title="Gerar tarefa agora"
-              >
-                <Zap size={11} className="fill-current" /> Gerar
-              </button>
-              <button onClick={() => abrirEdicao(tmpl)} className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl transition-colors" title="Editar modelo">
-                <Pencil size={14} />
-              </button>
-              <button onClick={() => onToggle(tmpl.ID)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title={tmpl.Ativa ? 'Pausar' : 'Ativar'}>
-                <RotateCw size={14} />
-              </button>
-              <button onClick={() => excluirModelo(tmpl.ID)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Excluir modelo">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
+        {ativos.map((x, index) => renderRow(x.tmpl, x.sit, index, ativos.length))}
       </div>
+
+      {/* Avulsas já concluídas (histórico recolhível) */}
+      {concluidos.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <button
+            onClick={() => setMostrarConcluidos(v => !v)}
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-sm font-semibold text-stone-600">
+              Concluídas <span className="text-stone-400">({concluidos.length})</span>
+            </span>
+            <ChevronDown size={18} className={`text-stone-400 transition-transform ${mostrarConcluidos ? 'rotate-180' : ''}`} />
+          </button>
+          {mostrarConcluidos && (
+            <div className="border-t border-gray-100">
+              {concluidos.map((x, index) => renderRow(x.tmpl, x.sit, index, concluidos.length))}
+            </div>
+          )}
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">

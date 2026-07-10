@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole, TaskPriority } from '../types';
 import {
-  Inbox, Clock, RotateCcw, Copy, ImageOff, Star, ListChecks,
+  Inbox, Clock, RotateCcw, Copy, ImageOff, Star, ListChecks, Layers,
   Trash2, Check, X, XCircle, Send, Paperclip, MessageSquare, ShieldCheck, CalendarClock,
 } from 'lucide-react';
 import { getTodayStr } from '../store';
@@ -17,7 +17,7 @@ interface TaskSupervisionViewProps {
   currentUserRole?: UserRole;
 }
 
-type TabKey = 'AGUARDANDO' | 'ATRASADAS' | 'REPROVADAS' | 'DUPLICADAS' | 'SEM_EVIDENCIA' | 'PESSOAIS' | 'TODAS';
+type TabKey = 'A_FAZER' | 'EM_ANDAMENTO' | 'AGUARDANDO' | 'ATRASADAS' | 'REPROVADAS' | 'CONCLUIDAS' | 'PESSOAIS' | 'TODAS';
 type AuditMode = 'REPROVAR' | 'NAO_FEITA' | 'AJUSTE';
 
 const brDate = (d?: string) => d ? (d.substring(0, 10).split('-').reverse().join('/')) : '—';
@@ -57,7 +57,6 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   const times = useMemo(() => Array.from(new Set(users.map(u => u.Time).filter(Boolean))) as string[], [users]);
 
   const isAtrasada = (t: Task) => t.Status === TaskStatus.ATRASADA || (t.Status === TaskStatus.PENDENTE && (t.DataLimite_Date || '') < hoje);
-  const semEvidencia = (t: Task) => t.Status === TaskStatus.AGUARDANDO_APROVACAO && !pareceArquivo(t.ProofAttachment);
   const pessoalAValorar = (t: Task) => !!t.Pessoal && (t.PontosValor || 0) === 0 && t.Status !== TaskStatus.PENDENTE;
 
   const duplicateIds = useMemo(() => {
@@ -81,12 +80,14 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
     return true;
   };
 
+  const emAndamento = (t: Task) => (t.Andamento || 'Pendente') === 'Em andamento';
   const predicados: Record<TabKey, (t: Task) => boolean> = {
+    A_FAZER: t => t.Status === TaskStatus.PENDENTE && !isAtrasada(t) && !emAndamento(t) && !t.Pessoal,
+    EM_ANDAMENTO: t => emAndamento(t) && !isAtrasada(t) && !t.Pessoal,
     AGUARDANDO: t => t.Status === TaskStatus.AGUARDANDO_APROVACAO && !t.Pessoal,
     ATRASADAS: t => isAtrasada(t) && !t.Pessoal,
-    REPROVADAS: t => t.Status === TaskStatus.FEITA_ERRADA && !t.Pessoal,
-    DUPLICADAS: t => duplicateIds.has(t.ID),
-    SEM_EVIDENCIA: t => semEvidencia(t) && !t.Pessoal,
+    REPROVADAS: t => (t.Status === TaskStatus.FEITA_ERRADA || t.Status === TaskStatus.NAO_FEITA) && !t.Pessoal,
+    CONCLUIDAS: t => t.Status === TaskStatus.APROVADA && !t.Pessoal,
     PESSOAIS: t => pessoalAValorar(t),
     TODAS: () => true,
   };
@@ -99,13 +100,14 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
   );
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'AGUARDANDO', label: 'Aguardando aprovação', icon: <Inbox size={15} /> },
-    { key: 'ATRASADAS', label: 'Atrasadas', icon: <Clock size={15} /> },
-    { key: 'REPROVADAS', label: 'Reprovadas / refazer', icon: <RotateCcw size={15} /> },
-    { key: 'DUPLICADAS', label: 'Duplicadas', icon: <Copy size={15} /> },
-    { key: 'SEM_EVIDENCIA', label: 'Sem evidência', icon: <ImageOff size={15} /> },
+    { key: 'A_FAZER', label: 'A fazer', icon: <ListChecks size={15} /> },
+    { key: 'EM_ANDAMENTO', label: 'Em andamento', icon: <Clock size={15} /> },
+    { key: 'AGUARDANDO', label: 'A conferir', icon: <Inbox size={15} /> },
+    { key: 'ATRASADAS', label: 'Atrasadas', icon: <CalendarClock size={15} /> },
+    { key: 'REPROVADAS', label: 'Refazer', icon: <RotateCcw size={15} /> },
+    { key: 'CONCLUIDAS', label: 'Concluídas', icon: <Check size={15} /> },
     { key: 'PESSOAIS', label: 'Pessoais a valorar', icon: <Star size={15} /> },
-    { key: 'TODAS', label: 'Todas', icon: <ListChecks size={15} /> },
+    { key: 'TODAS', label: 'Todas', icon: <Layers size={15} /> },
   ];
 
   const abrirAudit = (t: Task, mode: AuditMode) => {
@@ -193,7 +195,7 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
             const dup = duplicateIds.has(t.ID);
             const atras = isAtrasada(t);
             const temEvid = pareceArquivo(t.ProofAttachment);
-            const podeAuditar = !!onAuditTask && !t.Pessoal;
+            const podeAuditar = !!onAuditTask && !t.Pessoal && t.Status !== TaskStatus.APROVADA;
             return (
               <Card key={t.ID} className={`p-5 ${dup ? 'border-l-4 border-l-amber-400' : ''}`}>
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
