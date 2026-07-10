@@ -20,6 +20,8 @@ Depois, criar o primeiro usuário **Plataforma** (via SQL / painel): um registro
 | `task_templates` | Modelos recorrentes. `Recorrencia, DiasRecorrencia, DiaDoMes, DataInicio, PularFinalDeSemana, Ativa, empresa_id`. |
 | `score_ledger` | Extrato de pontos. `UserEmail, Data, Pontos, Tipo (GANHO/PENALIDADE), Descricao, task_id, empresa_id`. |
 | `user_empresas` | Vínculo usuário↔empresas (acesso multi-empresa). `email, empresa_id`. |
+| `bonus_rules` | Regras de pontuação/bonificação por empresa (1 linha por empresa). Ver seção abaixo. |
+| `monthly_score_closings` | Fechamento mensal de pontuação (1 linha por empresa/ano/mês/colaborador). Ver seção abaixo. |
 
 ## Isolamento (RLS)
 
@@ -50,13 +52,48 @@ Regras de pontuação: ver `lib/scoreEngine.ts` (fonte das regras) — a `audit_
 
 Operações privilegiadas (service role), autorizadas pelo papel do chamador. Ações (`body.action`):
 
-- `create` — cria usuário (auth + perfil) na empresa; idempotente (mesmo e-mail em outra empresa vira vínculo). Senha provisória `123456`.
+- `create` — cria usuário (auth + perfil) na empresa; idempotente (mesmo e-mail em outra empresa vira vínculo). Gera **senha aleatória forte** (o usuário nunca a usa) e envia **convite por e-mail (Resend)** com link de definição de senha; se o e-mail falhar, retorna `inviteLink` ao admin (fallback). Não há mais senha fixa.
 - `update` — edita um usuário.
-- `reset-password` — redefine para `123456` + `SenhaProvisoria`.
+- `reset-password` — invalida a senha atual (aleatória) + `SenhaProvisoria=true` e envia novo **link de definição de senha** por e-mail (fallback `inviteLink`).
 - `toggle-status` — Ativo/Inativo.
 - `delete` — exclui usuário (perfil + auth).
 - `set-empresas` — define quais empresas (entre as do chamador) um usuário acessa (Master concede ao Gestor).
 - `delete-empresa` — (plataforma) exclui a empresa e seus dados; usuários exclusivos são removidos, multi-empresa realocados; nunca apaga a plataforma.
+
+## Regras de Bonificação (`bonus_rules`)
+
+Cada empresa configura as próprias regras de pontuação/bonificação (migration `20260709120000_bonus_rules.sql`). **1 linha por empresa** (PK = `empresa_id`). Se a empresa não tiver linha, o app usa `DEFAULT_BONUS_RULES` (em `types.ts`), que espelha o comportamento histórico — **compatibilidade garantida**.
+
+| Campo | Tipo | Default | Significado |
+|---|---|---|---|
+| `empresa_id` | text (PK, FK `empresas`) | — | Empresa dona da regra. |
+| `eficiencia_minima` | numeric (0–100) | 90 | % mínimo de eficiência para ficar elegível ao bônus. |
+| `bonus_tipo` | text (`FIXO`\|`PERCENTUAL`) | `PERCENTUAL` | Bônus fixo (pontos) ou percentual sobre os pontos realizados. |
+| `bonus_valor` | numeric (≥0) | 10 | Valor do bônus (pontos fixos ou %). |
+| `bonus_com_atraso` | boolean | false | Permitir bônus mesmo com tarefas atrasadas no período. |
+| `peso_prioridade` | jsonb | `{Urgente:1.25,Alta:1.10,Media:1.0,Baixa:1.0}` | Multiplicador por prioridade aplicado no ganho. |
+| `reentrega_fator` | numeric (0–1) | 0.5 | Fator dos pontos em reentrega/atraso. |
+| `pessoal_valorada` | boolean | true | Tarefas pessoais valoradas entram na base do bônus. |
+| `fechamento_dia` | int (1–28) | 1 | Dia do fechamento mensal do período. |
+| `updated_at`, `updated_by` | — | now() | Auditoria da última alteração. |
+
+**RLS:**
+- `bonus_rules_select` — leitura para quem tem acesso à empresa (`app_tem_acesso`) e plataforma. O dashboard/relatórios de cada usuário lê a regra da própria empresa.
+- `bonus_rules_manage` — escrita apenas para **Master** (`app_role()='master'` na empresa) e **Plataforma** (`app_is_plataforma()`). Gestor **não** configura.
+
+Aplicação no frontend: o motor puro em `lib/scoreEngine.ts` (`multiplicadorPrioridade`, `calcularBonus`) consome as regras; `store.ts` deriva `bonusRules` da empresa ativa; a tela `components/BonusRulesView.tsx` (rota `BONUS_RULES`, menu Administração) edita; **Dashboard** e **Relatórios** aplicam nos cálculos de elegibilidade e valor do bônus.
+
+## Fechamento Mensal (`monthly_score_closings`)
+
+Master/Gestor fecha oficialmente a pontuação do mês para bonificação (migration `20260709130000_monthly_closings.sql`). **1 linha por (empresa, ano, mês, colaborador)** — `unique(empresa_id, ano, mes, colaborador)`. Campos: `pontos_possiveis, pontos_realizados, eficiencia, penalidades, saldo_final, status_bonus (elegivel|nao_elegivel), bonus_sugerido, status_fechamento (aberto|em_revisao|fechado|pago), fechado_por, fechado_em`.
+
+**RLS:**
+- `closings_select` — leitura por acesso à empresa + plataforma.
+- `closings_manage` — escrita para gestão (`app_is_manager()`) na empresa + plataforma.
+
+**Trava retroativa (o ponto central):** a migration recria a RPC `audit_task` **idêntica à versão vigente** (`20260707180000`) e apenas **adiciona** uma checagem: se existe um `monthly_score_closings` com `status_fechamento in ('fechado','pago')` para o período (ano/mês do `DataLimite`) e colaborador da tarefa, e o chamador **não é Plataforma** (`app_is_plataforma()`), a auditoria é bloqueada com exceção. A trava é **dormante** enquanto nenhum período estiver fechado — comportamento idêntico ao atual. Reabrir/alterar período fechado é gesto de Plataforma (a tela só oferece "Reabrir" para Plataforma).
+
+Frontend: tela `components/MonthlyClosingView.tsx` (rota `MONTHLY_CLOSING`, menu Administração) com filtros mês/ano, revisão por colaborador, botões "Em revisão", "Fechar período", "Marcar como pago" e (Plataforma) "Reabrir", além de extrato PDF. O `store.ts` carrega `closings` (escopo por empresa) e expõe `salvarFechamento`/`setStatusFechamento`. Os **Relatórios** exibem se o mês está aberto/fechado.
 
 ## Storage
 
@@ -64,4 +101,6 @@ Bucket **privado** `evidencias` (limite 5 MB; imagem/PDF). Caminho `{empresa_id}
 
 ## Autenticação
 
-Supabase Auth (e-mail/senha). Login barrado se o usuário estiver Bloqueado/Inativo ou se a empresa estiver **Suspensa**. Senha provisória `123456` para novos usuários e resets.
+Supabase Auth (e-mail/senha). Login barrado se o usuário estiver Bloqueado/Inativo ou se a empresa estiver **Suspensa**.
+
+**Convite seguro (sem senha fixa):** ao criar/resetar um usuário, a Edge Function gera uma senha aleatória forte (descartável) e um **link de convite** (`generateLink` type `recovery`, com expiração nativa do Supabase) enviado por **Resend** (`RESEND_API_KEY`/`RESEND_FROM`). O usuário clica, cai na tela `PrimeiroAcesso` (via sessão do link) e define a própria senha — que passa por **validação forte** (≥8, maiúscula, minúscula, número). A flag `SenhaProvisoria=true` continua marcando "primeiro acesso" e a RPC `clear_senha_provisoria()` a zera após a definição. **Compatibilidade:** usuários antigos com `SenhaProvisoria=true` (senha `123456`) seguem funcionando normalmente. Deploy: `supabase functions deploy admin-users` (requer `RESEND_API_KEY` e a Site URL do projeto configurada para o link).

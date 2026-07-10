@@ -2,8 +2,9 @@ import React from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Task, TaskStatus, ScoreLedger, UserRole, User } from '../types';
+import { Task, TaskStatus, ScoreLedger, UserRole, User, BonusRules } from '../types';
 import { getTodayStr } from '../store';
+import { calcularBonus } from '../lib/scoreEngine';
 import { Flame, ChevronRight, Users, Star, ArrowUpRight, Award, Target } from 'lucide-react';
 
 interface DashboardProps {
@@ -16,6 +17,7 @@ interface DashboardProps {
   tasks: Task[];
   currentUserRole: UserRole;
   collaborators: User[];
+  bonusRules: BonusRules;
 }
 
 // ---- Paleta editorial (vermelho como único destaque) ----
@@ -108,7 +110,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const Dashboard: React.FC<DashboardProps> = ({
-  currentUser, score, myLedger, onNavigateToTasks, tasks, currentUserRole, collaborators,
+  currentUser, score, myLedger, onNavigateToTasks, tasks, currentUserRole, collaborators, bonusRules,
 }) => {
   const isManager = currentUserRole === UserRole.GESTOR || currentUserRole === UserRole.ADMIN;
   const todayStr = getTodayStr();
@@ -146,9 +148,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     const eficiencia = Math.round(currentUser.EficienciaMes || 0);
     const possiveis = currentUser.PontosPossiveisMes || 0;
-    const bonusPct = Math.min(100, (eficiencia / 90) * 100);
-    const elegivel = eficiencia >= 90;
-    const ptsParaBonus = Math.max(0, Math.ceil(0.9 * possiveis - (currentUser.PontosRealizadosMes || 0)));
+    const realizados = currentUser.PontosRealizadosMes || 0;
+    // Meta e bônus vêm das Regras de Bonificação da empresa (default = 90%).
+    const meta = bonusRules.eficiencia_minima;
+    const bonus = calcularBonus({ eficiencia, pontosRealizados: realizados, temAtraso: currentUser.TemAtrasos }, bonusRules);
+    const bonusPct = meta > 0 ? Math.min(100, (eficiencia / meta) * 100) : 100;
+    const elegivel = bonus.elegivel;
+    const ptsParaBonus = Math.max(0, Math.ceil((meta / 100) * possiveis - realizados));
 
     return (
       <div className="space-y-8 animate-in fade-in duration-500 font-ciatos pb-10">
@@ -226,7 +232,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className={`h-full rounded-full transition-all duration-700 ${elegivel ? 'bg-emerald-600' : 'bg-marca'}`} style={{ width: `${bonusPct}%` }} />
             </div>
             <p className="text-xs mt-2 text-stone-400">
-              {elegivel ? '✓ Elegível ao bônus deste mês' : possiveis > 0 ? `Faltam ${ptsParaBonus} pts para 90%` : 'Sem obrigações no mês ainda'}
+              {elegivel
+                ? `✓ Elegível — bônus de +${bonus.valor} pts`
+                : possiveis > 0 ? `Faltam ${ptsParaBonus} pts para ${meta}%` : 'Sem obrigações no mês ainda'}
             </p>
           </Card>
         </div>

@@ -50,7 +50,8 @@ export const authApi = {
     if (e1) throw new Error('Senha atual incorreta');
     const { error: e2 } = await supabase.auth.updateUser({ password: novaSenha });
     if (e2) throwSb(e2, 'Não foi possível alterar a senha');
-    await supabase.rpc('clear_senha_provisoria');
+    const { error: e3 } = await supabase.rpc('clear_senha_provisoria');
+    if (e3) throwSb(e3, 'Senha alterada, mas não foi possível concluir o primeiro acesso');
     return { message: 'Senha alterada com sucesso' };
   },
 
@@ -58,7 +59,8 @@ export const authApi = {
   definirNovaSenha: async (novaSenha: string) => {
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     if (error) throwSb(error, 'Não foi possível definir a senha');
-    await supabase.rpc('clear_senha_provisoria');
+    const { error: e2 } = await supabase.rpc('clear_senha_provisoria');
+    if (e2) throwSb(e2, 'Senha definida, mas não foi possível concluir o primeiro acesso');
     return { message: 'Senha definida com sucesso' };
   },
 
@@ -73,7 +75,8 @@ export const authApi = {
       body: { action: 'create', user: userData },
     });
     if (error) throwSb(error, 'Erro ao criar usuário');
-    return data.user;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data; // { user, invited, inviteLink, vinculado? }
   },
 
   updateUser: async (email: string, userData: any) => {
@@ -96,7 +99,8 @@ export const authApi = {
       body: { action: 'reset-password', email },
     });
     if (error) throwSb(error, 'Erro ao resetar senha');
-    return { message: data?.message || 'Senha resetada' };
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data as { message: string; invited?: boolean; inviteLink?: string | null };
   },
 
   changeEmail: async (email: string, novoEmail: string) => {
@@ -153,6 +157,13 @@ export const tasksApi = {
     const { data, error } = await supabase.from('tasks').insert(taskData).select().single();
     if (error) throwSb(error, 'Erro ao criar tarefa');
     return data;
+  },
+
+  // Edita campos de uma tarefa já gerada (gestor/master, via RLS tasks_manage).
+  update: async (taskId: string, fields: any) => {
+    const { error } = await supabase.from('tasks').update(fields).eq('ID', taskId);
+    if (error) throwSb(error, 'Erro ao atualizar tarefa');
+    return { ok: true };
   },
 
   definirAndamento: async (taskId: string, andamento: string) => {
@@ -312,6 +323,59 @@ export const empresasApi = {
   },
 };
 
+// ==================== REGRAS DE BONIFICAÇÃO (por empresa) ====================
+export const bonusRulesApi = {
+  // Todas as regras visíveis (RLS já isola por empresa; plataforma vê todas).
+  getAll: async () => {
+    const { data, error } = await supabase.from('bonus_rules').select('*');
+    if (error) throwSb(error);
+    return data ?? [];
+  },
+
+  // Regra de uma empresa específica (ou null se ainda não configurada).
+  get: async (empresaId: string) => {
+    const { data, error } = await supabase.from('bonus_rules').select('*').eq('empresa_id', empresaId).maybeSingle();
+    if (error) throwSb(error);
+    return data;
+  },
+
+  // Cria/atualiza a regra da empresa (Master/Plataforma, via RLS bonus_rules_manage).
+  upsert: async (empresaId: string, rules: any) => {
+    const payload = { ...rules, empresa_id: empresaId, updated_at: new Date().toISOString() };
+    const { data, error } = await supabase
+      .from('bonus_rules').upsert(payload, { onConflict: 'empresa_id' }).select().single();
+    if (error) throwSb(error, 'Erro ao salvar as regras de bonificação');
+    return data;
+  },
+};
+
+// ==================== FECHAMENTO MENSAL DE PONTUAÇÃO ====================
+export const monthlyClosingsApi = {
+  getAll: async () => {
+    const { data, error } = await supabase.from('monthly_score_closings').select('*');
+    if (error) throwSb(error);
+    return data ?? [];
+  },
+
+  // Cria/atualiza os fechamentos do período (Gestor/Master/Plataforma, via RLS).
+  upsert: async (rows: any[]) => {
+    if (!rows.length) return [];
+    const { data, error } = await supabase.from('monthly_score_closings')
+      .upsert(rows, { onConflict: 'empresa_id,ano,mes,colaborador' }).select();
+    if (error) throwSb(error, 'Erro ao salvar o fechamento');
+    return data ?? [];
+  },
+
+  // Muda o status de um fechamento (aberto/em_revisao/fechado/pago).
+  setStatus: async (id: string, status: string, extra?: Record<string, any>) => {
+    const { data, error } = await supabase.from('monthly_score_closings')
+      .update({ status_fechamento: status, updated_at: new Date().toISOString(), ...(extra || {}) })
+      .eq('id', id).select().single();
+    if (error) throwSb(error, 'Erro ao atualizar o status do fechamento');
+    return data;
+  },
+};
+
 // ==================== E-MAIL (Resend via Edge Function) ====================
 export const emailApi = {
   // Notifica o responsável sobre uma nova obrigação. Nunca bloqueia a criação da tarefa.
@@ -324,4 +388,4 @@ export const emailApi = {
   },
 };
 
-export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, email: emailApi };
+export default { auth: authApi, tasks: tasksApi, templates: templatesApi, ledger: ledgerApi, empresas: empresasApi, bonusRules: bonusRulesApi, closings: monthlyClosingsApi, email: emailApi };

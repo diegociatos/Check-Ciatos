@@ -73,7 +73,7 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
           <CheckCircle2 size={20} className="text-emerald-600 mt-0.5 shrink-0" />
           <div className="text-sm text-emerald-900">
             <p className="font-semibold">Empresa "{criada.nome}" criada.</p>
-            <p className="mt-0.5">O responsável <span className="font-semibold">{criada.email}</span> já pode entrar com a senha provisória <span className="font-semibold">123456</span> (troca no primeiro acesso).</p>
+            <p className="mt-0.5">Enviamos um convite por e-mail para <span className="font-semibold">{criada.email}</span> definir a própria senha e acessar (o link expira).</p>
           </div>
           <button onClick={() => setCriada(null)} className="ml-auto text-emerald-600"><X size={18} /></button>
         </div>
@@ -159,7 +159,7 @@ const PlatformClientsView: React.FC<Props> = ({ empresas, users, onCreate, onEnt
                     <input type="email" className="mt-1 w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" value={form.masterEmail} onChange={e => setForm({ ...form, masterEmail: e.target.value })} />
                   </div>
                 </div>
-                <p className="text-xs text-stone-400 mt-3">O responsável entra com a senha provisória <span className="font-semibold">123456</span> e troca no primeiro acesso.</p>
+                <p className="text-xs text-stone-400 mt-3">O responsável recebe um convite por e-mail para definir a própria senha (o link expira).</p>
               </div>
               <button type="submit" disabled={saving} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors disabled:opacity-60">
                 {saving ? 'Criando...' : 'Criar empresa'}

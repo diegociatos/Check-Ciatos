@@ -18,6 +18,9 @@ import PlatformClientsView from './components/PlatformClientsView.tsx';
 import EquipeView from './components/EquipeView.tsx';
 import MinhasTarefasView from './components/MinhasTarefasView.tsx';
 import RelatoriosView from './components/RelatoriosView.tsx';
+import BonusRulesView from './components/BonusRulesView.tsx';
+import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
+import MonthlyClosingView from './components/MonthlyClosingView.tsx';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -26,14 +29,12 @@ const App: React.FC = () => {
   // Hooks must be called before any conditional returns
   const visibleTasks = useMemo(() => {
     if (!store.currentUser) return [];
-    const { currentUser, tasks, users } = store;
-    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER].includes(currentUser.Role)) return tasks;
-    if (currentUser.Role === UserRole.GESTOR) {
-      const myCollaborators = users.filter(u => u.Gestor === currentUser.Email).map(u => u.Email);
-      return tasks.filter(t => t.Responsavel === currentUser.Email || myCollaborators.includes(t.Responsavel));
-    }
+    const { currentUser, tasks } = store;
+    // Gestão (inclui Gestor) supervisiona a empresa inteira: vê todas as tarefas em escopo
+    // (a RLS já isola por empresa), inclusive as que o Master cria para qualquer responsável.
+    if ([UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER, UserRole.GESTOR].includes(currentUser.Role)) return tasks;
     return tasks.filter(t => t.Responsavel === currentUser.Email);
-  }, [store.tasks, store.currentUser, store.users]);
+  }, [store.tasks, store.currentUser]);
 
   const collaboratorsList = useMemo(() => {
     if (!store.currentUser) return [];
@@ -101,6 +102,7 @@ const App: React.FC = () => {
             tasks={visibleTasks}
             currentUserRole={currentUser.Role}
             collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
           />
         );
 
@@ -130,7 +132,43 @@ const App: React.FC = () => {
         );
 
       case 'RELATORIOS':
-        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} />;
+        return <RelatoriosView tasks={tasks} ledger={ledger} users={users} collaboratorsList={collaboratorsList} bonusRules={store.bonusRules} empresaNome={store.empresaAtual?.Nome} closings={store.closings} />;
+
+      case 'BONUS_RULES':
+        return (
+          <BonusRulesView
+            rules={store.bonusRules}
+            onSave={store.saveBonusRules}
+            empresaNome={store.empresaAtual?.Nome}
+            activeEmpresa={store.activeEmpresa}
+          />
+        );
+
+      case 'EXECUTIVE_DASHBOARD':
+        return (
+          <ExecutiveDashboardView
+            tasks={tasks}
+            ledger={ledger}
+            collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
+            empresaNome={store.empresaAtual?.Nome}
+          />
+        );
+
+      case 'MONTHLY_CLOSING':
+        return (
+          <MonthlyClosingView
+            tasks={tasks}
+            ledger={ledger}
+            collaborators={collaboratorsList}
+            bonusRules={store.bonusRules}
+            closings={store.closings}
+            empresaNome={store.empresaAtual?.Nome}
+            currentUserRole={currentUser.Role}
+            onSalvar={store.salvarFechamento}
+            onSetStatus={store.setStatusFechamento}
+          />
+        );
 
       case 'CHECK_DELIVERIES':
         return <DeliveryChecklist tasks={visibleTasks} onAudit={store.auditTask} />;
@@ -167,7 +205,7 @@ const App: React.FC = () => {
         );
 
       case 'TASK_SUPERVISION':
-        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} onAuditTask={store.auditTask} />;
+        return <TaskSupervisionView tasks={visibleTasks} users={users} onDeleteTask={store.deleteTask} onAuditTask={store.auditTask} onValorar={store.valorarTarefaPessoal} />;
 
       case 'HELP_CENTER':
         return <HelpCenterView currentUser={currentUser} />;
