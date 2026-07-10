@@ -83,7 +83,9 @@ Deno.serve(async (req) => {
       } catch (e) {
         const m = (e as Error).message || '';
         const status = m.match(/Asaas (\d+)/)?.[1] || (m.includes('Invalid header') ? 'header-invalido' : 'erro');
-        return json({ ok: false, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: false, status, chave });
+        // Redige qualquer fragmento de chave antes de devolver a mensagem do Asaas.
+        const msg = m.replace(/\$aact_[A-Za-z0-9=\-_]+/g, '[REDACTED]').slice(0, 300);
+        return json({ ok: false, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: false, status, msg, chave });
       }
     }
 
