@@ -69,23 +69,13 @@ Deno.serve(async (req) => {
     // 0) Ping de diagnóstico — valida a chave no Asaas (read-only, não cria nada).
     // ---------------------------------------------------------------
     if (action === 'ping') {
-      const raw = Deno.env.get('ASAAS_API_KEY') || '';
-      // Diagnóstico sem vazar a chave: só formato, nunca o valor.
-      const chave = {
-        definida: ASAAS_KEY.length > 0,
-        tamanho: ASAAS_KEY.length,
-        comecaComAact: ASAAS_KEY.startsWith('$aact_'),
-        tinhaEspacosOuQuebras: /\s/.test(raw),
-      };
+      // Diagnóstico de conectividade/autenticação — nunca expõe a chave.
       try {
-        const r = await asaas('/customers?limit=1', 'GET');
-        return json({ ok: true, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: true, totalClientes: r?.totalCount ?? null, chave });
+        await asaas('/customers?limit=1', 'GET');
+        return json({ ok: true, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: true });
       } catch (e) {
-        const m = (e as Error).message || '';
-        const status = m.match(/Asaas (\d+)/)?.[1] || (m.includes('Invalid header') ? 'header-invalido' : 'erro');
-        // Redige qualquer fragmento de chave antes de devolver a mensagem do Asaas.
-        const msg = m.replace(/\$aact_[A-Za-z0-9=\-_]+/g, '[REDACTED]').slice(0, 300);
-        return json({ ok: false, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: false, status, msg, chave });
+        const msg = String((e as Error).message || '').replace(/\$aact_[A-Za-z0-9=\-_]+/g, '[REDACTED]').slice(0, 300);
+        return json({ ok: false, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: false, msg });
       }
     }
 
