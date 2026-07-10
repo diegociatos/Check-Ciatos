@@ -14,6 +14,9 @@ export interface Empresa {
   Status?: string;
   Plano?: string;
   DataCriacao?: string;
+  StorageLimitMB?: number;
+  StorageUsedMB?: number;
+  StorageExtraMB?: number;
 }
 
 export enum UserStatus {

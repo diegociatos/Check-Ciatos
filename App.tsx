@@ -21,8 +21,9 @@ import RelatoriosView from './components/RelatoriosView.tsx';
 import BonusRulesView from './components/BonusRulesView.tsx';
 import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
 import MonthlyClosingView from './components/MonthlyClosingView.tsx';
+import LandingPage from './components/landing/LandingPage.tsx';
 
-const App: React.FC = () => {
+const InternalApp: React.FC = () => {
   const store = useStore();
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
 
@@ -238,6 +239,14 @@ const App: React.FC = () => {
       {renderView()}
     </Layout>
   );
+};
+
+const App: React.FC = () => {
+  if (window.location.pathname === '/') {
+    return <LandingPage />;
+  }
+
+  return <InternalApp />;
 };
 
 export default App;
