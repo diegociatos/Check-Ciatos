@@ -1,30 +1,24 @@
-/* Inter (corpo/dados) — self-hosted, sem CDN externo. */
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+/* App inteiro em Book Antiqua (fonte de sistema no Windows/Office; fallbacks
+   serifados cobrem outros sistemas). Sem CDN externo. */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* Padrão do app = Inter (dados legíveis). */
+  /* Padrão do app = Book Antiqua. */
   body {
     @apply font-corpo;
   }
 
-  /* Títulos e display = serifa da marca (Book Antiqua). */
+  /* Títulos e display também em Book Antiqua. */
   h1,
   h2,
   h3 {
     @apply font-titulo;
   }
 
-  /* Legado: `.font-ciatos` ficava em ~30 containers e forçava serifa no conteúdo
-     inteiro (tabelas, inputs, números). Agora é sinônimo de corpo (Inter); os
-     títulos dentro continuam serifados pela regra h1/h2/h3 acima, e os números
-     de destaque recebem `font-titulo` explicitamente. */
+  /* Legado: `.font-ciatos` aparece em ~30 containers. Mantido como sinônimo de corpo. */
   .font-ciatos {
     @apply font-corpo;
   }

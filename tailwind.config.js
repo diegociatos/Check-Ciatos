@@ -31,11 +31,11 @@ export default {
         erro: '#dc2626',
       },
       fontFamily: {
-        // Títulos/display: serifa editorial da marca (Book Antiqua).
+        // App inteiro em Book Antiqua (serifa editorial da marca). Fallbacks cobrem
+        // outros sistemas: Palatino (Mac), URW Palladio (Linux), Georgia (universal).
         titulo: ['Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', 'serif'],
-        // Corpo/dados/inputs: sans legível (Inter). Também é a fonte padrão do body.
-        corpo: ['Inter', 'Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
-        sans: ['Inter', 'Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
+        corpo: ['Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', 'serif'],
+        sans: ['Book Antiqua', 'Palatino Linotype', 'Palatino', 'URW Palladio L', 'Georgia', 'serif'],
       },
     },
   },
