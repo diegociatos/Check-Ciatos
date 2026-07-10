@@ -19,10 +19,14 @@ const PRECOS: Record<string, number> = { Controle: 39.90, Evidencias: 149.90 };
 const MEMORIA_VALOR = 100.00;
 const MEMORIA_MB = 500;
 
-const ASAAS_ENV = Deno.env.get('ASAAS_ENV') || 'sandbox';
-const ASAAS_BASE = Deno.env.get('ASAAS_BASE_URL')
-  || (ASAAS_ENV === 'production' ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/api/v3');
-const ASAAS_KEY = Deno.env.get('ASAAS_API_KEY');
+// Detecção tolerante: qualquer coisa que comece com "prod" (Production, produção…) = produção.
+const ASAAS_ENV = (Deno.env.get('ASAAS_ENV') || 'sandbox').trim().toLowerCase();
+const ASAAS_IS_PROD = ASAAS_ENV.startsWith('prod');
+const ASAAS_BASE = (Deno.env.get('ASAAS_BASE_URL') || '').trim()
+  || (ASAAS_IS_PROD ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/api/v3');
+// Remove QUALQUER espaço/quebra de linha (Asaas keys não têm whitespace); evita
+// "Invalid header value" quando a chave é colada quebrada em duas linhas.
+const ASAAS_KEY = (Deno.env.get('ASAAS_API_KEY') || '').replace(/\s+/g, '');
 
 async function asaas(path: string, method: string, body?: unknown) {
   const r = await fetch(ASAAS_BASE + path, {
@@ -61,6 +65,28 @@ Deno.serve(async (req) => {
   const action = payload?.action;
 
   try {
+    // ---------------------------------------------------------------
+    // 0) Ping de diagnóstico — valida a chave no Asaas (read-only, não cria nada).
+    // ---------------------------------------------------------------
+    if (action === 'ping') {
+      const raw = Deno.env.get('ASAAS_API_KEY') || '';
+      // Diagnóstico sem vazar a chave: só formato, nunca o valor.
+      const chave = {
+        definida: ASAAS_KEY.length > 0,
+        tamanho: ASAAS_KEY.length,
+        comecaComAact: ASAAS_KEY.startsWith('$aact_'),
+        tinhaEspacosOuQuebras: /\s/.test(raw),
+      };
+      try {
+        const r = await asaas('/customers?limit=1', 'GET');
+        return json({ ok: true, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: true, totalClientes: r?.totalCount ?? null, chave });
+      } catch (e) {
+        const m = (e as Error).message || '';
+        const status = m.match(/Asaas (\d+)/)?.[1] || (m.includes('Invalid header') ? 'header-invalido' : 'erro');
+        return json({ ok: false, env: ASAAS_ENV, base: ASAAS_BASE, autenticado: false, status, chave });
+      }
+    }
+
     // ---------------------------------------------------------------
     // 1) Assinatura de plano (site público)
     // ---------------------------------------------------------------
