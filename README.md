@@ -15,14 +15,38 @@ SaaS multi-empresa de **checklist diário com pontuação de colaboradores**. Ca
 
 ## Planos e Asaas
 
-A landing usa dois links de assinatura recorrente do Asaas:
+A contratação é self-service. Não há formulário para a equipe tratar contratação manualmente.
+
+| Plano | Valor | Armazenamento |
+|---|---:|---|
+| Plano Controle | R$ 39,90/mês | Sem anexos/documentos. Upload bloqueado. |
+| Plano Evidências | R$ 149,90/mês | Inclui 1 GB para documentos, comprovantes e evidências. |
+
+Variáveis usadas pela landing:
 
 | Variável | Uso |
 |---|---|
-| `VITE_ASAAS_CONTROLE_URL` | Link recorrente do Plano Controle, sem anexos/documentos. |
-| `VITE_ASAAS_EVIDENCIAS_URL` | Link recorrente do Plano Evidências, com documentos, comprovantes e storage privado. |
+| `VITE_ASAAS_CONTROLE_URL` | Link recorrente do Plano Controle. |
+| `VITE_ASAAS_EVIDENCIAS_URL` | Link recorrente do Plano Evidências. |
+| `VITE_ASAAS_MEMORIA_EXTRA_URL` | Link recorrente para contratar memória adicional. |
 
-Enquanto essas variáveis não forem configuradas, os botões apontam para a própria seção de planos. Para operar em modo self-service, crie os links de pagamento recorrente no Asaas e configure as variáveis no Cloudflare Pages.
+Enquanto essas variáveis não forem configuradas, os botões apontam para a própria seção de planos/memória. Para operar em modo self-service, crie os links de pagamento recorrente no Asaas e configure as variáveis no Cloudflare Pages.
+
+## Controle de armazenamento
+
+O Plano Controle não permite anexos. O Plano Evidências permite anexos até o limite contratado.
+
+A migration `supabase/migrations/20260710150000_empresa_storage_quota.sql` adiciona campos de quota em `empresas`:
+
+| Campo | Uso |
+|---|---|
+| `StorageLimitMB` | Limite base de armazenamento. Controle: 0 MB. Evidências: 1024 MB. |
+| `StorageUsedMB` | Uso aproximado atual em MB. |
+| `StorageExtraMB` | Memória adicional contratada em MB. |
+
+A validação inicial fica em `lib/storage.ts`: bloqueia upload no Plano Controle e impede novo anexo quando `StorageUsedMB + arquivo` ultrapassa `StorageLimitMB + StorageExtraMB`.
+
+Para controle 100% forte, o backend/webhook deve atualizar essas colunas de forma transacional e recalcular uso ao remover arquivos antigos.
 
 ## Fluxo self-service desejado
 
@@ -32,17 +56,7 @@ Enquanto essas variáveis não forem configuradas, os botões apontam para a pr�
 4. Recebe acesso automaticamente.
 5. Cadastra empresa, equipe, modelos de tarefas e começa a usar seguindo o manual do site.
 
-Para o passo 4 ser 100% automático, o backend precisa de um webhook do Asaas. O webhook deve receber a confirmação de pagamento/assinatura, criar ou ativar a empresa, criar o usuário Master, gravar o plano contratado e disparar o e-mail de primeiro acesso. A landing já está preparada para os links recorrentes; a automação de provisionamento deve ser implementada no backend/Supabase.
-
-## Alterar WhatsApp
-
-O número comercial fica em `components/landing/LandingPage.tsx`:
-
-```ts
-const WHATSAPP_NUMBER = '5531999999999';
-```
-
-Substitua pelo número real no formato internacional, somente com dígitos.
+Para o passo 4 ser 100% automático, o backend precisa de um webhook do Asaas. O webhook deve receber a confirmação de pagamento/assinatura, criar ou ativar a empresa, criar o usuário Master, gravar o plano contratado, configurar a quota de armazenamento e disparar o e-mail de primeiro acesso.
 
 ## Papéis
 
@@ -69,6 +83,7 @@ Variáveis principais:
 - `VITE_SUPABASE_ANON_KEY` — anon key pública do Supabase.
 - `VITE_ASAAS_CONTROLE_URL` — link de assinatura recorrente do Plano Controle.
 - `VITE_ASAAS_EVIDENCIAS_URL` — link de assinatura recorrente do Plano Evidências.
+- `VITE_ASAAS_MEMORIA_EXTRA_URL` — link recorrente para contratar memória adicional.
 
 ## Scripts
 
@@ -98,6 +113,7 @@ Variáveis de ambiente no Cloudflare Pages:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ASAAS_CONTROLE_URL`
 - `VITE_ASAAS_EVIDENCIAS_URL`
+- `VITE_ASAAS_MEMORIA_EXTRA_URL`
 
 O arquivo `public/_redirects` garante o fallback de SPA, mantendo `/login` e `/app` funcionando ao acessar por link direto.
 
@@ -124,7 +140,7 @@ services/api.ts         → camada de dados (supabase-js)
 lib/
   supabase.ts           → cliente Supabase
   scoreEngine.ts        → regras de pontuação
-  storage.ts            → evidências (upload / URL assinada)
+  storage.ts            → evidências, upload e validação de quota
   notifications.ts      → notificações a partir das tarefas
 components/             → telas do app interno
 supabase/
