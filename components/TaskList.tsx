@@ -20,11 +20,12 @@ interface TaskListProps {
   onDefinirAndamento?: (taskId: string, andamento: string) => Promise<void>;
   currentUserRole: UserRole;
   currentUserEmail: string;
+  permiteAnexos?: boolean; // Plano Controle = false (esconde o anexo de evidência)
 }
 
 const RED = '#8B1B1F';
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail, permiteAnexos = true }) => {
   const hoje = getTodayStr();
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const [note, setNote] = useState('');
@@ -191,6 +192,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                 />
               </div>
 
+              {permiteAnexos ? (
               <div>
                 <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Evidência <span className="text-stone-300 normal-case">(opcional — imagem ou PDF, até {MAX_MB}MB)</span></label>
                 {file ? (
@@ -212,6 +214,14 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                 )}
                 {uploadError && <p className="text-[12px] text-[#C62828] mt-1.5">{uploadError}</p>}
               </div>
+              ) : (
+                <div className="flex items-start gap-2.5 bg-stone-50 border border-stone-200 rounded-xl p-3.5">
+                  <Paperclip size={16} className="text-stone-400 shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-stone-500 leading-relaxed">
+                    Anexar evidências (imagens, PDFs, comprovantes) está disponível no <strong className="text-stone-700">Plano Evidências</strong>. Seu plano atual conclui a obrigação apenas com a nota.
+                  </p>
+                </div>
+              )}
 
               <button onClick={confirmar} disabled={uploading} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
                 {uploading ? (

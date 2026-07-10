@@ -323,6 +323,16 @@ export const empresasApi = {
   },
 };
 
+// Contratação de memória extra (recorrente, +500 MB) pela Edge Function do Asaas.
+// Retorna { url } com o link de pagamento para redirecionar o cliente.
+export async function comprarMemoriaExtra(empresaId: string): Promise<{ url?: string }> {
+  const { data, error } = await supabase.functions.invoke('asaas-checkout', {
+    body: { action: 'memoria', empresa_id: empresaId },
+  });
+  if (error) throwSb(error, 'Não foi possível iniciar a contratação de memória extra');
+  return (data ?? {}) as { url?: string };
+}
+
 // ==================== REGRAS DE BONIFICAÇÃO (por empresa) ====================
 export const bonusRulesApi = {
   // Todas as regras visíveis (RLS já isola por empresa; plataforma vê todas).

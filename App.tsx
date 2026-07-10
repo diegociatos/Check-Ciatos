@@ -21,6 +21,8 @@ import RelatoriosView from './components/RelatoriosView.tsx';
 import BonusRulesView from './components/BonusRulesView.tsx';
 import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
 import MonthlyClosingView from './components/MonthlyClosingView.tsx';
+import PlanoArmazenamentoView from './components/PlanoArmazenamentoView.tsx';
+import { planoPermiteAnexos } from './lib/storage.ts';
 
 const App: React.FC = () => {
   const store = useStore();
@@ -128,6 +130,15 @@ const App: React.FC = () => {
             onReabrirPessoal={store.reabrirTarefaPessoal}
             onExcluirPessoal={store.excluirTarefaPessoal}
             onDefinirAndamento={store.definirAndamento}
+            permiteAnexos={planoPermiteAnexos(store.empresaAtual?.Plano)}
+          />
+        );
+
+      case 'PLANO':
+        return (
+          <PlanoArmazenamentoView
+            empresa={store.empresaAtual}
+            currentUserRole={currentUser.Role}
           />
         );
 
