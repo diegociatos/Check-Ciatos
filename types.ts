@@ -251,4 +251,5 @@ export type ViewType =
   | 'BONUS_RULES'
   | 'EXECUTIVE_DASHBOARD'
   | 'MONTHLY_CLOSING'
-  | 'PLANO';
+  | 'PLANO'
+  | 'CALENDARIO';

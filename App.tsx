@@ -22,6 +22,7 @@ import BonusRulesView from './components/BonusRulesView.tsx';
 import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
 import MonthlyClosingView from './components/MonthlyClosingView.tsx';
 import PlanoArmazenamentoView from './components/PlanoArmazenamentoView.tsx';
+import CalendarioView from './components/CalendarioView.tsx';
 import { planoPermiteAnexos } from './lib/storage.ts';
 
 const App: React.FC = () => {
@@ -140,6 +141,16 @@ const App: React.FC = () => {
         return (
           <PlanoArmazenamentoView
             empresa={store.empresaAtual}
+            currentUserRole={currentUser.Role}
+          />
+        );
+
+      case 'CALENDARIO':
+        return (
+          <CalendarioView
+            tasks={visibleTasks}
+            currentUser={currentUser}
+            users={users}
             currentUserRole={currentUser.Role}
           />
         );
