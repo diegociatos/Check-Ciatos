@@ -50,7 +50,9 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fundo font-ciatos">
         <div className="text-center animate-in fade-in duration-300">
-          <div className="h-12 w-12 rounded-2xl bg-marca text-white flex items-center justify-center font-black text-lg mx-auto animate-pulse">GC</div>
+          <div className="h-12 w-12 rounded-2xl bg-marca text-white flex items-center justify-center mx-auto animate-pulse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+          </div>
           <p className="text-stone-400 mt-4 text-sm">Carregando…</p>
         </div>
       </div>

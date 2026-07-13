@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
   const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-  const RESEND_FROM = Deno.env.get('RESEND_FROM') || 'Check-Ciatos <onboarding@resend.dev>';
+  const RESEND_FROM = Deno.env.get('RESEND_FROM') || 'Chekly <onboarding@resend.dev>';
 
   // Autoriza: precisa estar autenticado e ser gestão (quem cria tarefa).
   const asCaller = createClient(url, anon, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } });
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
           <p style="margin:0; font-size:16px; font-weight:600;">${esc(titulo)}</p>
           ${prazo ? `<p style="margin:8px 0 0; color:#78716c; font-size:14px;">Prazo: ${fmtData(prazo)}</p>` : ''}
         </div>
-        <p style="margin:0; color:#78716c; font-size:14px;">Acesse o Checklist Diário para concluir e ganhar seus pontos.</p>
+        <p style="margin:0; color:#78716c; font-size:14px;">Acesse o Chekly para concluir e ganhar seus pontos.</p>
       </div>
     </div>`;
 

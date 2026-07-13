@@ -47,7 +47,7 @@ const HelpCenterView: React.FC<HelpCenterViewProps> = ({ currentUser }) => {
       <div className="bg-marca p-12 rounded-2xl text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-ciatos font-bold uppercase tracking-tight mb-2">Guia do Usuário</h2>
-          <p className="text-white/70 font-medium text-lg">Sua jornada de alta performance no Grupo Ciatos começa aqui.</p>
+          <p className="text-white/70 font-medium text-lg">Sua jornada de alta performance começa aqui.</p>
         </div>
         <Book size={120} className="absolute right-10 top-1/2 -translate-y-1/2 opacity-10" />
       </div>

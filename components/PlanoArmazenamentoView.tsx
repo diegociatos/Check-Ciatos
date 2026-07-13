@@ -143,7 +143,7 @@ const PlanoArmazenamentoView: React.FC<Props> = ({ empresa }) => {
             O <strong>Plano Controle</strong> não permite anexar documentos nas obrigações. Para enviar evidências (imagens, PDFs, comprovantes) com 1 GB de armazenamento, faça upgrade para o <strong>Plano Evidências</strong>.
           </p>
           <p className="text-[12px] text-stone-400">
-            Para trocar de plano, ajuste sua assinatura no Asaas ou fale com o Grupo Ciatos.
+            Para trocar de plano, ajuste sua assinatura no Asaas ou fale com o suporte.
           </p>
         </Card>
       )}

@@ -1,6 +1,6 @@
 {
-  "name": "Checklist Diário - Grupo Ciatos",
-  "description": "Aplicativo de gestão de tarefas e produtividade com sistema de pontuação, recompensas e penalidades para o Grupo Ciatos.",
+  "name": "Chekly",
+  "description": "Chekly — gestão de tarefas e produtividade com evidências, pontuação, recompensas e penalidades por performance.",
   "requestFramePermissions": [
     "camera"
   ]

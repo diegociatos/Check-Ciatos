@@ -70,12 +70,14 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
       `}>
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-            <div className="h-10 w-10 bg-marca rounded-lg flex items-center justify-center font-bold text-xl text-white overflow-hidden shrink-0">
-               <span className="font-black">GC</span>
+            <div className="h-10 w-10 bg-marca rounded-xl flex items-center justify-center text-white overflow-hidden shrink-0">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+                 <path d="M5 13l4 4L19 7" />
+               </svg>
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold leading-tight text-[#111111] truncate">{empresaNome || (isPlataforma ? 'Plataforma' : 'Checklist Diário')}</h1>
-              <p className="text-xs text-gray-500 font-medium">Checklist Diário</p>
+              <h1 className="font-bold leading-tight text-[#111111] truncate">{empresaNome || (isPlataforma ? 'Plataforma' : 'Chekly')}</h1>
+              <p className="text-xs text-gray-500 font-medium">Chekly</p>
             </div>
           </div>
 
@@ -147,7 +149,9 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
               <Menu size={24} />
             </button>
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-marca rounded-md flex items-center justify-center text-white text-[10px] font-black lg:hidden">GC</div>
+              <div className="h-8 w-8 bg-marca rounded-lg flex items-center justify-center text-white lg:hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+              </div>
               <h2 className="text-xl text-stone-900">{headerTitle}</h2>
             </div>
           </div>

@@ -369,7 +369,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             className="w-full text-left bg-stone-900 text-white p-8 rounded-2xl hover:bg-stone-800 transition-colors group"
           >
             <h3 className="text-lg mb-1">Conferir entregas</h3>
-            <p className="text-stone-400 text-sm mb-5">A excelência do Grupo Ciatos vem da auditoria de cada obrigação.</p>
+            <p className="text-stone-400 text-sm mb-5">A excelência vem da auditoria de cada obrigação.</p>
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all">
               Gerenciar equipe <ChevronRight size={16} />
             </span>

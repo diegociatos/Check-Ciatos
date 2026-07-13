@@ -41,14 +41,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           
           {/* Logo Section */}
           <div className="mx-auto mb-6">
-            <div className="h-20 w-20 bg-marca rounded-lg flex items-center justify-center text-white text-3xl font-bold shadow-md ring-4 ring-gray-50 overflow-hidden">
-               {/* Using text representation as grupo.jpg is not available in the prompt environment */}
-               <span className="font-serif italic">GC</span>
+            <div className="h-20 w-20 bg-marca rounded-2xl flex items-center justify-center text-white shadow-md ring-4 ring-gray-50 overflow-hidden">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10" aria-hidden="true">
+                 <path d="M5 13l4 4L19 7" />
+               </svg>
             </div>
           </div>
 
           <h1 className="text-[28px] font-bold text-[#111111] leading-tight mb-2">
-            Bem-vindo ao Checklist Diário
+            Bem-vindo ao Chekly
           </h1>
           <p className="text-[14px] text-[#999999] font-normal mb-10">
             Acesse com seu email corporativo
@@ -121,7 +122,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {/* Card Footer Fixed within card */}
           <div className="mt-8 pt-6 border-t border-gray-100">
              <p className="text-[#111111] text-[10px] font-normal">
-              © 2026 Grupo Ciatos - Reestruturações Empresariais
+              © 2026 Chekly · CIATOS SOFTWARES E SERVICOS LTDA
              </p>
           </div>
         </div>

@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
         value: PRECOS[plano],
         nextDueDate: hojeSP(),
         cycle: 'MONTHLY',
-        description: `Check-Ciatos — Plano ${plano === 'Evidencias' ? 'Evidências' : 'Controle'}`,
+        description: `Chekly — Plano ${plano === 'Evidencias' ? 'Evidências' : 'Controle'}`,
         externalReference: signup.id,
       });
 
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
         value: MEMORIA_VALOR,
         nextDueDate: hojeSP(),
         cycle: 'MONTHLY',
-        description: `Check-Ciatos — Memória extra +${MEMORIA_MB} MB`,
+        description: `Chekly — Memória extra +${MEMORIA_MB} MB`,
         externalReference: `memoria:${empresaId}`,
       });
 

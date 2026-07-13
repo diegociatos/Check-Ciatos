@@ -30,10 +30,10 @@ const hoje = () => new Date().toLocaleDateString('pt-BR');
 function cabecalho(doc: jsPDF, empresa: string, subtitulo: string, periodo: string): number {
   doc.setFillColor(...MARCA);
   doc.roundedRect(14, 12, 12, 12, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-  doc.text('GC', 20, 20, { align: 'center' });
+  doc.setDrawColor(255, 255, 255); doc.setLineWidth(1.1);
+  doc.line(17.4, 18.2, 19, 20); doc.line(19, 20, 22.6, 15.4);
 
-  doc.setTextColor(...TINTA); doc.setFontSize(14); doc.text('Grupo Ciatos', 30, 18);
+  doc.setTextColor(...TINTA); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text('Chekly', 30, 18);
   doc.setTextColor(...CINZA); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   doc.text(subtitulo, 30, 23);
 

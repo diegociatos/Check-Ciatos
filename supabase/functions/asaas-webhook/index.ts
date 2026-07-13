@@ -30,14 +30,14 @@ async function gerarLinkConvite(admin: any, email: string): Promise<string | nul
 
 async function enviarEmailAcesso(email: string, nome: string | undefined, empresa: string, link: string): Promise<boolean> {
   const key = Deno.env.get('RESEND_API_KEY');
-  const from = Deno.env.get('RESEND_FROM') || 'Check-Ciatos <onboarding@resend.dev>';
+  const from = Deno.env.get('RESEND_FROM') || 'Chekly <onboarding@resend.dev>';
   if (!key || !link) return false;
   const nomeSeguro = String(nome ?? '').replace(/[<>&]/g, '');
   const empSeguro = String(empresa ?? '').replace(/[<>&]/g, '');
   const html = `
     <div style="font-family: Georgia, 'Times New Roman', serif; color:#1c1917; max-width:520px; margin:0 auto;">
       <div style="background:#8B1B1F; color:#fff; padding:20px 24px; border-radius:12px 12px 0 0;">
-        <h1 style="margin:0; font-size:20px;">Bem-vindo ao Check-Ciatos</h1>
+        <h1 style="margin:0; font-size:20px;">Bem-vindo ao Chekly</h1>
       </div>
       <div style="border:1px solid #e7e5e4; border-top:0; border-radius:0 0 12px 12px; padding:24px;">
         <p style="margin:0 0 12px;">Olá${nomeSeguro ? ', ' + nomeSeguro : ''},</p>
@@ -50,7 +50,7 @@ async function enviarEmailAcesso(email: string, nome: string | undefined, empres
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [email], subject: 'Check-Ciatos — acesso liberado, defina sua senha', html }),
+      body: JSON.stringify({ from, to: [email], subject: 'Chekly — acesso liberado, defina sua senha', html }),
     });
     return r.ok;
   } catch { return false; }

@@ -1,0 +1,41 @@
+redirectsOrigin = "config"
+plugins = []
+headers = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\dev\\Check-Ciatos\\dist"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+
+[build.environment]
+VITE_SUPABASE_URL = "https://rylbvqsjnmjohxvvzstm.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bGJ2cXNqbm1qb2h4dnZ6c3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTAzNzQsImV4cCI6MjA5ODkyNjM3NH0.HLxGatmczQjipc8F-DKw1kDitpOwhC-XAdp03BYEAi8"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
