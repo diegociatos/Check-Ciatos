@@ -176,8 +176,15 @@ h3 { font-size: 25px; }
 .faq { max-width: 860px; }
 details { margin-bottom: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 summary { cursor: pointer; font-size: 20px; font-weight: 900; }
-footer { display: flex; justify-content: space-between; gap: 24px; padding: 42px 32px; background: var(--bg); border-top: 1px solid var(--line); color: var(--muted); }
-footer strong { color: var(--ink); font-size: 24px; }
+footer { padding: 52px 32px 28px; background: var(--bg); border-top: 1px solid var(--line); color: var(--muted); }
+.foot-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; }
+.foot-brand strong { color: var(--ink); font-size: 24px; display: block; margin-bottom: 10px; }
+.foot-brand p { max-width: 380px; margin: 0; }
+.foot-col h4 { color: var(--ink); font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .1em; }
+.foot-col p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; text-align: left; }
+.foot-col a, .foot-brand a { color: var(--brand); text-decoration: none; font-weight: 700; }
+.foot-col a:hover, .foot-brand a:hover { text-decoration: underline; }
+.foot-bottom { max-width: 1200px; margin: 34px auto 0; padding-top: 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; font-size: 13px; flex-wrap: wrap; }
 
 /* ===================== Modal de contratação ===================== */
 .modal-overlay {
@@ -274,5 +281,6 @@ footer strong { color: var(--ink); font-size: 24px; }
   .hero, .split { grid-template-columns: 1fr; }
   .cards.four, .cards.three, .visual-grid, .pricing { grid-template-columns: 1fr; }
   .field-row { grid-template-columns: 1fr; }
-  footer { flex-direction: column; }
+  .foot-grid { grid-template-columns: 1fr; gap: 28px; }
+  .foot-bottom { flex-direction: column; gap: 8px; }
 }
