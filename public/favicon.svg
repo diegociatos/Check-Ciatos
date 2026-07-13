@@ -7,5 +7,6 @@
   </defs>
   <rect x="4" y="4" width="92" height="92" rx="26" fill="url(#ck-fav)"/>
   <rect x="4" y="4" width="92" height="46" rx="26" fill="#ffffff" opacity="0.07"/>
-  <path d="M28 51 l14 15 30 -34" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M45 51 l12 13 26 -30" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M21 51 l14 15 30 -34" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

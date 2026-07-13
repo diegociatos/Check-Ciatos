@@ -43,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mx-auto mb-6">
             <div className="h-20 w-20 bg-marca rounded-2xl flex items-center justify-center text-white shadow-md ring-4 ring-gray-50 overflow-hidden">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10" aria-hidden="true">
-                 <path d="M5 13l4 4L19 7" />
+                 <path d="M11 12.5l3.5 3.5 7-8" strokeWidth={2.4} strokeOpacity={0.5} /><path d="M3 12.5l4 4 8.5-9.5" />
                </svg>
             </div>
           </div>

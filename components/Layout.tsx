@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           <div className="flex items-center gap-3 p-6 border-b border-gray-200">
             <div className="h-10 w-10 bg-marca rounded-xl flex items-center justify-center text-white overflow-hidden shrink-0">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-                 <path d="M5 13l4 4L19 7" />
+                 <path d="M11 12.5l3.5 3.5 7-8" strokeWidth={2.4} strokeOpacity={0.5} /><path d="M3 12.5l4 4 8.5-9.5" />
                </svg>
             </div>
             <div className="min-w-0">
@@ -150,7 +150,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
             </button>
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 bg-marca rounded-lg flex items-center justify-center text-white lg:hidden">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true"><path d="M11 12.5l3.5 3.5 7-8" strokeWidth={2.4} strokeOpacity={0.5} /><path d="M3 12.5l4 4 8.5-9.5" /></svg>
               </div>
               <h2 className="text-xl text-stone-900">{headerTitle}</h2>
             </div>
