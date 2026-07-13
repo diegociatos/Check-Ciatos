@@ -177,15 +177,17 @@ h3 { font-size: 25px; }
 .faq { max-width: 860px; }
 details { margin-bottom: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 summary { cursor: pointer; font-size: 20px; font-weight: 900; }
-footer { padding: 52px 32px 28px; background: var(--bg); border-top: 1px solid var(--line); color: var(--muted); }
-.foot-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; }
-.foot-brand strong { color: var(--ink); font-size: 24px; display: block; margin-bottom: 10px; }
-.foot-brand p { max-width: 380px; margin: 0; }
-.foot-col h4 { color: var(--ink); font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .1em; }
-.foot-col p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; text-align: left; }
-.foot-col a, .foot-brand a { color: var(--brand); text-decoration: none; font-weight: 700; }
-.foot-col a:hover, .foot-brand a:hover { text-decoration: underline; }
-.foot-bottom { max-width: 1200px; margin: 34px auto 0; padding-top: 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; font-size: 13px; flex-wrap: wrap; }
+footer { background: #1c1917; color: #b7ab9e; padding: 60px 32px 30px; }
+.foot-grid { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 44px; }
+.foot-brand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.foot-logo { width: 42px; height: 42px; display: block; flex: 0 0 auto; }
+.foot-brand-row strong { color: #ffffff; font-size: 26px; }
+.foot-brand p { color: #9c9188; max-width: 380px; margin: 0; text-align: left; line-height: 1.75; font-size: 15px; }
+.foot-col h4 { color: #ffffff; font-size: 12px; margin: 0 0 16px; text-transform: uppercase; letter-spacing: .14em; font-weight: 900; }
+.foot-col p { color: #9c9188; margin: 0 0 11px; font-size: 14px; line-height: 1.6; text-align: left; }
+.foot-col a, .foot-brand a { color: #e7ddd2; text-decoration: none; font-weight: 700; transition: color .15s; }
+.foot-col a:hover, .foot-brand a:hover { color: #ffffff; }
+.foot-bottom { max-width: 1160px; margin: 42px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; gap: 16px; font-size: 12.5px; color: #7d746b; flex-wrap: wrap; }
 
 /* ===================== Modal de contratação ===================== */
 .modal-overlay {
