@@ -99,6 +99,13 @@ export const useStore = () => {
 
   // Carrega dados do backend na inicialização
   useEffect(() => {
+    // Timeout de segurança: se alguma request travar (rede/sessão/proxy preso — a
+    // Promise nunca resolve nem rejeita), libera a interface em vez de deixar o
+    // usuário preso em "Carregando…" para sempre.
+    let finalizado = false;
+    const timeoutSeguranca = window.setTimeout(() => {
+      if (!finalizado) { console.warn('⏱️ Carga excedeu o tempo — liberando a interface.'); setLoading(false); }
+    }, 12000);
     const loadData = async () => {
       try {
         setLoading(true);
@@ -199,11 +206,14 @@ export const useStore = () => {
         console.error('Erro ao carregar dados:', err);
         setError('Falha ao carregar dados do servidor');
       } finally {
+        finalizado = true;
+        window.clearTimeout(timeoutSeguranca);
         setLoading(false);
       }
     };
 
     loadData();
+    return () => window.clearTimeout(timeoutSeguranca);
   }, []);
 
   // ===== Contexto multi-empresa =====
