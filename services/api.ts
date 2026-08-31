@@ -17,7 +17,17 @@ async function sessionEmail(): Promise<string | null> {
 export const authApi = {
   login: async (email: string, senha: string) => {
     const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    if (error || !auth.user) throw new Error('E-mail ou senha inválidos');
+    if (error) {
+      // Distingue credencial inválida (status 400) de falha de conexão/servidor
+      // (fetch falhou, servidor pausado/fora): não confundir o usuário com "senha inválida".
+      const status = (error as any)?.status;
+      const msg = String(error.message || '').toLowerCase();
+      if (status === 400 || msg.includes('invalid login') || msg.includes('invalid credentials')) {
+        throw new Error('E-mail ou senha inválidos');
+      }
+      throw new Error('Não foi possível conectar ao servidor agora. Verifique sua conexão e tente novamente em instantes.');
+    }
+    if (!auth.user) throw new Error('E-mail ou senha inválidos');
 
     const { data: row, error: e2 } = await supabase
       .from('users').select('*').ilike('Email', email).maybeSingle();
