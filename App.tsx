@@ -133,6 +133,7 @@ const App: React.FC = () => {
             onReabrirPessoal={store.reabrirTarefaPessoal}
             onExcluirPessoal={store.excluirTarefaPessoal}
             onDefinirAndamento={store.definirAndamento}
+            onTransferir={store.transferirTarefa}
             permiteAnexos={planoPermiteAnexos(store.empresaAtual?.Plano)}
           />
         );

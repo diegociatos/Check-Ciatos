@@ -490,6 +490,16 @@ export const useStore = () => {
     setTasks(prev => prev.map(t => (t.ID === taskId ? { ...t, Andamento: andamento } : t)));
   }, []);
 
+  // Transferir/reatribuir uma obrigação para outra pessoa (gestão). A RLS tasks_manage
+  // permite ao gestor/master alterar tarefas da própria empresa. Reseta o andamento.
+  const transferirTarefa = useCallback(async (taskId: string, novoResponsavel: string) => {
+    await acaoBackend(
+      () => tasksApi.update(taskId, { Responsavel: novoResponsavel, Andamento: 'Pendente' }),
+      'Não foi possível transferir a obrigação.'
+    );
+    setTasks(prev => prev.map(t => (t.ID === taskId ? { ...t, Responsavel: novoResponsavel, Andamento: 'Pendente' } : t)));
+  }, []);
+
   const auditTask = useCallback(async (taskId: string, status: TaskStatus, justification: string, nextDeadline?: string) => {
     // Mapeia TaskStatus para ConferenciaStatus do backend
     let apiStatus = 'APROVADO';
@@ -900,7 +910,7 @@ export const useStore = () => {
     notifications, notifNaoLidas, marcarNotificacoesLidas,
     loading, error, refreshData, auditAndFixTasks,
     login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,
-    updateProfile, completeTask, definirAndamento, auditTask, deleteTask,
+    updateProfile, completeTask, definirAndamento, transferirTarefa, auditTask, deleteTask,
     addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,
     criarTarefaPessoal, concluirTarefaPessoal, reabrirTarefaPessoal, excluirTarefaPessoal, valorarTarefaPessoal
   };

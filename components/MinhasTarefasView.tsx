@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Task, TaskStatus, User, UserRole } from '../types';
+import { Task, TaskStatus, User, UserRole, UserStatus } from '../types';
 import { getTodayStr } from '../store';
 import { CalendarDays, CheckCheck, Sun, PartyPopper, Plus, Check, RotateCcw, Trash2, Star, X } from 'lucide-react';
 import { PageHeader, EmptyState, Card, Btn, Pill, showToast, useUndoableDelete } from './ui';
@@ -17,6 +17,7 @@ interface MinhasTarefasViewProps {
   onReabrirPessoal: (taskId: string) => Promise<void>;
   onExcluirPessoal: (taskId: string) => Promise<void>;
   onDefinirAndamento: (taskId: string, andamento: string) => Promise<void>;
+  onTransferir?: (taskId: string, novoResponsavel: string) => Promise<void>;
   permiteAnexos?: boolean;
 }
 
@@ -27,10 +28,20 @@ const PENDENTE_LIKE = [TaskStatus.PENDENTE, TaskStatus.FEITA_ERRADA, TaskStatus.
 const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
   currentUser, tasks, users, onComplete, currentUserRole,
   onCriarPessoal, onConcluirPessoal, onReabrirPessoal, onExcluirPessoal, onDefinirAndamento,
-  permiteAnexos = true,
+  onTransferir, permiteAnexos = true,
 }) => {
   const today = getTodayStr();
   const [aba, setAba] = useState<Aba>('HOJE');
+
+  // Só a gestão pode transferir; candidatos = pessoas ativas da empresa (menos ela mesma e a plataforma).
+  const podeTransferir = [UserRole.GESTOR, UserRole.MASTER, UserRole.ADMIN, UserRole.PLATAFORMA].includes(currentUserRole);
+  const transferCandidates = useMemo(
+    () => users
+      .filter((u) => u.Status === UserStatus.ATIVO && u.Email !== currentUser.Email && u.Role !== UserRole.PLATAFORMA)
+      .map((u) => ({ Email: u.Email, Nome: u.Nome }))
+      .sort((a, b) => (a.Nome || a.Email).localeCompare(b.Nome || b.Email)),
+    [users, currentUser.Email],
+  );
 
   const meus = useMemo(() => tasks.filter((t) => t.Responsavel === currentUser.Email), [tasks, currentUser.Email]);
   // Obrigações pontuadas (não pessoais)
@@ -123,7 +134,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
             action={proximas.length > 0 ? <button onClick={() => setAba('PROXIMAS')} className="text-sm font-semibold text-marca hover:text-marca-escuro">Ver próximas ({proximas.length})</button> : undefined}
           />
         ) : (
-          <TaskList tasks={enrich(hoje)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} permiteAnexos={permiteAnexos} />
+          <TaskList tasks={enrich(hoje)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} permiteAnexos={permiteAnexos} onTransferir={onTransferir} transferCandidates={transferCandidates} podeTransferir={podeTransferir} />
         )
       )}
 
@@ -131,7 +142,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
         proximas.length === 0 ? (
           <EmptyState icon={<CalendarDays size={26} />} title="Sem próximas obrigações" message="Quando novas tarefas forem geradas para você, aparecem aqui com antecedência." />
         ) : (
-          <TaskList tasks={enrich(proximas)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} permiteAnexos={permiteAnexos} />
+          <TaskList tasks={enrich(proximas)} onComplete={onComplete} onDefinirAndamento={onDefinirAndamento} currentUserRole={currentUserRole} currentUserEmail={currentUser.Email} permiteAnexos={permiteAnexos} onTransferir={onTransferir} transferCandidates={transferCandidates} podeTransferir={podeTransferir} />
         )
       )}
 

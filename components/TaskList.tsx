@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
-import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText } from 'lucide-react';
+import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText, ArrowRightLeft } from 'lucide-react';
 import { validarArquivo, uploadEvidencia, MAX_MB } from '../lib/storage';
 import { statusInfo, STATUS_TONE_CLASS } from '../lib/labels';
 import { getTodayStr } from '../store';
@@ -21,11 +21,14 @@ interface TaskListProps {
   currentUserRole: UserRole;
   currentUserEmail: string;
   permiteAnexos?: boolean; // Plano Controle = false (esconde o anexo de evidência)
+  onTransferir?: (taskId: string, novoResponsavel: string) => Promise<void> | void;
+  transferCandidates?: { Email: string; Nome: string }[]; // para quem a gestão pode transferir
+  podeTransferir?: boolean; // só gestão (Gestor/Master/Admin/Plataforma)
 }
 
 const RED = '#8B1B1F';
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail, permiteAnexos = true }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail, permiteAnexos = true, onTransferir, transferCandidates = [], podeTransferir = false }) => {
   const hoje = getTodayStr();
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
   const [note, setNote] = useState('');
@@ -33,6 +36,21 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [celebrar, setCelebrar] = useState<{ titulo: string; pontos: number } | null>(null);
+  const [transferTask, setTransferTask] = useState<EnrichedTask | null>(null);
+  const [transferTo, setTransferTo] = useState('');
+  const [transferindo, setTransferindo] = useState(false);
+
+  const confirmarTransferencia = async () => {
+    if (!transferTask || !transferTo || transferindo || !onTransferir) return;
+    setTransferindo(true);
+    try {
+      await onTransferir(transferTask.ID, transferTo);
+      setTransferTask(null);
+      setTransferTo('');
+    } finally {
+      setTransferindo(false);
+    }
+  };
 
   const abrirModal = (task: EnrichedTask) => {
     setSelectedTask(task); setNote(''); setFile(null); setUploadError('');
@@ -154,6 +172,14 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                     >
                       <CheckSquare size={18} /> {isRejected ? 'Refazer' : 'Concluir'}
                     </button>
+                    {podeTransferir && onTransferir && transferCandidates.length > 0 && (
+                      <button
+                        onClick={() => { setTransferTask(task); setTransferTo(''); }}
+                        className="w-full text-stone-500 py-2 rounded-xl text-sm font-semibold hover:text-marca transition-colors flex items-center justify-center gap-2"
+                      >
+                        <ArrowRightLeft size={16} /> Transferir para outra pessoa
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -228,6 +254,49 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                   <><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</>
                 ) : (
                   <><Send size={18} /> Enviar para aprovação</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de transferência (gestão transfere a obrigação para outra pessoa) */}
+      {transferTask && (
+        <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="text-xl text-stone-900">Transferir obrigação</h3>
+              <button onClick={() => setTransferTask(null)} className="text-stone-400 hover:text-stone-600"><X size={22} /></button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="bg-stone-50 border border-stone-100 p-4 rounded-xl">
+                <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Obrigação</p>
+                <p className="text-stone-900 mt-0.5">{transferTask.Titulo}</p>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Transferir para</label>
+                <select
+                  value={transferTo}
+                  onChange={(e) => setTransferTo(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-marca/20 outline-none"
+                >
+                  <option value="">Selecione a pessoa…</option>
+                  {transferCandidates.map((c) => (
+                    <option key={c.Email} value={c.Email}>{c.Nome || c.Email}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-stone-400 mt-1.5">A obrigação sai da sua lista e vai para a pessoa escolhida, mantendo prazo e pontuação.</p>
+              </div>
+              <button
+                onClick={confirmarTransferencia}
+                disabled={!transferTo || transferindo}
+                className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {transferindo ? (
+                  <><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Transferindo…</>
+                ) : (
+                  <><ArrowRightLeft size={18} /> Transferir</>
                 )}
               </button>
             </div>
