@@ -4,6 +4,7 @@ import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole, Task, TaskS
 import { getTodayStr, toDateOnly } from '../store';
 import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil, ChevronDown } from 'lucide-react';
 import { useUndoableDelete } from './ui';
+import { acharSimilares, normalizar } from '../lib/similaridade';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
@@ -188,6 +189,27 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
     return startDate.toLocaleDateString('pt-BR');
   }, [formData.Recorrencia, formData.DiaDoMes, formData.DataInicio, formData.DiasRecorrencia, today]);
 
+  // Inteligência anti-duplicidade: modelos + tarefas abertas parecidos com o título digitado.
+  const similares = useMemo(() => {
+    if (normalizar(formData.Titulo).length < 3) return [];
+    const cand: { titulo: string; resp: string; tipo: string }[] = [];
+    templates.forEach((t) => { if (t.ID !== editingId) cand.push({ titulo: t.Titulo, resp: t.Responsavel, tipo: 'Modelo' }); });
+    tasks.forEach((t) => {
+      if (t.Status !== TaskStatus.APROVADA && t.Status !== TaskStatus.AGUARDANDO_APROVACAO) {
+        cand.push({ titulo: t.Titulo, resp: t.Responsavel, tipo: 'Tarefa' });
+      }
+    });
+    // Remove repetidos (mesmo título + responsável) — ex.: modelo e a tarefa que ele gerou.
+    const vistos = new Set<string>();
+    const unicos = cand.filter((c) => {
+      const k = normalizar(c.titulo) + '|' + (c.resp || '').toLowerCase();
+      if (vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    });
+    return acharSimilares(formData.Titulo, unicos, (c) => c.titulo, 0.55).slice(0, 4);
+  }, [formData.Titulo, templates, tasks, editingId]);
+
   const toggleDay = (day: string) => {
     setFormData(prev => ({
       ...prev,
@@ -235,6 +257,15 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
     }
     if (formData.Recorrencia === RecurrenceType.SEMANAL && formData.DiasRecorrencia.length === 0) {
         return alert("Selecione ao menos um dia da semana para recorrência semanal.");
+    }
+
+    // Anti-duplicidade: em criação nova, se houver algo MUITO parecido, confirma antes.
+    if (!editingId && similares.length > 0 && similares[0].score >= 0.7) {
+      const s = similares[0].item;
+      const ok = window.confirm(
+        `Já existe algo muito parecido:\n\n"${s.titulo}"${s.resp ? ' — ' + s.resp.split('@')[0] : ''}\n\nDeseja criar mesmo assim?`
+      );
+      if (!ok) return;
     }
 
     if (editingId) onUpdate(editingId, formData);
@@ -338,6 +369,22 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título da Tarefa Corporativa</label>
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
+                    {!editingId && similares.length > 0 && (
+                      <div className="mt-2 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                        <div className="flex items-center gap-1.5 text-amber-800 text-[12px] font-bold">
+                          <AlertTriangle size={14} /> Já existe algo parecido — confira antes de duplicar:
+                        </div>
+                        <ul className="mt-1.5 space-y-1">
+                          {similares.map((s, i) => (
+                            <li key={i} className="text-[12px] text-amber-900/90 flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{s.item.tipo}</span>
+                              <strong>{s.item.titulo}</strong>
+                              {s.item.resp && <span className="text-amber-700/70">· {s.item.resp.split('@')[0]}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
