@@ -5,6 +5,7 @@ import { getTodayStr, toDateOnly } from '../store';
 import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil, ChevronDown } from 'lucide-react';
 import { useUndoableDelete } from './ui';
 import { acharSimilares, normalizar } from '../lib/similaridade';
+import { pontosAprovacao } from '../lib/scoreEngine';
 
 interface TemplateManagerProps {
   templates: TaskTemplate[];
@@ -443,8 +444,37 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Pontuação (Mérito)</label>
-                      <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.PontosValor} onChange={e => setFormData({...formData, PontosValor: parseInt(e.target.value)})} />
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Prioridade</label>
+                      <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Prioridade} onChange={e => setFormData({...formData, Prioridade: e.target.value as TaskPriority})}>
+                        <option value={TaskPriority.BAIXA}>Baixa</option>
+                        <option value={TaskPriority.MEDIA}>Média</option>
+                        <option value={TaskPriority.ALTA}>Alta</option>
+                        <option value={TaskPriority.URGENTE}>Urgente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Pontos: escala clara + presets + prévia do que a pessoa recebe */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Pontos da tarefa</label>
+                    <p className="text-[11px] text-stone-400 -mt-1">Quanto vale ao ser aprovada. Cai pela metade se for entregue atrasada ou refeita.</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[{ l: 'Simples', v: 10 }, { l: 'Normal', v: 50 }, { l: 'Complexa', v: 100 }].map(p => (
+                        <button key={p.v} type="button" onClick={() => setFormData({ ...formData, PontosValor: p.v })}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${formData.PontosValor === p.v ? 'bg-marca border-marca text-white shadow-sm' : 'bg-gray-50 border-gray-200 text-stone-500 hover:border-marca/30'}`}>
+                          {p.l} · {p.v}
+                        </button>
+                      ))}
+                      <input type="number" min={0} step={5}
+                        className="w-24 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
+                        value={Number.isFinite(formData.PontosValor) ? formData.PontosValor : 0}
+                        onChange={e => { const v = parseInt(e.target.value, 10); setFormData({ ...formData, PontosValor: Number.isNaN(v) ? 0 : Math.max(0, v) }); }} />
+                      <span className="text-[11px] text-stone-400">pts</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap text-[12px] bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 text-emerald-800">
+                      No prazo vale <strong>{pontosAprovacao({ pontosBase: Number.isFinite(formData.PontosValor) ? formData.PontosValor : 0, prioridade: formData.Prioridade })} pts</strong>
+                      <span className="text-emerald-700/60">· atrasada/refeita <strong>{pontosAprovacao({ pontosBase: Number.isFinite(formData.PontosValor) ? formData.PontosValor : 0, prioridade: formData.Prioridade, atrasada: true })} pts</strong></span>
+                      {formData.Prioridade !== TaskPriority.MEDIA && <span className="text-emerald-700/60">· inclui prioridade {formData.Prioridade}</span>}
                     </div>
                   </div>
 
