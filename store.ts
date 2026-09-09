@@ -97,7 +97,11 @@ export const useStore = () => {
     return localStorage.getItem('ciatos_current_user');
   });
 
-  // Carrega dados do backend na inicialização
+  // Carrega dados do backend na inicialização e SEMPRE que o usuário logado muda.
+  // Isso é essencial: a RLS filtra as tabelas pela sessão do Supabase. Se a carga
+  // ocorresse só no mount (antes do login), a requisição seria anônima e voltaria
+  // vazia — e ao logar os dados nunca apareceriam. Recarregar quando currentUserEmail
+  // muda garante que, logo após o login, os dados sejam buscados já com a sessão ativa.
   useEffect(() => {
     // Timeout de segurança: se alguma request travar (rede/sessão/proxy preso — a
     // Promise nunca resolve nem rejeita), libera a interface em vez de deixar o
@@ -214,7 +218,7 @@ export const useStore = () => {
 
     loadData();
     return () => window.clearTimeout(timeoutSeguranca);
-  }, []);
+  }, [currentUserEmail]);
 
   // ===== Contexto multi-empresa =====
   // A plataforma (dono do sistema) enxerga todas as empresas; ao "entrar" numa empresa,
