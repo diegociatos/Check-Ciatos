@@ -7,7 +7,7 @@ import { getTodayStr } from '../store';
 import { calcularBonus } from '../lib/scoreEngine';
 import { PageHeader, Card, StatCard, EmptyState, Pill } from './ui';
 import {
-  Gauge, CheckCircle2, Clock, AlertTriangle, XCircle, FilePlus2, Coins, Users,
+  Gauge, CheckCircle2, Clock, AlertTriangle, XCircle, FilePlus2,
   Trophy, RotateCcw, TimerOff,
 } from 'lucide-react';
 
@@ -201,12 +201,6 @@ const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({ tasks, 
             <StatCard label="Reprovadas" value={kpis.reprovadas} icon={<XCircle size={18} />} />
           </div>
 
-          {/* Bônus */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StatCard label="Colaboradores elegíveis ao bônus" value={kpis.elegiveis} hint={`de ${linhas.length} no período`} icon={<Users size={18} />} />
-            <StatCard label="Custo estimado de bonificação" value={`${kpis.custoBonus} pts`} hint="soma dos bônus dos elegíveis" icon={<Coins size={18} />} tone="marca" />
-          </div>
-
           {/* Evolução 6 meses */}
           <Card className="p-6">
             <div className="flex items-center justify-between mb-5">
@@ -245,11 +239,10 @@ const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({ tasks, 
                         <span className={`text-sm font-semibold w-5 shrink-0 ${i === 0 ? 'text-marca' : 'text-stone-300'}`}>{i + 1}º</span>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-tinta truncate">{r.user.Nome}</p>
-                          <p className="text-xs text-stone-400">{Math.round(r.eficiencia)}% eficiência{r.bonusElegivel ? ` · bônus +${r.bonusValor}` : ''}</p>
+                          <p className="text-xs text-stone-400">{Math.round(r.eficiencia)}% eficiência</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {r.bonusElegivel && <Pill tone="sucesso">Bônus</Pill>}
                         <span className="font-titulo text-base text-tinta">{r.saldo}</span>
                       </div>
                     </div>
