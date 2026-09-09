@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { BonusRules, DEFAULT_BONUS_RULES, TaskPriority } from '../types';
 import { PageHeader, Card, Btn, Pill, showToast } from './ui';
 import { calcularBonus } from '../lib/scoreEngine';
-import { Percent, Coins, Clock, Scale, RotateCcw, UserCheck, CalendarClock, Save, RotateCw, Info } from 'lucide-react';
+import { Percent, Coins, Clock, UserCheck, CalendarClock, Save, RotateCw, Info } from 'lucide-react';
 
 interface BonusRulesViewProps {
   rules: BonusRules;
@@ -11,7 +11,6 @@ interface BonusRulesViewProps {
   activeEmpresa?: string | null;
 }
 
-const PRIORIDADES: TaskPriority[] = [TaskPriority.URGENTE, TaskPriority.ALTA, TaskPriority.MEDIA, TaskPriority.BAIXA];
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode }> = ({ icon, title, hint, children }) => (
   <Card className="p-6">
@@ -53,19 +52,13 @@ const BonusRulesView: React.FC<BonusRulesViewProps> = ({ rules, onSave, empresaN
   useEffect(() => { setForm(rules); }, [rules, activeEmpresa]);
 
   const set = <K extends keyof BonusRules>(k: K, v: BonusRules[K]) => setForm(f => ({ ...f, [k]: v }));
-  const setPeso = (p: string, v: number) => setForm(f => ({ ...f, peso_prioridade: { ...f.peso_prioridade, [p]: v } }));
 
   const validar = (f: BonusRules): string[] => {
     const e: string[] = [];
     if (f.eficiencia_minima < 0 || f.eficiencia_minima > 100) e.push('A eficiência mínima deve estar entre 0% e 100%.');
     if (f.bonus_valor < 0) e.push('O valor do bônus não pode ser negativo.');
     if (f.bonus_tipo === 'PERCENTUAL' && f.bonus_valor > 100) e.push('Bônus percentual acima de 100% é incomum — confirme o valor.');
-    if (f.reentrega_fator < 0 || f.reentrega_fator > 1) e.push('O fator de reentrega deve estar entre 0 e 1 (ex.: 0.5 = metade dos pontos).');
     if (f.fechamento_dia < 1 || f.fechamento_dia > 28) e.push('O dia de fechamento deve estar entre 1 e 28.');
-    for (const p of PRIORIDADES) {
-      const w = f.peso_prioridade[p];
-      if (w == null || isNaN(w) || w < 0) e.push(`O peso da prioridade "${p}" deve ser um número maior ou igual a 0.`);
-    }
     return e;
   };
 
@@ -166,25 +159,6 @@ const BonusRulesView: React.FC<BonusRulesViewProps> = ({ rules, onSave, empresaN
         <Section icon={<UserCheck size={18} />} title="Tarefas pessoais" hint="Se tarefas pessoais valoradas entram na base do bônus.">
           <Toggle on={form.pessoal_valorada} onChange={v => set('pessoal_valorada', v)}
             label="Contar tarefas pessoais valoradas" desc="Quando ligado, os pontos de tarefas pessoais aprovadas somam na base." />
-        </Section>
-
-        <Section icon={<Scale size={18} />} title="Peso por prioridade" hint="Multiplicador aplicado ao ganho na aprovação.">
-          <div className="grid grid-cols-2 gap-3">
-            {PRIORIDADES.map(p => (
-              <div key={p}>
-                <Label>{p}</Label>
-                <input type="number" min={0} step={0.05} value={form.peso_prioridade[p] ?? 1}
-                  onChange={e => setPeso(p, Number(e.target.value))} className={numCls} />
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Section icon={<RotateCcw size={18} />} title="Reentrega / atraso" hint="Fator dos pontos quando a tarefa é reentregue ou atrasada.">
-          <Label>Fator (0 a 1)</Label>
-          <input type="number" min={0} max={1} step={0.05} value={form.reentrega_fator}
-            onChange={e => set('reentrega_fator', Number(e.target.value))} className={`${numCls} w-32`} />
-          <p className="text-xs text-stone-400 mt-2">0.5 = metade dos pontos; 1 = pontos cheios; 0 = sem pontos.</p>
         </Section>
 
         <Section icon={<CalendarClock size={18} />} title="Fechamento mensal" hint="Dia em que o período de bonificação fecha.">

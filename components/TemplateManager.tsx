@@ -140,7 +140,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
   );
   
   const [formData, setFormData] = useState<Omit<TaskTemplate, 'ID'>>({
-    Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
+    Titulo: '', Descricao: '', Responsavel: '', PontosValor: 5, Prioridade: TaskPriority.MEDIA,
     Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
     DiaDoMes: 1, DataInicio: today, PularFinalDeSemana: false, Ativa: true
   });
@@ -228,7 +228,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
   };
 
   const formVazio = (): Omit<TaskTemplate, 'ID'> => ({
-    Titulo: '', Descricao: '', Responsavel: '', PontosValor: 50, Prioridade: TaskPriority.MEDIA,
+    Titulo: '', Descricao: '', Responsavel: '', PontosValor: 5, Prioridade: TaskPriority.MEDIA,
     Recorrencia: RecurrenceType.DIARIA, DiasRecorrencia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
     DiaDoMes: 1, DataInicio: today, PularFinalDeSemana: false, Ativa: true,
   });
@@ -459,14 +459,15 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                     <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Pontos da tarefa</label>
                     <p className="text-[11px] text-stone-400 -mt-1">Quanto vale ao ser aprovada. Cai pela metade se for entregue atrasada ou refeita.</p>
                     <div className="flex flex-wrap items-center gap-2">
-                      {[{ l: 'Simples', v: 10 }, { l: 'Normal', v: 50 }, { l: 'Complexa', v: 100 }].map(p => (
+                      {[{ l: 'Simples', v: 1 }, { l: 'Normal', v: 5 }, { l: 'Complexa', v: 10 }].map(p => (
                         <button key={p.v} type="button" onClick={() => setFormData({ ...formData, PontosValor: p.v })}
                           className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${formData.PontosValor === p.v ? 'bg-marca border-marca text-white shadow-sm' : 'bg-gray-50 border-gray-200 text-stone-500 hover:border-marca/30'}`}>
                           {p.l} · {p.v}
                         </button>
                       ))}
-                      <input type="number" min={0} step={5}
-                        className="w-24 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
+                      <span className="text-[11px] text-stone-400 pl-1">ou digite:</span>
+                      <input type="number" min={0} step={1} aria-label="Pontos personalizados"
+                        className="w-20 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10"
                         value={Number.isFinite(formData.PontosValor) ? formData.PontosValor : 0}
                         onChange={e => { const v = parseInt(e.target.value, 10); setFormData({ ...formData, PontosValor: Number.isNaN(v) ? 0 : Math.max(0, v) }); }} />
                       <span className="text-[11px] text-stone-400">pts</span>
