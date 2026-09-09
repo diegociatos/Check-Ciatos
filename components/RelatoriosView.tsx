@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Task, TaskStatus, ScoreLedger, ScoreType, User, UserRole, BonusRules, MonthlyClosing } from '../types';
-import { Download, TrendingUp, TrendingDown, Scale, Award, Coins, FileText } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Scale, Award, FileText } from 'lucide-react';
 import { PageHeader, Card, StatCard, EmptyState, Btn, Pill } from './ui';
 import { calcularBonus } from '../lib/scoreEngine';
 import { pdfConsolidado, pdfColaborador, LinhaPdf } from '../lib/bonusPdf';
@@ -136,8 +136,8 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
   };
 
   const baixarCSV = () => {
-    const cab = ['Colaborador', 'Time', 'Aprovadas', 'Erros', 'Não feitas', 'Pontos ganhos', 'Penalidades', 'Saldo', 'Eficiência (%)', 'Bônus'];
-    const corpo = linhas.map((r) => [r.user.Nome, r.user.Time || '', r.aprovadas, r.erros, r.naoFeitas, r.ganhos, r.penalidades, r.saldo, Math.round(r.eficiencia), r.elegivel ? r.bonus : 0]);
+    const cab = ['Colaborador', 'Time', 'Aprovadas', 'Erros', 'Não feitas', 'Pontos ganhos', 'Penalidades', 'Saldo', 'Eficiência (%)'];
+    const corpo = linhas.map((r) => [r.user.Nome, r.user.Time || '', r.aprovadas, r.erros, r.naoFeitas, r.ganhos, r.penalidades, r.saldo, Math.round(r.eficiencia)]);
     const csv = [cab, ...corpo]
       .map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';'))
       .join('\n');
@@ -210,12 +210,11 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
       </Card>
 
       {/* Consolidado */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Pontos ganhos" value={totais.ganhos} icon={<TrendingUp size={18} />} />
         <StatCard label="Penalidades" value={totais.penalidades} icon={<TrendingDown size={18} />} />
         <StatCard label="Saldo" value={totais.saldo} icon={<Scale size={18} />} tone="marca" />
         <StatCard label="Tarefas aprovadas" value={totais.aprovadas} icon={<Award size={18} />} />
-        <StatCard label="Bônus previsto" value={`+${totais.bonus}`} hint={`${totais.elegiveis} elegíve${totais.elegiveis === 1 ? 'l' : 'is'}`} icon={<Coins size={18} />} />
       </div>
 
       {collaboratorsList.length === 0 ? (
@@ -239,7 +238,6 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                     <th className="px-6 py-3 font-semibold text-right">Penal.</th>
                     <th className="px-6 py-3 font-semibold text-right">Saldo</th>
                     <th className="px-6 py-3 font-semibold text-right">Efic.</th>
-                    <th className="px-6 py-3 font-semibold text-right">Bônus</th>
                     <th className="px-6 py-3 font-semibold text-center">PDF</th>
                   </tr>
                 </thead>
@@ -262,11 +260,6 @@ const RelatoriosView: React.FC<RelatoriosViewProps> = ({ tasks, ledger, users, c
                       <td className="px-6 py-3 text-right text-erro font-medium">{r.penalidades}</td>
                       <td className="px-6 py-3 text-right font-titulo text-base text-tinta">{r.saldo}</td>
                       <td className="px-6 py-3 text-right text-stone-600">{Math.round(r.eficiencia)}%</td>
-                      <td className="px-6 py-3 text-right">
-                        {r.elegivel
-                          ? <span className="font-semibold text-emerald-600">+{r.bonus}</span>
-                          : <span className="text-stone-300">—</span>}
-                      </td>
                       <td className="px-6 py-3 text-center">
                         <button onClick={() => gerarPdfColab(r)} title="Gerar PDF individual"
                           className="inline-flex items-center justify-center p-1.5 rounded-lg text-stone-400 hover:text-marca hover:bg-marca/10">
