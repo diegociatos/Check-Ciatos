@@ -204,7 +204,7 @@ const PessoaisPanel: React.FC<{
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <p className="text-sm text-stone-500 max-w-lg">
-          Anote aqui os serviços que você mesmo organiza. Eles <strong>não valem pontos</strong> — servem para sua gestão e para o seu gestor enxergar seu trabalho. Se ele quiser reconhecer, ele atribui os pontos.
+          Registre aqui os serviços que você mesmo organiza. Elas <strong>começam sem pontos</strong>: ao concluir, o gestor pode <strong>reconhecer o trabalho e atribuir pontos</strong> (em <em>Central de auditoria → “Pessoais a valorar”</em>).
         </p>
         <Btn onClick={() => setCriando(true)}><Plus size={16} /> Nova tarefa</Btn>
       </div>

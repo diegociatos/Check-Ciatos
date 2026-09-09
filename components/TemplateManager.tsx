@@ -344,23 +344,23 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-               <h3 className="font-titulo text-xl text-tinta">{editingId ? 'Editar modelo' : 'Novo modelo de tarefa'}</h3>
+               <h3 className="font-titulo text-xl text-tinta">{editingId ? 'Editar tarefa' : 'Nova tarefa'}</h3>
                <button onClick={fecharModal} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                
                <div className="bg-marca/5 p-6 rounded-2xl border border-marca/10 space-y-4">
                   <div className="flex items-center gap-3 text-[10px] font-black text-marca uppercase tracking-[0.2em] mb-2">
-                    <Calendar size={14} /> Fluxo de Datas Previsto
+                    <Calendar size={14} /> Quando vai acontecer
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Solicitação (Hoje)</p>
+                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Hoje</p>
                       <p className="text-sm font-black text-[#111111]">{today.split('-').reverse().join('/')}</p>
                     </div>
                     <ArrowRightLeft size={16} className="text-marca opacity-30" />
                     <div className="flex-1 text-right">
-                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Execução (Prazo)</p>
+                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Prazo de entrega</p>
                       <p className="text-sm font-black text-marca">{previewDataExecucao}</p>
                     </div>
                   </div>
@@ -368,7 +368,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
 
                <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título da Tarefa Corporativa</label>
+                    <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Título da tarefa</label>
                     <input required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-4 focus:ring-marca/10" placeholder="Ex: Conciliação de Contas" value={formData.Titulo} onChange={e => setFormData({...formData, Titulo: e.target.value})} />
                     {!editingId && similares.length > 0 && (
                       <div className="mt-2 bg-amber-50 border border-amber-200 rounded-2xl p-3">
@@ -400,7 +400,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Responsável pela Tarefa</label>
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Quem vai fazer</label>
                       <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none" value={formData.Responsavel} onChange={e => setFormData({...formData, Responsavel: e.target.value})}>
                         <option value="">Vincular responsável...</option>
                         {masterList.length > 0 && (
@@ -435,7 +435,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Tipo de Recorrência</label>
+                      <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Repetição</label>
                       <select className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-black uppercase outline-none" value={formData.Recorrencia} onChange={e => setFormData({...formData, Recorrencia: e.target.value as RecurrenceType})}>
                         <option value={RecurrenceType.DIARIA}>Diária</option>
                         <option value={RecurrenceType.SEMANAL}>Semanal</option>
