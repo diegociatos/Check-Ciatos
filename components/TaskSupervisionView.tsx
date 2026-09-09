@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Task, User, TaskStatus, UserRole, TaskPriority } from '../types';
 import {
-  Inbox, Clock, RotateCcw, Copy, ImageOff, Star, ListChecks, Layers,
+  Inbox, RotateCcw, Copy, ImageOff, Star, Layers,
   Trash2, Check, X, XCircle, Send, Paperclip, MessageSquare, ShieldCheck, CalendarClock,
 } from 'lucide-react';
 import { getTodayStr } from '../store';
@@ -99,9 +99,9 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
     [base, tab, duplicateIds]
   );
 
+  // Central de auditoria foca no que exige AÇÃO (conferir, atrasadas, refazer, valorar).
+  // "A fazer" e "Em andamento" saíram daqui — ficam no Quadro (Kanban) e no Calendário.
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'A_FAZER', label: 'A fazer', icon: <ListChecks size={15} /> },
-    { key: 'EM_ANDAMENTO', label: 'Em andamento', icon: <Clock size={15} /> },
     { key: 'AGUARDANDO', label: 'A conferir', icon: <Inbox size={15} /> },
     { key: 'ATRASADAS', label: 'Atrasadas', icon: <CalendarClock size={15} /> },
     { key: 'REPROVADAS', label: 'Refazer', icon: <RotateCcw size={15} /> },
@@ -155,10 +155,12 @@ const TaskSupervisionView: React.FC<TaskSupervisionViewProps> = ({ tasks, users,
             <option value="TODOS">Todos os colaboradores</option>
             {collaborators.map(u => <option key={u.Email} value={u.Email}>{u.Nome}</option>)}
           </select>
-          <select className={selectCls} value={fTime} onChange={e => setFTime(e.target.value)}>
-            <option value="TODOS">Todos os times</option>
-            {times.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+          {times.length > 0 && (
+            <select className={selectCls} value={fTime} onChange={e => setFTime(e.target.value)}>
+              <option value="TODOS">Todos os times</option>
+              {times.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
           <select className={selectCls} value={fPrio} onChange={e => setFPrio(e.target.value)}>
             <option value="TODOS">Todas as prioridades</option>
             {[TaskPriority.URGENTE, TaskPriority.ALTA, TaskPriority.MEDIA, TaskPriority.BAIXA].map(p => <option key={p} value={p}>{p}</option>)}
