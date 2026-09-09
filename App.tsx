@@ -23,6 +23,7 @@ import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
 import MonthlyClosingView from './components/MonthlyClosingView.tsx';
 import PlanoArmazenamentoView from './components/PlanoArmazenamentoView.tsx';
 import CalendarioView from './components/CalendarioView.tsx';
+import KanbanView from './components/KanbanView.tsx';
 import { planoPermiteAnexos } from './lib/storage.ts';
 
 const App: React.FC = () => {
@@ -153,6 +154,19 @@ const App: React.FC = () => {
             currentUser={currentUser}
             users={users}
             currentUserRole={currentUser.Role}
+          />
+        );
+
+      case 'KANBAN':
+        return (
+          <KanbanView
+            tasks={visibleTasks}
+            currentUser={currentUser}
+            users={users}
+            currentUserRole={currentUser.Role}
+            onDefinirAndamento={store.definirAndamento}
+            onComplete={store.completeTask}
+            permiteAnexos={planoPermiteAnexos(store.empresaAtual?.Plano)}
           />
         );
 

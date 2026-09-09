@@ -252,4 +252,5 @@ export type ViewType =
   | 'EXECUTIVE_DASHBOARD'
   | 'MONTHLY_CLOSING'
   | 'PLANO'
-  | 'CALENDARIO';
+  | 'CALENDARIO'
+  | 'KANBAN';
