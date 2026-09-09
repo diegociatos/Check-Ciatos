@@ -12,7 +12,7 @@ interface MinhasTarefasViewProps {
   users: User[];
   onComplete: (taskId: string, note: string, proof: string) => void;
   currentUserRole: UserRole;
-  onCriarPessoal: (titulo: string, descricao?: string, dataLimite?: string) => Promise<any>;
+  onCriarPessoal: (titulo: string, descricao?: string, dataLimite?: string, pontos?: number) => Promise<any>;
   onConcluirPessoal: (taskId: string) => Promise<void>;
   onReabrirPessoal: (taskId: string) => Promise<void>;
   onExcluirPessoal: (taskId: string) => Promise<void>;
@@ -161,6 +161,7 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
           onConcluir={onConcluirPessoal}
           onReabrir={onReabrirPessoal}
           onExcluir={onExcluirPessoal}
+          ehGestao={podeTransferir}
         />
       )}
     </div>
@@ -172,15 +173,17 @@ const MinhasTarefasView: React.FC<MinhasTarefasViewProps> = ({
 // ---------------------------------------------------------------------------
 const PessoaisPanel: React.FC<{
   pessoais: Task[];
-  onCriar: (titulo: string, descricao?: string, dataLimite?: string) => Promise<any>;
+  onCriar: (titulo: string, descricao?: string, dataLimite?: string, pontos?: number) => Promise<any>;
   onConcluir: (taskId: string) => Promise<void>;
   onReabrir: (taskId: string) => Promise<void>;
   onExcluir: (taskId: string) => Promise<void>;
-}> = ({ pessoais, onCriar, onConcluir, onReabrir, onExcluir }) => {
+  ehGestao: boolean;
+}> = ({ pessoais, onCriar, onConcluir, onReabrir, onExcluir, ehGestao }) => {
   const [criando, setCriando] = useState(false);
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [prazo, setPrazo] = useState(getTodayStr());
+  const [pontos, setPontos] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const { pendentes: excluindo, remover: excluir } = useUndoableDelete((id) => { void onExcluir(id); }, 'Tarefa');
 
@@ -188,8 +191,8 @@ const PessoaisPanel: React.FC<{
     if (!titulo.trim()) { showToast({ message: 'Dê um nome à tarefa.', tone: 'erro' }); return; }
     setSalvando(true);
     try {
-      await onCriar(titulo.trim(), descricao.trim() || undefined, prazo || undefined);
-      setTitulo(''); setDescricao(''); setPrazo(getTodayStr()); setCriando(false);
+      await onCriar(titulo.trim(), descricao.trim() || undefined, prazo || undefined, ehGestao ? pontos : undefined);
+      setTitulo(''); setDescricao(''); setPrazo(getTodayStr()); setPontos(0); setCriando(false);
       showToast({ message: 'Tarefa pessoal criada.', tone: 'sucesso' });
     } catch (e: any) {
       showToast({ message: e?.message || 'Não foi possível criar.', tone: 'erro' });
@@ -296,6 +299,23 @@ const PessoaisPanel: React.FC<{
                 <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Prazo</label>
                 <input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca/20" />
               </div>
+              {ehGestao && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Pontos <span className="text-stone-300 normal-case">(opcional — creditados ao concluir)</span></label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[1, 5, 10].map((v) => (
+                      <button key={v} type="button" onClick={() => setPontos(v)}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${pontos === v ? 'bg-marca border-marca text-white' : 'bg-stone-50 border-stone-200 text-stone-500 hover:border-marca/30'}`}>{v}</button>
+                    ))}
+                    <span className="text-[11px] text-stone-400 pl-1">ou digite:</span>
+                    <input type="number" min={0} step={1} value={pontos}
+                      onChange={(e) => { const n = parseInt(e.target.value, 10); setPontos(Number.isNaN(n) ? 0 : Math.max(0, n)); }}
+                      className="w-20 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-marca/20" />
+                    <span className="text-[11px] text-stone-400">pts</span>
+                  </div>
+                  <p className="text-[11px] text-stone-400 mt-1.5">Deixe 0 para valorar depois. Só gestão pode pontuar na criação.</p>
+                </div>
+              )}
               <div className="flex gap-2 pt-1">
                 <Btn variant="secondary" onClick={() => setCriando(false)} full>Cancelar</Btn>
                 <Btn onClick={salvar} loading={salvando} full>Criar tarefa</Btn>

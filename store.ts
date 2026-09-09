@@ -735,8 +735,8 @@ export const useStore = () => {
 
   // ==================== TAREFAS PESSOAIS ====================
   // Colaborador cria/gerencia as próprias (0 pt); só o master valora.
-  const criarTarefaPessoal = useCallback(async (titulo: string, descricao?: string, dataLimite?: string) => {
-    const novo = await tasksApi.criarPessoal(titulo, descricao, dataLimite);
+  const criarTarefaPessoal = useCallback(async (titulo: string, descricao?: string, dataLimite?: string, pontos?: number) => {
+    const novo = await tasksApi.criarPessoal(titulo, descricao, dataLimite, pontos);
     if (novo) {
       setTasks(prev => [...prev, {
         ID: novo.ID,

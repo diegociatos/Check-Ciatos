@@ -206,9 +206,9 @@ export const tasksApi = {
   },
 
   // ---- Tarefas pessoais (colaborador cria p/ si; só o master valora) ----
-  criarPessoal: async (titulo: string, descricao?: string, dataLimite?: string) => {
+  criarPessoal: async (titulo: string, descricao?: string, dataLimite?: string, pontos?: number) => {
     const { data, error } = await supabase.rpc('criar_tarefa_pessoal', {
-      p_titulo: titulo, p_descricao: descricao ?? null, p_data_limite: dataLimite ?? null,
+      p_titulo: titulo, p_descricao: descricao ?? null, p_data_limite: dataLimite ?? null, p_pontos: pontos ?? 0,
     });
     if (error) throwSb(error, 'Erro ao criar tarefa pessoal');
     return (data as any)?.task;
