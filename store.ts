@@ -619,18 +619,27 @@ export const useStore = () => {
     // (Pendente/Atrasada) — assim a alteração de pontos/título aparece na Supervisão.
     // Não toca em tarefas em aprovação ou concluídas (não altera o que já está sendo avaliado).
     const abertos = [TaskStatus.PENDENTE, TaskStatus.ATRASADA];
-    const campos = {
+    const campos: any = {
       Titulo: data.Titulo,
       Descricao: data.Descricao,
       Responsavel: data.Responsavel,
       Prioridade: data.Prioridade,
       PontosValor: data.PontosValor,
     };
+    // Data Específica (avulsa): se o prazo do modelo mudar, move também a tarefa já
+    // gerada (senão ela fica com a data velha e aparece "atrasada" indevidamente).
+    // Reabre p/ Pendente para o status recalcular pela nova data.
+    const ehEspecifica = String(data.Recorrencia || '').toLowerCase().includes('espec');
+    const novaData = ehEspecifica && data.DataInicio ? String(data.DataInicio).slice(0, 10) : undefined;
+    if (novaData) { campos.DataLimite = novaData; campos.Status = TaskStatus.PENDENTE; }
+
     const alvo = tasks.filter(t => t.TemplateID === id && abertos.includes(t.Status));
     if (alvo.length) {
       await Promise.all(alvo.map(t => tasksApi.update(t.ID, campos).catch(() => {})));
+      const camposLocal: any = { ...campos };
+      if (novaData) camposLocal.DataLimite_Date = novaData;
       setTasks(prev => prev.map(t =>
-        (t.TemplateID === id && abertos.includes(t.Status)) ? { ...t, ...campos } : t
+        (t.TemplateID === id && abertos.includes(t.Status)) ? { ...t, ...camposLocal } : t
       ));
     }
   }, [tasks]);
