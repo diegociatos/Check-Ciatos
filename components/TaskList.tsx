@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Task, TaskStatus, UserRole, ConferenciaStatus } from '../types';
 import { X, Send, CheckCircle2, Clock, RotateCcw, ShieldCheck, ShieldAlert, ShieldEllipsis, CheckSquare, PartyPopper, Paperclip, FileText, ArrowRightLeft } from 'lucide-react';
 import { validarArquivo, uploadEvidencia, MAX_MB } from '../lib/storage';
@@ -28,6 +28,39 @@ interface TaskListProps {
 
 const RED = '#8B1B1F';
 
+// Descrição da tarefa com "Ver mais/Ver menos". Detecta o corte real medindo se o
+// texto transborda as 2 linhas (scrollHeight > clientHeight) — assim o botão aparece
+// sempre que houver texto escondido, mesmo em cards estreitos onde poucas palavras já
+// estouram 2 linhas (contar caracteres não funcionava nesses casos).
+const Descricao: React.FC<{ texto: string }> = ({ texto }) => {
+  const [aberta, setAberta] = useState(false);
+  const [truncado, setTruncado] = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => {
+    const medir = () => {
+      const el = ref.current;
+      if (el && !aberta) setTruncado(el.scrollHeight > el.clientHeight + 1);
+    };
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, [texto, aberta]);
+  return (
+    <div className="mt-1.5">
+      <p ref={ref} className={`text-sm text-stone-500 whitespace-pre-line ${aberta ? '' : 'line-clamp-2'}`}>{texto}</p>
+      {(truncado || aberta) && (
+        <button
+          type="button"
+          onClick={() => setAberta(a => !a)}
+          className="mt-1 text-xs font-semibold text-marca hover:underline"
+        >
+          {aberta ? 'Ver menos' : 'Ver mais'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamento, currentUserEmail, permiteAnexos = true, onTransferir, transferCandidates = [], podeTransferir = false }) => {
   const hoje = getTodayStr();
   const [selectedTask, setSelectedTask] = useState<EnrichedTask | null>(null);
@@ -39,12 +72,6 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
   const [transferTask, setTransferTask] = useState<EnrichedTask | null>(null);
   const [transferTo, setTransferTo] = useState('');
   const [transferindo, setTransferindo] = useState(false);
-  const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
-  const alternarExpandir = (id: string) => setExpandidas(prev => {
-    const nova = new Set(prev);
-    nova.has(id) ? nova.delete(id) : nova.add(id);
-    return nova;
-  });
 
   const confirmarTransferencia = async () => {
     if (!transferTask || !transferTo || transferindo || !onTransferir) return;
@@ -133,24 +160,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                   </div>
 
                   <h4 className="text-lg text-stone-900 leading-snug mt-4">{task.Titulo}</h4>
-                  {task.Descricao && (() => {
-                    const aberta = expandidas.has(task.ID);
-                    const podeExpandir = task.Descricao.length > 90;
-                    return (
-                      <div className="mt-1.5">
-                        <p className={`text-sm text-stone-500 whitespace-pre-line ${aberta ? '' : 'line-clamp-2'}`}>{task.Descricao}</p>
-                        {podeExpandir && (
-                          <button
-                            type="button"
-                            onClick={() => alternarExpandir(task.ID)}
-                            className="mt-1 text-xs font-semibold text-marca hover:underline"
-                          >
-                            {aberta ? 'Ver menos' : 'Ver mais'}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {task.Descricao && <Descricao texto={task.Descricao} />}
 
                   <div className="mt-5 pt-4 border-t border-stone-100 flex items-center gap-2 text-sm text-stone-500">
                     <Clock size={15} className="text-stone-400" />
