@@ -384,7 +384,13 @@ export const useStore = () => {
       if (email) setCurrentUserEmail(prev => prev ?? email);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) setCurrentUserEmail(null);
+      // A sessão do Supabase é a fonte da verdade sobre quem está logado.
+      // Se houver sessão, sincroniza o email atual com o dela — isso corrige o
+      // caso de um link de convite/recuperação aberto num navegador que já tinha
+      // OUTRA sessão (o email antigo salvo divergia do usuário do link, e o app
+      // caía no login em vez de mostrar a criação de senha).
+      const email = session?.user?.email ?? null;
+      setCurrentUserEmail(prev => (prev === email ? prev : email));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
