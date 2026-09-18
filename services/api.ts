@@ -2,7 +2,7 @@
 // Mantém a mesma "cara" de antes (authApi/tasksApi/templatesApi/ledgerApi) para o store.ts
 // continuar chamando igual. A lógica de servidor vive em RPCs (SECURITY DEFINER) e numa
 // Edge Function de administração de usuários.
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseConfigurado } from '../lib/supabase';
 
 function throwSb(error: { message: string } | null, fallback = 'Erro inesperado'): never {
   throw new Error(error?.message || fallback);
@@ -16,6 +16,7 @@ async function sessionEmail(): Promise<string | null> {
 // ==================== AUTH ====================
 export const authApi = {
   login: async (email: string, senha: string) => {
+    if (!supabaseConfigurado) throw new Error('O acesso ainda não está configurado neste ambiente. Fale com o administrador.');
     const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password: senha });
     if (error) {
       // Distingue credencial inválida (status 400) de falha de conexão/servidor

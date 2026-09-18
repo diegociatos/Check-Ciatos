@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Task, ScoreLedger, UserRole, TaskStatus, UserStatus, TaskPriority, ConferenciaStatus, ScoreType, TaskTemplate, RecurrenceType, BotLog, Empresa, BonusRules, DEFAULT_BONUS_RULES, MonthlyClosing } from './types';
 import { authApi, tasksApi, templatesApi, ledgerApi, empresasApi, bonusRulesApi, monthlyClosingsApi, emailApi } from './services/api';
-import { supabase } from './lib/supabase';
+import { supabase, supabaseConfigurado } from './lib/supabase';
 import { gerarNotificacoes } from './lib/notifications';
 import { showToast } from './components/ui';
 
@@ -93,9 +93,10 @@ export const useStore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('ciatos_current_user');
-  });
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(!supabaseConfigurado);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const retryLoad = useCallback(() => setLoadAttempt(n => n + 1), []);
 
   // Carrega dados do backend na inicialização e SEMPRE que o usuário logado muda.
   // Isso é essencial: a RLS filtra as tabelas pela sessão do Supabase. Se a carga
@@ -103,12 +104,24 @@ export const useStore = () => {
   // vazia — e ao logar os dados nunca apareceriam. Recarregar quando currentUserEmail
   // muda garante que, logo após o login, os dados sejam buscados já com a sessão ativa.
   useEffect(() => {
+    if (!sessionReady) return;
+    if (!currentUserEmail) {
+      setBaseUsers([]); setTasks([]); setTemplates([]); setLedger([]);
+      setEmpresas([]); setBonusRulesAll([]); setClosingsAll([]); setActiveEmpresa(null);
+      setError(null); setLoading(false);
+      return;
+    }
     // Timeout de segurança: se alguma request travar (rede/sessão/proxy preso — a
     // Promise nunca resolve nem rejeita), libera a interface em vez de deixar o
     // usuário preso em "Carregando…" para sempre.
     let finalizado = false;
+    let cancelled = false;
     const timeoutSeguranca = window.setTimeout(() => {
-      if (!finalizado) { console.warn('⏱️ Carga excedeu o tempo — liberando a interface.'); setLoading(false); }
+      if (!finalizado && !cancelled) {
+        cancelled = true;
+        setError('O carregamento demorou mais que o esperado. Verifique sua conexão e tente novamente.');
+        setLoading(false);
+      }
     }, 12000);
     const loadData = async () => {
       try {
@@ -117,14 +130,18 @@ export const useStore = () => {
 
         // Carregar dados em paralelo
         const [usersData, tasksData, templatesData, ledgerData, empresasData, bonusRulesData, closingsData] = await Promise.all([
-          authApi.getUsers().catch(() => []),
-          tasksApi.getAll().catch(() => []),
-          templatesApi.getAll().catch(() => []),
-          ledgerApi.getAll().catch(() => []),
-          empresasApi.getAll().catch(() => []),
-          bonusRulesApi.getAll().catch(() => []),
-          monthlyClosingsApi.getAll().catch(() => []),
+          authApi.getUsers(),
+          tasksApi.getAll(),
+          templatesApi.getAll(),
+          ledgerApi.getAll(),
+          empresasApi.getAll(),
+          bonusRulesApi.getAll(),
+          monthlyClosingsApi.getAll(),
         ]);
+        if (cancelled) return;
+        if (!usersData.some((u: any) => u.Email?.toLowerCase() === currentUserEmail.toLowerCase())) {
+          throw new Error('Perfil indisponível');
+        }
 
         setEmpresas(empresasData as Empresa[]);
         setBonusRulesAll((bonusRulesData as any[]).map(normalizeBonusRules));
@@ -207,18 +224,19 @@ export const useStore = () => {
 
         console.log('✅ Dados carregados do backend');
       } catch (err) {
+        if (cancelled) return;
         console.error('Erro ao carregar dados:', err);
         setError('Falha ao carregar dados do servidor');
       } finally {
         finalizado = true;
         window.clearTimeout(timeoutSeguranca);
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadData();
-    return () => window.clearTimeout(timeoutSeguranca);
-  }, [currentUserEmail]);
+    return () => { cancelled = true; window.clearTimeout(timeoutSeguranca); };
+  }, [currentUserEmail, sessionReady, loadAttempt]);
 
   // ===== Contexto multi-empresa =====
   // A plataforma (dono do sistema) enxerga todas as empresas; ao "entrar" numa empresa,
@@ -379,10 +397,8 @@ export const useStore = () => {
 
   // Sincroniza a sessão do Supabase com o email atual (cobre refresh e logout em outra aba)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const email = data.session?.user?.email;
-      if (email) setCurrentUserEmail(prev => prev ?? email);
-    });
+    if (!supabaseConfigurado) return;
+    // INITIAL_SESSION também cobre refresh; uma única fonte evita corridas entre callbacks.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       // A sessão do Supabase é a fonte da verdade sobre quem está logado.
       // Se houver sessão, sincroniza o email atual com o dela — isso corrige o
@@ -391,6 +407,7 @@ export const useStore = () => {
       // caía no login em vez de mostrar a criação de senha).
       const email = session?.user?.email ?? null;
       setCurrentUserEmail(prev => (prev === email ? prev : email));
+      setSessionReady(true);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -728,6 +745,9 @@ export const useStore = () => {
         Tentativas: t.Tentativas || 0,
         empresa_id: t.empresa_id,
         Pessoal: !!t.Pessoal,
+        Andamento: t.Andamento || 'Pendente',
+        DataGeracao: t.DataGeracao || '',
+        DataCriacao: t.DataCriacao || '',
       })));
 
       setLedger(ledgerData.map((l: any) => ({
@@ -737,9 +757,12 @@ export const useStore = () => {
         Pontos: l.Pontos,
         Tipo: l.Tipo === 'GANHO' ? ScoreType.GANHO : ScoreType.PENALIDADE,
         Descricao: l.Descricao,
+        empresa_id: l.empresa_id,
       })));
     } catch (err) {
       console.error('Erro ao atualizar dados:', err);
+      showToast({ message: 'Não foi possível atualizar os dados. Tente novamente.', tone: 'erro' });
+      throw err;
     }
   }, []);
 
@@ -797,18 +820,15 @@ export const useStore = () => {
   const auditAndFixTasks = useCallback(async () => {
     console.log('🤖 Iniciando auditoria de tarefas...');
     const today = getTodayStr();
-    let fixedCount = 0;
+    const fixedCount = 0;
     
     // Verificar tarefas atrasadas
-    const overdueTasks = tasks.filter(t => 
+    const overdueTasks = scopedTasks.filter(t =>
       t.Status === TaskStatus.PENDENTE && 
       t.DataLimite < today
     );
     
-    for (const task of overdueTasks) {
-      console.log(`⚠️ Tarefa atrasada encontrada: ${task.Titulo}`);
-      fixedCount++;
-    }
+
     
     // Adicionar log de auditoria
     const logEntry: BotLog = {
@@ -829,7 +849,7 @@ export const useStore = () => {
     await refreshData();
 
     return { overdueTasks: overdueTasks.length, fixed: fixedCount };
-  }, [tasks, currentUserEmail, refreshData]);
+  }, [scopedTasks, currentUserEmail, refreshData]);
 
   // ==================== EMPRESAS (plataforma) ====================
   const createEmpresa = useCallback(async (
@@ -927,7 +947,7 @@ export const useStore = () => {
     bonusRules, saveBonusRules,
     closings, salvarFechamento, setStatusFechamento,
     notifications, notifNaoLidas, marcarNotificacoesLidas,
-    loading, error, refreshData, auditAndFixTasks,
+    loading, error, retryLoad, refreshData, auditAndFixTasks,
     login, logout, changePassword, definirNovaSenha, resetUserPassword, toggleUserStatus, deleteUser, addUser, updateUser, changeUserEmail,
     updateProfile, completeTask, definirAndamento, transferirTarefa, auditTask, deleteTask,
     addTemplate, updateTemplate, toggleTemplate, deleteTemplate, generateTaskFromTemplate,

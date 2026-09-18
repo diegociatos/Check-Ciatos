@@ -1,29 +1,29 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { useStore, getTodayStr } from './store.ts';
 import { ViewType, UserRole, TaskStatus } from './types.ts';
 import Login from './components/Login.tsx';
 import PrimeiroAcesso from './components/PrimeiroAcesso.tsx';
 import Layout from './components/Layout.tsx';
-import Dashboard from './components/Dashboard.tsx';
-import MyScoreView from './components/MyScoreView.tsx';
-import DeliveryChecklist from './components/DeliveryChecklist.tsx';
-import ManageUsersView from './components/ManageUsersView.tsx';
-import TemplateManager from './components/TemplateManager.tsx';
-import TaskSupervisionView from './components/TaskSupervisionView.tsx';
-import HelpCenterView from './components/HelpCenterView.tsx';
-import BotHistoryView from './components/BotHistoryView.tsx';
-import MyProfileView from './components/MyProfileView.tsx';
-import PlatformClientsView from './components/PlatformClientsView.tsx';
-import EquipeView from './components/EquipeView.tsx';
-import MinhasTarefasView from './components/MinhasTarefasView.tsx';
-import RelatoriosView from './components/RelatoriosView.tsx';
-import BonusRulesView from './components/BonusRulesView.tsx';
-import ExecutiveDashboardView from './components/ExecutiveDashboardView.tsx';
-import MonthlyClosingView from './components/MonthlyClosingView.tsx';
-import PlanoArmazenamentoView from './components/PlanoArmazenamentoView.tsx';
-import CalendarioView from './components/CalendarioView.tsx';
-import KanbanView from './components/KanbanView.tsx';
+const Dashboard = lazy(() => import('./components/Dashboard.tsx'));
+const MyScoreView = lazy(() => import('./components/MyScoreView.tsx'));
+const DeliveryChecklist = lazy(() => import('./components/DeliveryChecklist.tsx'));
+const ManageUsersView = lazy(() => import('./components/ManageUsersView.tsx'));
+const TemplateManager = lazy(() => import('./components/TemplateManager.tsx'));
+const TaskSupervisionView = lazy(() => import('./components/TaskSupervisionView.tsx'));
+const HelpCenterView = lazy(() => import('./components/HelpCenterView.tsx'));
+const BotHistoryView = lazy(() => import('./components/BotHistoryView.tsx'));
+const MyProfileView = lazy(() => import('./components/MyProfileView.tsx'));
+const PlatformClientsView = lazy(() => import('./components/PlatformClientsView.tsx'));
+const EquipeView = lazy(() => import('./components/EquipeView.tsx'));
+const MinhasTarefasView = lazy(() => import('./components/MinhasTarefasView.tsx'));
+const RelatoriosView = lazy(() => import('./components/RelatoriosView.tsx'));
+const BonusRulesView = lazy(() => import('./components/BonusRulesView.tsx'));
+const ExecutiveDashboardView = lazy(() => import('./components/ExecutiveDashboardView.tsx'));
+const MonthlyClosingView = lazy(() => import('./components/MonthlyClosingView.tsx'));
+const PlanoArmazenamentoView = lazy(() => import('./components/PlanoArmazenamentoView.tsx'));
+const CalendarioView = lazy(() => import('./components/CalendarioView.tsx'));
+const KanbanView = lazy(() => import('./components/KanbanView.tsx'));
 import { planoPermiteAnexos } from './lib/storage.ts';
 
 const App: React.FC = () => {
@@ -62,6 +62,16 @@ const App: React.FC = () => {
   }
 
   // Early return for authentication
+  if (store.error) {
+    return <main className="min-h-dvh flex items-center justify-center bg-fundo p-6">
+      <section role="alert" className="max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center">
+        <h1 className="text-2xl text-tinta">Não foi possível carregar seus dados</h1>
+        <p className="my-4 text-stone-600">{store.error}</p>
+        <button onClick={store.retryLoad} className="rounded-xl bg-marca px-5 py-3 text-white">Tentar novamente</button>
+        <button onClick={store.logout} className="block mx-auto mt-4 p-2 text-marca">Voltar ao login</button>
+      </section>
+    </main>;
+  }
   if (!store.currentUser) {
     return <Login onLogin={store.login} />;
   }
@@ -251,7 +261,7 @@ const App: React.FC = () => {
         return <HelpCenterView currentUser={currentUser} />;
 
       case 'BOT_HISTORY':
-        return <BotHistoryView logs={botLog} />;
+        return <BotHistoryView logs={botLog} onAudit={store.auditAndFixTasks} />;
 
       default:
         return <div className="p-8 text-center text-gray-400">Página em desenvolvimento</div>;
@@ -274,7 +284,9 @@ const App: React.FC = () => {
       activeEmpresa={store.activeEmpresa}
       onSwitchEmpresa={store.setActiveEmpresa}
     >
-      {renderView()}
+      <Suspense fallback={<div role="status" className="p-8 text-center text-stone-600">Carregando tela…</div>}>
+        {renderView()}
+      </Suspense>
     </Layout>
   );
 };

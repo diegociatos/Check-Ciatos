@@ -25,3 +25,4 @@ dist-ssr
 
 # Cache local do wrangler (deploy Cloudflare Pages)
 .wrangler/
+.npm-cache/

@@ -1,0 +1,87 @@
+
+> checklist-diário---grupo-ciatos@0.0.0 check
+> npm run typecheck && npm run lint
+
+
+> checklist-diário---grupo-ciatos@0.0.0 typecheck
+> tsc --noEmit
+
+
+> checklist-diário---grupo-ciatos@0.0.0 lint
+> eslint .
+
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\App.tsx
+  41:6  warning  React Hook useMemo has a missing dependency: 'store'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  48:6  warning  React Hook useMemo has a missing dependency: 'store'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\BonusRulesView.tsx
+  2:43  warning  'TaskPriority' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\BotHistoryView.tsx
+  16:3  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\CompletedTasksView.tsx
+  4:10  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4:23  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  4:81  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  4:96  warning  'UserIcon' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\DeliveryChecklist.tsx
+  41:10   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  41:23   warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  41:45   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  41:52   warning  'User' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  41:64   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  41:87   warning  'History' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  41:96   warning  'MessageSquare' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  41:137  warning  'Check' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\ExecutiveDashboardView.tsx
+   73:5  warning  React Hook useMemo has a missing dependency: 'noMes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  103:6  warning  React Hook useMemo has a missing dependency: 'noMes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\HelpCenterView.tsx
+   2:27  warning  'useEffect' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   6:3   warning  'Target' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   9:3   warning  'Key' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  10:3   warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\ManageUsersView.tsx
+  6:24  warning  'Lock' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\MonthlyClosingView.tsx
+  76:6  warning  React Hook useMemo has a missing dependency: 'noMes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\PlanoArmazenamentoView.tsx
+  39:6  warning  React Hook useEffect has a missing dependency: 'empresa'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\RelatoriosView.tsx
+    2:58  warning  'UserRole' is defined but never used. Allowed unused vars must match /^_/u                                  @typescript-eslint/no-unused-vars
+   92:6   warning  React Hook useMemo has a missing dependency: 'noPeriodo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  108:5   warning  React Hook useMemo has a missing dependency: 'noPeriodo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\TaskSupervisionView.tsx
+  95:58  warning  React Hook useMemo has a missing dependency: 'passaFiltros'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  99:5   warning  React Hook useMemo has a missing dependency: 'predicados'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\components\TemplateManager.tsx
+    5:34   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+    5:81   warning  'CheckSquare' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+    5:121  warning  'Info' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+    5:127  warning  'ListChecks' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   27:10   warning  'duplicateWarning' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  168:11   warning  'found' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\constants.tsx
+  14:3  warning  'Coins' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\diego\.codex\.chatgpt-projects\g-p-6a4f90b3a9cc819185355d438f7388d4\Check-Ciatos\store.ts
+    2:83  warning  'ConferenciaStatus' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+  244:87  warning  React Hook useMemo has a missing dependency: 'emScopo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  245:79  warning  React Hook useMemo has a missing dependency: 'emScopo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  246:87  warning  React Hook useMemo has a missing dependency: 'emScopo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  247:81  warning  React Hook useMemo has a missing dependency: 'emScopo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  257:82  warning  React Hook useMemo has a missing dependency: 'emScopo'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 43 problems (0 errors, 43 warnings)

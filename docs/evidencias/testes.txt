@@ -1,0 +1,50 @@
+
+> checklist-diário---grupo-ciatos@0.0.0 test
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: webhook rejects events when its secret is not configured
+ok 1 - webhook rejects events when its secret is not configured
+  ---
+  duration_ms: 1.8622
+  type: 'test'
+  ...
+# Subtest: webhook rejects missing and invalid credentials
+ok 2 - webhook rejects missing and invalid credentials
+  ---
+  duration_ms: 0.2938
+  type: 'test'
+  ...
+# Subtest: webhook accepts only the configured token
+ok 3 - webhook accepts only the configured token
+  ---
+  duration_ms: 0.2184
+  type: 'test'
+  ...
+# Subtest: entrypoint rejects before privileged access: 503/forged
+ok 4 - entrypoint rejects before privileged access: 503/forged
+  ---
+  duration_ms: 274.4519
+  type: 'test'
+  ...
+# Subtest: entrypoint rejects before privileged access: 401/null
+ok 5 - entrypoint rejects before privileged access: 401/null
+  ---
+  duration_ms: 90.319
+  type: 'test'
+  ...
+# Subtest: entrypoint rejects before privileged access: 401/wrong
+ok 6 - entrypoint rejects before privileged access: 401/wrong
+  ---
+  duration_ms: 86.8611
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1907.194

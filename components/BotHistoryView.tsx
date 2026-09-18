@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { BotLog } from '../types';
-import { useStore } from '../store';
+import { showToast } from './ui';
 import { 
   Zap, 
   CheckCircle2, 
@@ -20,21 +20,21 @@ import {
 
 interface BotHistoryViewProps {
   logs: BotLog[];
+  onAudit: () => Promise<{ overdueTasks: number; fixed: number }>;
 }
 
-const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
+const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs, onAudit }) => {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
-  const { auditAndFixTasks } = useStore();
-  const [auditResult, setAuditResult] = useState<{found: number, updated: number, manualFixes: string[]} | null>(null);
+
+  const [auditResult, setAuditResult] = useState<{ overdueTasks: number; fixed: number } | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
 
-  const handleRunAudit = () => {
+  const handleRunAudit = async () => {
+    if (isAuditing) return;
     setIsAuditing(true);
-    setTimeout(() => {
-      const result = auditAndFixTasks();
-      setAuditResult(result);
-      setIsAuditing(false);
-    }, 1000);
+    try { setAuditResult(await onAudit()); }
+    catch { showToast({ message: 'Não foi possível verificar as tarefas. Tente novamente.', tone: 'erro' }); }
+    finally { setIsAuditing(false); }
   };
 
   const getRecommendation = (error?: string) => {
@@ -64,8 +64,8 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
                  <ShieldCheck size={20} />
               </div>
               <div>
-                 <h4 className="text-sm font-black uppercase tracking-widest text-[#111111]">Auditoria de Integridade (72h)</h4>
-                 <p className="text-[10px] text-gray-400 font-bold uppercase">Verificação de inconsistências off-by-one em tarefas geradas por modelo.</p>
+                 <h4 className="text-sm font-black uppercase tracking-widest text-[#111111]">Verificação de tarefas atrasadas</h4>
+                 <p className="text-[10px] text-gray-400 font-bold uppercase">Consulta das tarefas pendentes com prazo vencido na empresa selecionada.</p>
               </div>
            </div>
            <button 
@@ -78,33 +78,9 @@ const BotHistoryView: React.FC<BotHistoryViewProps> = ({ logs }) => {
            </button>
         </div>
 
-        {auditResult && (
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
-             <div className="text-center">
-                <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Encontradas (72h)</p>
-                <p className="text-2xl font-black text-[#111111]">{auditResult.found}</p>
-             </div>
-             <div className="text-center border-x border-gray-200">
-                <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Atualizadas Automaticamente</p>
-                <p className="text-2xl font-black text-green-600">{auditResult.updated}</p>
-             </div>
-             <div className="text-center">
-                <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Falhas (Correção Manual)</p>
-                <p className={`text-2xl font-black ${auditResult.manualFixes.length > 0 ? 'text-red-600' : 'text-gray-300'}`}>
-                   {auditResult.manualFixes.length}
-                </p>
-             </div>
-             
-             {auditResult.manualFixes.length > 0 && (
-                <div className="col-span-full pt-4 border-t border-gray-200">
-                   <p className="text-[10px] font-black text-red-600 uppercase mb-2">Relatório de Correção Manual Necessária:</p>
-                   <div className="bg-white p-4 rounded-xl border border-red-50 text-[9px] font-mono text-gray-600 space-y-1">
-                      {auditResult.manualFixes.map((f, i) => <p key={i}>• {f}</p>)}
-                   </div>
-                </div>
-             )}
-          </div>
-        )}
+        {auditResult && <p role="status" className="rounded-xl bg-stone-50 p-4 text-sm text-stone-700">
+          {auditResult.overdueTasks} tarefa(s) pendente(s) com prazo vencido. Esta verificação não altera tarefas nem pontuação.
+        </p>}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

@@ -56,7 +56,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
   const sections: NavigationSection[] = ['GERAL', 'GESTÃO', 'ADMINISTRAÇÃO'];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FFFFFF]">
+    <div className="flex h-screen h-dvh overflow-hidden bg-[#FFFFFF]">
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
@@ -143,6 +143,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button 
+              aria-label="Abrir menu"
+              aria-expanded={isSidebarOpen}
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
             >
@@ -158,6 +160,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
           
           <div className="flex items-center gap-4 relative">
              <button
+                aria-label="Notificações"
+                aria-expanded={isNotificationsOpen}
                 onClick={() => { const abrindo = !isNotificationsOpen; setIsNotificationsOpen(abrindo); setIsUserMenuOpen(false); if (abrindo) onOpenNotifications?.(); }}
                 className="p-2 hover:bg-gray-100 rounded-lg relative text-gray-500"
              >
@@ -208,7 +212,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, currentView, notifications
              )}
 
              {isNotificationsOpen && (
-               <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl z-[70] overflow-hidden">
+               <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-gray-200 shadow-2xl z-[70] overflow-hidden">
                  <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                    <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Notificações</h4>
                    <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400"><X size={16}/></button>

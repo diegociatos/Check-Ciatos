@@ -6,9 +6,10 @@
 //  - SUBSCRIPTION_DELETED / SUBSCRIPTION_INACTIVATED:
 //      * PLANO   -> suspende a empresa.
 //      * MEMÓRIA -> cancela o pacote e devolve os 500 MB.
-// Segurança: valida o header 'asaas-access-token' contra ASAAS_WEBHOOK_TOKEN (se definido).
+// Segurança: valida o header 'asaas-access-token' contra ASAAS_WEBHOOK_TOKEN (obrigatório).
 // verify_jwt=false (o Asaas chama sem JWT do Supabase).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { webhookAuthStatus } from '../_shared/webhook-auth.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -122,10 +123,9 @@ Deno.serve(async (req) => {
 
   // Autenticação do webhook (token configurado no painel do Asaas).
   const tokenEsperado = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
-  if (tokenEsperado) {
-    const recebido = req.headers.get('asaas-access-token') || '';
-    if (recebido !== tokenEsperado) return json({ error: 'Token inválido' }, 401);
-  }
+  const authStatus = webhookAuthStatus(tokenEsperado, req.headers.get('asaas-access-token'));
+  if (authStatus === 503) return json({ error: 'Webhook indisponível' }, 503);
+  if (authStatus === 401) return json({ error: 'Token inválido' }, 401);
 
   const url = Deno.env.get('SUPABASE_URL')!;
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

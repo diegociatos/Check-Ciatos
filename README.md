@@ -3,7 +3,7 @@
 SaaS multi-empresa de **checklist diário com pontuação de colaboradores**. Cada empresa-cliente tem sua própria equipe e dados totalmente isolados. O objetivo é aumentar a produtividade deixando claro o que precisa ser feito e recompensando com pontos o que foi entregue e aprovado.
 
 **Stack:** React 19 + Vite + TypeScript + TailwindCSS + Supabase (Postgres, Auth, Storage, Edge Functions).
-**Deploy:** Netlify (frontend estático) + Supabase (backend gerenciado).
+**Deploy:** Cloudflare Pages (workflow versionado; configuração Netlify legada também presente) + Supabase (backend gerenciado).
 
 ## Papéis
 
@@ -16,7 +16,7 @@ SaaS multi-empresa de **checklist diário com pontuação de colaboradores**. Ca
 
 ## Rodar localmente
 
-Pré-requisitos: **Node.js 18+**.
+Pré-requisitos: **Node.js 22+**.
 
 ```bash
 npm install
@@ -54,7 +54,7 @@ Detalhes das tabelas, funções e políticas em **[docs/SUPABASE.md](docs/SUPABA
 
 ## Deploy
 
-- **Frontend:** push em `main` → a Netlify publica automaticamente. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (em `netlify.toml` ou nas variáveis do site).
+- **Frontend:** `.github/workflows/deploy-cloudflare.yml` publica `dist/` no Cloudflare Pages (`chekly`) ao receber push em `main`. `netlify.toml` é uma configuração legada; confirme integrações ativas antes de remover. Nunca use a chave service role em variáveis `VITE_*`.
 - **Backend:** `supabase db push` aplica as migrations; `supabase functions deploy` publica a Edge Function.
 
 ## Estrutura
@@ -74,3 +74,9 @@ supabase/
   functions/admin-users → Edge Function (gestão de usuários/empresas)
 docs/SUPABASE.md        → documentação do backend
 ```
+
+## Auditoria e desenvolvimento seguro
+
+Veja [o diagnóstico priorizado](docs/AUDITORIA-2026-09-18.md). Sem `.env.local`, o login pode ser inspecionado sem acessar produção; a autenticação informa que o ambiente não está configurado. Para testes completos, use um projeto Supabase separado e usuários fictícios. Não aplique migrations nem publique Edge Functions no ambiente real sem revisão e autorização.
+
+`npm test` verifica a autenticação obrigatória do webhook de pagamentos. Configure `ASAAS_WEBHOOK_TOKEN` antes de uma futura publicação dessa função: sem token ela responderá 503, sem processar eventos.
