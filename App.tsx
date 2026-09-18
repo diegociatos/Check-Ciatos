@@ -161,6 +161,7 @@ const App: React.FC = () => {
         return (
           <CalendarioView
             tasks={visibleTasks}
+            templates={templates}
             currentUser={currentUser}
             users={users}
             currentUserRole={currentUser.Role}

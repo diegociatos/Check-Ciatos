@@ -3,7 +3,8 @@ import React, { useState, useMemo } from 'react';
 import { TaskTemplate, RecurrenceType, TaskPriority, User, UserRole, Task, TaskStatus } from '../types';
 import { getTodayStr, toDateOnly } from '../store';
 import { Plus, Trash2, RotateCw, FileText, User as UserIcon, X, Save, Calendar, CheckSquare, Clock, Zap, AlertTriangle, Info, ListChecks, CalendarDays, ArrowRightLeft, Pencil, ChevronDown } from 'lucide-react';
-import { useUndoableDelete } from './ui';
+import { useUndoableDelete, showToast } from './ui';
+import { recurrenceDates } from '../lib/recurrence';
 import { acharSimilares, normalizar } from '../lib/similaridade';
 import { pontosAprovacao } from '../lib/scoreEngine';
 
@@ -11,8 +12,8 @@ interface TemplateManagerProps {
   templates: TaskTemplate[];
   tasks: Task[];
   users: User[];
-  onAdd: (template: Omit<TaskTemplate, 'ID'>) => void;
-  onUpdate: (id: string, template: Omit<TaskTemplate, 'ID'>) => void;
+  onAdd: (template: Omit<TaskTemplate, 'ID'>) => Promise<unknown> | void;
+  onUpdate: (id: string, template: Omit<TaskTemplate, 'ID'>) => Promise<unknown> | void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onGenerateNow: (id: string, force?: boolean) => any;
@@ -24,7 +25,7 @@ interface SituacaoModelo { label: string; cls: string; gerou: boolean; concluida
 const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, users, onAdd, onUpdate, onToggle, onDelete, onGenerateNow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [duplicateWarning, setDuplicateWarning] = useState<{ templateId: string, title: string } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [filterColaborador, setFilterColaborador] = useState<string>('TODOS');
   const { pendentes: excluindo, remover: excluirModelo } = useUndoableDelete(onDelete, 'Modelo');
   
@@ -106,7 +107,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
         ) : (
           <>
             <Clock size={12} className="text-gray-400 flex-shrink-0" />
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{tmpl.Recorrencia}</span>
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{tmpl.Recorrencia === RecurrenceType.DIARIA ? (tmpl.PularFinalDeSemana ? 'Segunda a sexta' : 'Todos os dias') : tmpl.Recorrencia}</span>
           </>
         )}
       </div>
@@ -145,50 +146,15 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
     DiaDoMes: 1, DataInicio: today, PularFinalDeSemana: false, Ativa: true
   });
 
-  const previewDataExecucao = useMemo(() => {
-    // Se for DATA ESPECÍFICA, a data é exatamente o que estiver em DataInicio
-    if (formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA) {
-      return toDateOnly(formData.DataInicio).split('-').reverse().join('/');
-    }
-
-    const parts = today.split('-');
-    const spToday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-
-    // Se é Semanal, busca o próximo dia habilitado
-    if (formData.Recorrencia === RecurrenceType.SEMANAL) {
-      const daysMap: Record<string, number> = { 'Dom': 0, 'Seg': 1, 'Ter': 2, 'Qua': 3, 'Qui': 4, 'Sex': 5, 'Sab': 6 };
-      const selectedDays = formData.DiasRecorrencia.map(d => daysMap[d]);
-      
-      if (selectedDays.length === 0) return 'Selecione os dias';
-
-      const nextDate = new Date(spToday);
-      let found = false;
-      for (let i = 0; i < 8; i++) {
-        if (selectedDays.includes(nextDate.getDay())) {
-          found = true;
-          break;
-        }
-        nextDate.setDate(nextDate.getDate() + 1);
-      }
-      return nextDate.toLocaleDateString('pt-BR');
-    }
-
-    // Se é Data Fixa, o dia de execução é o DiaDoMes informado (Repetitivo mensal)
-    if ((formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.POR_DATA_FIXA) && formData.DiaDoMes) {
-      const targetDay = formData.DiaDoMes;
-      const nextDate = new Date(spToday.getFullYear(), spToday.getMonth(), targetDay);
-      if (spToday.getDate() > targetDay) {
-        nextDate.setMonth(nextDate.getMonth() + 1);
-      }
-      return nextDate.toLocaleDateString('pt-BR');
-    }
-    
-    if (formData.Recorrencia === RecurrenceType.DIARIA) return spToday.toLocaleDateString('pt-BR');
-    
-    const startParts = formData.DataInicio.split('-');
-    const startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
-    return startDate.toLocaleDateString('pt-BR');
-  }, [formData.Recorrencia, formData.DiaDoMes, formData.DataInicio, formData.DiasRecorrencia, today]);
+  const upcomingDates = useMemo(() => {
+    const isSingle = formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA || formData.Recorrencia === RecurrenceType.NENHUMA;
+    const from = formData.DataInicio && (isSingle || formData.DataInicio > today) ? formData.DataInicio : today;
+    const end = new Date(`${from}T12:00:00Z`);
+    end.setUTCDate(end.getUTCDate() + 370);
+    if (!Number.isFinite(end.getTime())) return [];
+    return recurrenceDates(formData, from, end.toISOString().slice(0, 10)).slice(0, 5);
+  }, [formData, today]);
+  const previewDataExecucao = upcomingDates[0]?.split('-').reverse().join('/') || 'Selecione uma programação válida';
 
   // Inteligência anti-duplicidade: modelos + tarefas abertas parecidos com o título digitado.
   const similares = useMemo(() => {
@@ -220,10 +186,10 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
     }));
   };
 
-  const handleGenerateClick = (id: string) => {
-    const result = onGenerateNow(id);
+  const handleGenerateClick = async (id: string) => {
+    const result = await onGenerateNow(id);
     if (result && result.duplicate) {
-      setDuplicateWarning({ templateId: id, title: result.template.Titulo });
+      showToast({ message: `Já existe uma tarefa gerada para a próxima ocorrência de “${templates.find(t => t.ID === id)?.Titulo || 'Tarefa'}”.`, tone: 'neutral' });
     }
   };
 
@@ -246,10 +212,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
     setIsModalOpen(true);
   };
 
-  const fecharModal = () => { setIsModalOpen(false); setEditingId(null); };
+  const fecharModal = () => { if (!saving) { setIsModalOpen(false); setEditingId(null); } };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     if (!formData.Titulo || !formData.Responsavel) return alert("Preencha os campos obrigatórios.");
 
     // Validações por tipo
@@ -269,9 +236,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
       if (!ok) return;
     }
 
-    if (editingId) onUpdate(editingId, formData);
-    else onAdd(formData);
-    fecharModal();
+    setSaving(true);
+    try {
+      if (editingId) await onUpdate(editingId, formData);
+      else await onAdd(formData);
+      setIsModalOpen(false); setEditingId(null);
+    } catch {
+      showToast({ message: 'Não foi possível salvar a programação. Confira sua conexão e tente novamente.', tone: 'erro' });
+    } finally { setSaving(false); }
   };
 
   return (
@@ -345,7 +317,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
                <h3 className="font-titulo text-xl text-tinta">{editingId ? 'Editar tarefa' : 'Nova tarefa'}</h3>
-               <button onClick={fecharModal} className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
+               <button onClick={fecharModal} aria-label="Fechar programação" className="text-gray-300 hover:text-gray-500 transition-colors"><X size={24}/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                
@@ -360,10 +332,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                     </div>
                     <ArrowRightLeft size={16} className="text-marca opacity-30" />
                     <div className="flex-1 text-right">
-                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Prazo de entrega</p>
+                      <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Próxima ocorrência prevista</p>
                       <p className="text-sm font-black text-marca">{previewDataExecucao}</p>
                     </div>
                   </div>
+                  <p className="mt-3 text-sm text-stone-600">Próximas datas: {upcomingDates.map(day => day.split('-').reverse().join('/')).join(' · ') || 'Selecione os dias da semana.'}</p>
                </div>
 
                <div className="space-y-4">
@@ -488,6 +461,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                           <button
                             key={day}
                             type="button"
+                            aria-label={day}
+                            aria-pressed={formData.DiasRecorrencia.includes(day)}
                             onClick={() => toggleDay(day)}
                             className={`h-11 w-11 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${
                               formData.DiasRecorrencia.includes(day)
@@ -495,7 +470,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                                 : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-marca/30'
                             }`}
                           >
-                            {day.charAt(0)}
+                            {day}
                           </button>
                         ))}
                       </div>
@@ -511,6 +486,17 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                   )}
 
                   {/* Opção de Pular Final de Semana */}
+                  {formData.Recorrencia === RecurrenceType.DIARIA && (
+                    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                      <label htmlFor="diariaDiasUteis" className="flex items-center gap-3 text-sm font-semibold text-stone-800 cursor-pointer">
+                        <input id="diariaDiasUteis" type="checkbox" checked={!!formData.PularFinalDeSemana}
+                          onChange={e => setFormData({ ...formData, PularFinalDeSemana: e.target.checked })}
+                          className="h-5 w-5 rounded border-stone-300 text-marca focus:ring-marca" />
+                        Somente de segunda a sexta-feira
+                      </label>
+                      <p className="mt-2 text-sm text-stone-600">{formData.PularFinalDeSemana ? 'Não haverá ocorrências previstas aos sábados e domingos. Feriados continuam incluídos.' : 'A tarefa se repete todos os dias, incluindo sábados e domingos.'}</p>
+                    </div>
+                  )}
                   {(formData.Recorrencia === RecurrenceType.POR_DATA_FIXA || formData.Recorrencia === RecurrenceType.MENSAL || formData.Recorrencia === RecurrenceType.DATA_ESPECIFICA) && (
                     <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100 animate-in slide-in-from-top-2 duration-300">
                       <input 
@@ -528,8 +514,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ templates, tasks, use
                </div>
 
                <div className="pt-6 border-t border-gray-100">
-                  <button type="submit" className="w-full bg-marca text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-marca-escuro transition-all hover:scale-[1.01] active:scale-95">
-                    <Save size={20} /> {editingId ? 'Salvar alterações' : 'Criar modelo'}
+                  <button type="submit" disabled={saving} className="w-full bg-marca text-white py-6 rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 hover:bg-marca-escuro transition-all disabled:opacity-60">
+                    <Save size={20} /> {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Criar modelo'}
                   </button>
                </div>
             </form>

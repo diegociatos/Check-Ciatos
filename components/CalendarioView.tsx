@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Task, TaskStatus, User, UserRole } from '../types';
+import { Task, TaskTemplate, TaskStatus, User, UserRole } from '../types';
+import { projectCalendarTasks, type CalendarTask } from '../lib/recurrence';
 import { getTodayStr } from '../store';
 import { statusInfo, STATUS_TONE_CLASS } from '../lib/labels';
 import { PageHeader } from './ui';
@@ -7,22 +8,24 @@ import { ChevronLeft, ChevronRight, CalendarDays, CalendarClock } from 'lucide-r
 
 interface Props {
   tasks: Task[];
+  templates: TaskTemplate[];
   currentUser: User;
   users: User[];
   currentUserRole: UserRole;
 }
 
-type Sev = 'overdue' | 'today' | 'upcoming' | 'awaiting' | 'done';
+type Sev = 'overdue' | 'today' | 'upcoming' | 'awaiting' | 'done' | 'planned';
 
 // Cores de aviso por severidade (pior primeiro).
 const SEV: Record<Sev, { dot: string; cell: string; chip: string; label: string }> = {
+  planned: { dot: 'bg-violet-500', cell: 'bg-violet-50 border-violet-100', chip: 'text-violet-700 bg-violet-50', label: 'Prevista' },
   overdue:  { dot: 'bg-red-500',     cell: 'bg-red-50 border-red-200',        chip: 'text-red-700 bg-red-50',       label: 'Atrasada' },
   today:    { dot: 'bg-amber-500',   cell: 'bg-amber-50 border-amber-200',    chip: 'text-amber-700 bg-amber-50',   label: 'Vence hoje' },
   upcoming: { dot: 'bg-sky-500',     cell: 'bg-sky-50 border-sky-100',        chip: 'text-sky-700 bg-sky-50',       label: 'A vencer' },
   awaiting: { dot: 'bg-stone-400',   cell: 'bg-stone-50 border-stone-200',    chip: 'text-stone-500 bg-stone-100',  label: 'Em conferência' },
   done:     { dot: 'bg-emerald-500', cell: 'bg-emerald-50 border-emerald-100', chip: 'text-emerald-700 bg-emerald-50', label: 'Concluída' },
 };
-const ORDEM: Sev[] = ['overdue', 'today', 'upcoming', 'awaiting', 'done'];
+const ORDEM: Sev[] = ['overdue', 'today', 'upcoming', 'awaiting', 'done', 'planned'];
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -30,13 +33,18 @@ const OPEN = [TaskStatus.PENDENTE, TaskStatus.FEITA_ERRADA, TaskStatus.NAO_FEITA
 const pad = (n: number) => String(n).padStart(2, '0');
 const dataDaTarefa = (t: Task) => (t.DataLimite_Date || t.DataLimite || '').slice(0, 10);
 
-const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUserRole }) => {
+const CalendarioView: React.FC<Props> = ({ tasks, templates, currentUser, users, currentUserRole }) => {
   const hoje = getTodayStr();
   const ehGestao = [UserRole.ADMIN, UserRole.PLATAFORMA, UserRole.MASTER, UserRole.GESTOR].includes(currentUserRole);
   const [escopo, setEscopo] = useState<'minhas' | 'equipe'>('minhas');
   const [ano, setAno] = useState(() => Number(hoje.slice(0, 4)));
   const [mes, setMes] = useState(() => Number(hoje.slice(5, 7)) - 1); // 0-based
   const [selecionado, setSelecionado] = useState<string>(hoje);
+  const previstas = useMemo(() => {
+    const from = `${ano}-${pad(mes + 1)}-01`;
+    const to = `${ano}-${pad(mes + 1)}-${pad(new Date(ano, mes + 1, 0).getDate())}`;
+    return projectCalendarTasks(templates, tasks, from > hoje ? from : hoje, to);
+  }, [templates, tasks, ano, mes, hoje]);
 
   const nomePorEmail = useMemo(() => {
     const m = new Map<string, string>();
@@ -46,14 +54,14 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
 
   // Base: tarefas com data. "Minhas" = do próprio; "Equipe" = todas em escopo.
   const base = useMemo(() => {
-    const comData = tasks.filter((t) => dataDaTarefa(t));
+    const comData: CalendarTask[] = [...tasks, ...previstas].filter((t) => dataDaTarefa(t));
     return escopo === 'minhas' || !ehGestao
-      ? comData.filter((t) => t.Responsavel === currentUser.Email)
+      ? comData.filter((t) => t.Responsavel.toLowerCase() === currentUser.Email.toLowerCase())
       : comData;
-  }, [tasks, escopo, ehGestao, currentUser.Email]);
+  }, [tasks, previstas, escopo, ehGestao, currentUser.Email]);
 
   const porDia = useMemo(() => {
-    const m = new Map<string, Task[]>();
+    const m = new Map<string, CalendarTask[]>();
     for (const t of base) {
       const d = dataDaTarefa(t);
       if (!m.has(d)) m.set(d, []);
@@ -62,14 +70,15 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
     return m;
   }, [base]);
 
-  const sevTarefa = (t: Task): Sev => {
+  const sevTarefa = (t: CalendarTask): Sev => {
+    if (t.Prevista) return 'planned';
     if (t.Status === TaskStatus.APROVADA) return 'done';
     if (t.Status === TaskStatus.AGUARDANDO_APROVACAO) return 'awaiting';
     const d = dataDaTarefa(t);
     return d < hoje ? 'overdue' : d === hoje ? 'today' : 'upcoming';
   };
 
-  const sevDia = (ts?: Task[]): Sev | null => {
+  const sevDia = (ts?: CalendarTask[]): Sev | null => {
     if (!ts || ts.length === 0) return null;
     const set = new Set(ts.map(sevTarefa));
     return ORDEM.find((s) => set.has(s)) ?? null;
@@ -88,16 +97,17 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
   // KPIs do mês visível.
   const kpis = useMemo(() => {
     const prefixo = `${ano}-${pad(mes + 1)}`;
-    let total = 0, atrasadas = 0, vencemHoje = 0;
+    let total = 0, atrasadas = 0, vencemHoje = 0, previstas = 0;
     for (const [d, ts] of porDia) {
       if (!d.startsWith(prefixo)) continue;
-      total += ts.length;
       for (const t of ts) {
+        if (t.Prevista) { previstas++; continue; }
+        total++;
         if (OPEN.includes(t.Status) && d < hoje) atrasadas++;
         else if (OPEN.includes(t.Status) && d === hoje) vencemHoje++;
       }
     }
-    return { total, atrasadas, vencemHoje };
+    return { total, atrasadas, vencemHoje, previstas };
   }, [porDia, ano, mes, hoje]);
 
   const irMes = (delta: number) => {
@@ -109,6 +119,13 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
     setAno(Number(hoje.slice(0, 4)));
     setMes(Number(hoje.slice(5, 7)) - 1);
     setSelecionado(hoje);
+  };
+  const irProximaSemana = () => {
+    const monday = new Date(`${hoje}T12:00:00Z`);
+    const weekday = (monday.getUTCDay() + 6) % 7;
+    monday.setUTCDate(monday.getUTCDate() + 7 - weekday);
+    setAno(monday.getUTCFullYear()); setMes(monday.getUTCMonth());
+    setSelecionado(monday.toISOString().slice(0, 10));
   };
 
   const tarefasDoDia = (porDia.get(selecionado) || []).slice().sort((a, b) => {
@@ -136,9 +153,11 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
       />
 
       {/* KPIs do mês */}
-      <div className="grid grid-cols-3 gap-3">
+      <p className="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-900">As tarefas marcadas como “Previstas” mostram as próximas ocorrências dos modelos ativos. Elas ainda não foram geradas e não entram na pontuação.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'No mês', valor: kpis.total, tom: 'text-stone-900' },
+          { label: 'Geradas no mês', valor: kpis.total, tom: 'text-stone-900' },
+          { label: 'Previstas no mês', valor: kpis.previstas, tom: 'text-violet-700' },
           { label: 'Atrasadas', valor: kpis.atrasadas, tom: 'text-red-600' },
           { label: 'Vencem hoje', valor: kpis.vencemHoje, tom: 'text-amber-600' },
         ].map((k) => (
@@ -152,9 +171,10 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendário */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E7E5E4] shadow-[0_1px_2px_rgba(28,25,23,0.04)] p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap gap-2 items-center justify-between mb-4">
             <h3 className="text-xl text-stone-900 capitalize">{MESES[mes]} <span className="text-stone-400">{ano}</span></h3>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
+              <button onClick={irProximaSemana} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-marca hover:bg-marca/5 transition-colors">Próxima semana</button>
               <button onClick={irHoje} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-marca hover:bg-marca/5 transition-colors">Hoje</button>
               <button onClick={() => irMes(-1)} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 transition-colors" aria-label="Mês anterior"><ChevronLeft size={18} /></button>
               <button onClick={() => irMes(1)} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 transition-colors" aria-label="Próximo mês"><ChevronRight size={18} /></button>
@@ -179,6 +199,8 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
               return (
                 <button
                   key={d}
+                  aria-label={`${fmtDiaLongo(d)}: ${ts?.length || 0} tarefas e previsões`}
+                  aria-pressed={ativo}
                   onClick={() => setSelecionado(d)}
                   className={`relative aspect-square rounded-xl border text-left p-1.5 transition-all
                     ${cor ? cor.cell : 'bg-white border-stone-100 hover:border-stone-200'}
@@ -232,11 +254,11 @@ const CalendarioView: React.FC<Props> = ({ tasks, currentUser, users, currentUse
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-stone-900 leading-snug">{t.Titulo}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_TONE_CLASS[info.tone]}`}>{info.label}</span>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${t.Prevista ? 'text-violet-700 bg-violet-50' : STATUS_TONE_CLASS[info.tone]}`}>{t.Prevista ? 'Prevista' : info.label}</span>
                         {escopo === 'equipe' && ehGestao && (
                           <span className="text-[11px] text-stone-400">{nomePorEmail.get(t.Responsavel.toLowerCase()) || t.Responsavel.split('@')[0]}</span>
                         )}
-                        {!t.Pessoal && <span className="text-[11px] text-marca font-semibold">{t.PontosValor} pts</span>}
+                        {!t.Pessoal && !t.Prevista && <span className="text-[11px] text-marca font-semibold">{t.PontosValor} pts</span>}
                       </div>
                     </div>
                   </div>
