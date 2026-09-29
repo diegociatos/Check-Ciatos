@@ -152,7 +152,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-bold text-[#111111] truncate">{task.Titulo}</span>
+                          <span className="text-sm font-bold text-[#111111] truncate" title={task.Titulo}>{task.Titulo}</span>
                           {task.DataLimite_Date! > todayStr && (
                             <span className="text-[8px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded w-fit uppercase">Antecipada</span>
                           )}
@@ -217,6 +217,10 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                   {isExpanded && (
                     <tr className="bg-marca/5">
                       <td colSpan={5} className="px-8 py-6">
+                        <div className="mb-5">
+                          <p className="text-[10px] font-black text-marca uppercase tracking-widest mb-1">Tarefa</p>
+                          <h4 className="text-base font-bold text-gray-900 leading-snug">{task.Titulo}</h4>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <p className="text-[10px] font-black text-marca uppercase tracking-widest">Descrição da Tarefa</p>
