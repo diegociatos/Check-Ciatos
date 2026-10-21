@@ -101,6 +101,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
   const confirmar = async () => {
     if (!selectedTask || uploading) return; // impede duplo clique
     const t = selectedTask;
+    // Trava de conclusão: só conclui com um comentário sobre a entrega.
+    if (!note.trim()) { setUploadError('Escreva um comentário sobre a entrega para concluir.'); return; }
     let proofPath = '';
     if (file) {
       setUploading(true); setUploadError('');
@@ -142,8 +144,13 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
           {tasks.map((task) => {
             const isAssignee = task.Responsavel === currentUserEmail;
             const isRejected = (task.Tentativas > 0 && task.Status === TaskStatus.PENDENTE) || task.Status === TaskStatus.FEITA_ERRADA || task.Status === TaskStatus.NAO_FEITA;
+            // "Não cumprida" encerrada pelo gestor (falta sem reenvio): a tarefa foi marcada como
+            // não feita e o prazo já expirou sem novo prazo. O colaborador NÃO pode refazer —
+            // demandas de data específica não têm como ser executadas depois do prazo.
+            const prazoVigente = !!task.DataLimite_Date && task.DataLimite_Date >= hoje;
+            const naoCumpridaFinal = task.Status === TaskStatus.NAO_FEITA && !prazoVigente;
             const acent = isRejected || task.Status === TaskStatus.ATRASADA ? '#C62828' : task.Status === TaskStatus.APROVADA ? '#2E7D32' : RED;
-            const podeConcluir = isAssignee && task.Status !== TaskStatus.APROVADA && task.Status !== TaskStatus.AGUARDANDO_APROVACAO;
+            const podeConcluir = isAssignee && !naoCumpridaFinal && task.Status !== TaskStatus.APROVADA && task.Status !== TaskStatus.AGUARDANDO_APROVACAO;
             const atrasada = podeConcluir && !!task.DataLimite_Date && task.DataLimite_Date < hoje;
             const emAndamento = (task.Andamento || 'Pendente') === 'Em andamento';
             return (
@@ -169,11 +176,13 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                 </div>
 
                 {isRejected && (task.JustificativaGestor || task.ObservacaoGestor) && (
-                  <div className="px-6 py-4 bg-amber-50 border-t border-amber-100 flex items-start gap-2.5">
-                    <RotateCcw size={15} className="text-amber-600 mt-0.5 shrink-0" />
+                  <div className={`px-6 py-4 border-t flex items-start gap-2.5 ${naoCumpridaFinal ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                    {naoCumpridaFinal
+                      ? <ShieldAlert size={15} className="text-red-600 mt-0.5 shrink-0" />
+                      : <RotateCcw size={15} className="text-amber-600 mt-0.5 shrink-0" />}
                     <div>
-                      <p className="text-[11px] font-semibold text-amber-800">Retornada{task.Tentativas > 0 ? ` — ${task.Tentativas}ª tentativa` : ''}</p>
-                      <p className="text-sm text-amber-800/90 italic mt-0.5">"{task.JustificativaGestor || task.ObservacaoGestor}"</p>
+                      <p className={`text-[11px] font-semibold ${naoCumpridaFinal ? 'text-red-800' : 'text-amber-800'}`}>{naoCumpridaFinal ? 'Não cumprida — encerrada pelo gestor' : `Retornada${task.Tentativas > 0 ? ` — ${task.Tentativas}ª tentativa` : ''}`}</p>
+                      <p className={`text-sm italic mt-0.5 ${naoCumpridaFinal ? 'text-red-800/90' : 'text-amber-800/90'}`}>"{task.JustificativaGestor || task.ObservacaoGestor}"</p>
                     </div>
                   </div>
                 )}
@@ -242,7 +251,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                 <p className="text-sm text-marca mt-1">Vale {selectedTask.PontosValor} pts</p>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Nota de conclusão <span className="text-stone-300 normal-case">(opcional)</span></label>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Nota de conclusão <span className="text-marca normal-case">(obrigatório)</span></label>
                 <textarea
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-marca/20 outline-none min-h-[110px]"
                   placeholder="O que foi realizado?"
@@ -282,7 +291,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onComplete, onDefinirAndamen
                 </div>
               )}
 
-              <button onClick={confirmar} disabled={uploading} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+              {!note.trim() && <p className="text-[12px] text-stone-400">Escreva um comentário sobre a entrega para liberar a conclusão.</p>}
+              <button onClick={confirmar} disabled={uploading || !note.trim()} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                 {uploading ? (
                   <><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</>
                 ) : (

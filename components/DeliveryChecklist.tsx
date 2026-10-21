@@ -49,6 +49,9 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
   const [auditTask, setAuditTask] = useState<Task | null>(null);
   const [justification, setJustification] = useState('');
   const [nextDeadline, setNextDeadline] = useState('');
+  // Na Falta (não cumprida), o novo prazo é OPCIONAL. Por padrão a tarefa é encerrada
+  // como não cumprida (sem reenvio); só reabre se o gestor marcar "dar novo prazo".
+  const [darNovoPrazo, setDarNovoPrazo] = useState(false);
   const [actionType, setActionType] = useState<TaskStatus | null>(null);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
@@ -63,14 +66,20 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
     }
 
     const isAnticipated = auditTask.DataLimite_Date! > todayStr;
-    if (actionType !== TaskStatus.APROVADA && !isAnticipated && !nextDeadline) {
+    const isFalta = actionType === TaskStatus.NAO_FEITA;
+    // Erro sempre devolve; Falta só reabre se o gestor optar por dar novo prazo.
+    // Falta sem reenvio = encerra como não cumprida (sem prazo).
+    const reabrir = !isFalta || darNovoPrazo;
+    if (reabrir && actionType !== TaskStatus.APROVADA && !isAnticipated && !nextDeadline) {
       return showToast({ message: 'Defina um novo prazo para a tarefa vencida.', tone: 'erro' });
     }
 
-    onAudit(auditTask.ID, actionType, justification, isAnticipated ? undefined : nextDeadline);
+    const prazoEnviar = reabrir ? (isAnticipated ? undefined : nextDeadline) : undefined;
+    onAudit(auditTask.ID, actionType, justification, prazoEnviar);
     setAuditTask(null);
     setJustification('');
     setNextDeadline('');
+    setDarNovoPrazo(false);
     setActionType(null);
   };
 
@@ -267,7 +276,7 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     {actionType === TaskStatus.APROVADA ? 'Aprovar Entrega' : actionType === TaskStatus.FEITA_ERRADA ? 'Sinalizar Erro' : 'Sinalizar Falta'}
                   </h3>
                </div>
-               <button onClick={() => setAuditTask(null)} className="text-white/70 hover:text-white">✕</button>
+               <button onClick={() => { setAuditTask(null); setJustification(''); setNextDeadline(''); setDarNovoPrazo(false); setActionType(null); }} className="text-white/70 hover:text-white">✕</button>
             </div>
             
             <div className="p-8 space-y-6">
@@ -314,15 +323,39 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ tasks, onAudit })
                     </div>
                     
                     {auditTask.DataLimite_Date! <= todayStr ? (
-                      <div className="space-y-2 animate-in slide-in-from-top-2">
-                         <label className="block text-[10px] font-black text-marca uppercase tracking-widest">Definir Novo Prazo para Correção</label>
-                         <input 
-                           type="date"
-                           className="w-full bg-white border-2 border-marca/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-marca"
-                           value={nextDeadline}
-                           onChange={(e) => setNextDeadline(e.target.value)}
-                         />
-                      </div>
+                      actionType === TaskStatus.NAO_FEITA ? (
+                        <div className="space-y-3 animate-in slide-in-from-top-2">
+                           <label className="flex items-start gap-3 cursor-pointer select-none">
+                             <input type="checkbox" checked={darNovoPrazo} onChange={(e) => setDarNovoPrazo(e.target.checked)} className="mt-1 h-4 w-4 accent-marca" />
+                             <span className="text-sm font-semibold text-stone-700">Dar um novo prazo para o colaborador corrigir</span>
+                           </label>
+                           {darNovoPrazo ? (
+                             <input
+                               type="date"
+                               className="w-full bg-white border-2 border-marca/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-marca"
+                               value={nextDeadline}
+                               onChange={(e) => setNextDeadline(e.target.value)}
+                             />
+                           ) : (
+                             <div className="p-5 bg-red-50 rounded-2xl border border-red-100 flex gap-4">
+                                <AlertCircle size={20} className="text-red-500 shrink-0" />
+                                <p className="text-[11px] text-red-700 font-bold leading-relaxed">
+                                   A tarefa será marcada como <strong>NÃO CUMPRIDA</strong> e encerrada. O colaborador <strong>não poderá refazer</strong> (sem reenvio).
+                                </p>
+                             </div>
+                           )}
+                        </div>
+                      ) : (
+                        <div className="space-y-2 animate-in slide-in-from-top-2">
+                           <label className="block text-[10px] font-black text-marca uppercase tracking-widest">Definir Novo Prazo para Correção</label>
+                           <input
+                             type="date"
+                             className="w-full bg-white border-2 border-marca/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-marca"
+                             value={nextDeadline}
+                             onChange={(e) => setNextDeadline(e.target.value)}
+                           />
+                        </div>
+                      )
                     ) : (
                       <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 flex gap-4 animate-in slide-in-from-top-2">
                          <Info size={20} className="text-blue-500 shrink-0" />
