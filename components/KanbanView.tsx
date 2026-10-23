@@ -93,6 +93,8 @@ const KanbanView: React.FC<Props> = ({ tasks, currentUser, users, currentUserRol
 
   const confirmarConclusao = async () => {
     if (!concluir || uploading) return;
+    // Trava de conclusão: só conclui com um comentário sobre a entrega.
+    if (!note.trim()) { setUploadError('Escreva um comentário sobre a entrega para concluir.'); return; }
     let proof = '';
     if (file) {
       setUploading(true); setUploadError('');
@@ -223,7 +225,7 @@ const KanbanView: React.FC<Props> = ({ tasks, currentUser, users, currentUserRol
                 <p className="text-stone-900 mt-0.5">{concluir.Titulo}</p>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Nota de conclusão <span className="text-stone-300 normal-case">(opcional)</span></label>
+                <label className="block text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Nota de conclusão <span className="text-marca normal-case">(obrigatório)</span></label>
                 <textarea className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-marca/20 outline-none min-h-[90px]" placeholder="O que foi realizado?" value={note} onChange={(e) => setNote(e.target.value)} />
               </div>
               {permiteAnexos ? (
@@ -244,7 +246,8 @@ const KanbanView: React.FC<Props> = ({ tasks, currentUser, users, currentUserRol
                   {uploadError && <p className="text-[12px] text-[#C62828] mt-1.5">{uploadError}</p>}
                 </div>
               ) : uploadError && <p className="text-[12px] text-[#C62828]">{uploadError}</p>}
-              <button onClick={confirmarConclusao} disabled={uploading} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+              {!note.trim() && <p className="text-[12px] text-stone-400">Escreva um comentário sobre a entrega para liberar a conclusão.</p>}
+              <button onClick={confirmarConclusao} disabled={uploading || !note.trim()} className="w-full bg-marca text-white py-4 rounded-xl font-semibold hover:bg-marca-escuro transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                 {uploading ? (<><div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</>) : (<><Send size={18} /> Enviar para aprovação</>)}
               </button>
             </div>
