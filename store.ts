@@ -472,8 +472,9 @@ export const useStore = () => {
   }, [activeEmpresa]);
 
   const updateUser = useCallback(async (email: string, updatedData: Partial<User>) => {
-    await acaoBackend(() => authApi.updateUser(email, updatedData), 'Não foi possível salvar as alterações.');
-    setBaseUsers(prev => prev.map(u => u.Email === email ? { ...u, ...updatedData } : u));
+    const persisted = await acaoBackend(() => authApi.updateUser(email, updatedData), 'Não foi possível salvar as alterações.');
+    const normalized = { ...persisted, Role: normalizeRole(persisted.Role), Status: normalizeUserStatus(persisted.Status) };
+    setBaseUsers(prev => prev.map(u => u.Email.toLowerCase() === email.toLowerCase() ? normalized : u));
   }, []);
 
   // Alterar e-mail (chave do usuário) — renomeia no Auth + todas as tabelas.

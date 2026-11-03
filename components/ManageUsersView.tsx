@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { User, UserRole, UserStatus } from '../types';
+import { userUpdatePayload } from '../lib/userFields';
 // Fixed: Added RefreshCw to lucide-react imports
 import { 
   Plus, Trash2, Edit3, Lock, Shield, 
@@ -88,7 +89,7 @@ const ManageUsersView: React.FC<ManageUsersViewProps> = ({
 
       let addRes: any = null;
       if (editingEmail) {
-        await Promise.resolve(onUpdateUser(editingEmail, formData));
+        await Promise.resolve(onUpdateUser(editingEmail, userUpdatePayload(formData)));
       } else {
         addRes = await Promise.resolve(onAddUser(formData));
       }
