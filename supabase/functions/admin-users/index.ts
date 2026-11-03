@@ -88,9 +88,13 @@ Deno.serve(async (req) => {
   let payload: any;
   try { payload = await req.json(); } catch { return json({ error: 'JSON inválido' }, 400); }
   const { action, email, user } = payload ?? {};
+  const requiresEmail = ['update', 'reset-password', 'toggle-status', 'delete', 'change-email', 'set-empresas'].includes(action);
+  if (requiresEmail && (typeof email !== 'string' || !email.trim() || !email.includes('@'))) {
+    return json({ error: 'E-mail inválido' }, 400);
+  }
 
   // Fora a plataforma, ações sobre um usuário existente só valem dentro da própria empresa.
-  if (!isPlataforma && ['update', 'reset-password', 'toggle-status', 'delete', 'change-email', 'set-empresas'].includes(action)) {
+  if (!isPlataforma && requiresEmail) {
     const { data: alvo } = await admin.from('users').select('empresa_id, Role').ilike('Email', emailPattern(email)).maybeSingle();
     if (!alvo || (alvo as any).empresa_id !== callerEmpresa) {
       return json({ error: 'Usuário de outra empresa' }, 403);

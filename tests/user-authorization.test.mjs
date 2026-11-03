@@ -37,7 +37,7 @@ test('email lookup is case insensitive but escapes SQL LIKE metacharacters', () 
 
 // Execute the real entrypoint with an in-memory Supabase adapter. No network,
 // credentials, Auth mutations or mail are permitted by this fixture.
-async function invoke({ role = 'gestor', targetRole = 'Colaborador', tenant = 'a', action = 'update', user = { Nome: 'Synthetic' } } = {}) {
+async function invoke({ role = 'gestor', targetRole = 'Colaborador', tenant = 'a', action = 'update', user = { Nome: 'Synthetic' }, email = 'target@example.invalid', omitEmail = false } = {}) {
   let handler;
   const writes = [];
   let reads = 0;
@@ -66,9 +66,62 @@ async function invoke({ role = 'gestor', targetRole = 'Colaborador', tenant = 'a
     Deno: { env: { get: key => key }, serve: fn => { handler = fn; } },
     require: path => path.includes('policy') ? policy : { createClient: (_url, key) => key === 'SUPABASE_ANON_KEY' ? { auth: { getUser: async () => ({ data: { user: { email: 'caller@example.invalid' } } }) } } : admin },
   });
-  const response = await handler(new Request('http://localhost/admin-users', { method: 'POST', body: JSON.stringify({ action, email: 'target@example.invalid', user, empresas: ['a'] }) }));
+  const response = await handler(new Request('http://localhost/admin-users', { method: 'POST', body: JSON.stringify({ action, ...(omitEmail ? {} : { email }), user, empresas: ['a'] }) }));
   return { status: response.status, body: await response.json(), writes };
 }
+
+test('entrypoint returns 400 without writes for missing or malformed target emails', async () => {
+  for (const role of ['gestor', 'plataforma']) {
+    for (const action of ['update', 'reset-password', 'toggle-status', 'delete', 'change-email', 'set-empresas']) {
+      for (const args of [{ omitEmail: true }, ...[null, 42, {}, [], '', '  ', 'invalid'].map(email => ({ email }))]) {
+        const result = await invoke({ role, action, ...args });
+        assert.equal(result.status, 400);
+        assert.deepEqual(result.writes, []);
+      }
+    }
+  }
+});
+
+test('store applies only the persisted normalized row and preserves state on backend failure', async () => {
+  const compile = path => ts.transpileModule(readFileSync(new URL(path, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const types = {};
+  vm.runInNewContext(compile('../types.ts'), { exports: types });
+  const exports = {};
+  const untouched = { Email: 'other@example.invalid', Nome: 'Other' };
+  const states = [];
+  let failure = false;
+  const persisted = { Email: 'self@example.invalid', Nome: 'Persisted', Role: 'gestor', Status: 'bloqueado', SenhaProvisoria: false };
+  vm.runInNewContext(compile('../store.ts'), {
+    exports, console,
+    require: path => {
+      if (path === 'react') return {
+        useState(initial) {
+          const index = states.length;
+          states.push(index === 0 ? [{ Email: persisted.Email, Role: 'Gestor', Nome: 'Before' }, untouched] : initial);
+          return [states[index], value => { states[index] = typeof value === 'function' ? value(states[index]) : value; }];
+        },
+        useEffect() {}, useCallback: fn => fn, useMemo: fn => fn(),
+      };
+      if (path === './types') return types;
+      if (path.includes('services/api')) return { authApi: { updateUser: async () => { if (failure) throw new Error('Synthetic failure'); return persisted; } } };
+      if (path.includes('notifications')) return { gerarNotificacoes: () => [] };
+      if (path.includes('components/ui')) return { showToast() {} };
+      return {};
+    },
+  });
+  const store = exports.useStore();
+  await store.updateUser('SELF@example.invalid', { Nome: 'Submitted', Role: 'Plataforma', Bio: 'Unpersisted' });
+  assert.equal(states[0][0].Nome, 'Persisted');
+  assert.equal(states[0][0].Role, types.UserRole.GESTOR);
+  assert.equal(states[0][0].Status, types.UserStatus.BLOQUEADO);
+  assert.equal(states[0][0].SenhaProvisoria, false);
+  assert.equal(states[0][0].Bio, undefined);
+  assert.equal(states[0][1], untouched);
+  failure = true;
+  const beforeFailure = states[0];
+  await assert.rejects(store.updateUser(persisted.Email, { Nome: 'Rejected' }), /Synthetic failure/);
+  assert.equal(states[0], beforeFailure);
+});
 
 test('entrypoint rejects elevated role and unexpected fields before any write', async () => {
   for (const user of [{ Role: 'Admin' }, { user_id: 'forged' }, { empresa_id: 'b' }, { Email: 'other@example.invalid' }]) {
