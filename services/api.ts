@@ -93,10 +93,11 @@ export const authApi = {
   updateUser: async (email: string, userData: any) => {
     const me = await sessionEmail();
     // edição do próprio perfil -> direto (RLS self-update); edição de terceiros -> Edge Function (admin)
-    if (me && me.toLowerCase() === email.toLowerCase()) {
-      const { error } = await supabase.from('users').update(userData).eq('Email', email);
+    const administrativeEdit = ['Role', 'Status', 'Time', 'Gestor'].some(key => Object.hasOwn(userData, key));
+    if (me && me.toLowerCase() === email.toLowerCase() && !administrativeEdit) {
+      const { data, error } = await supabase.from('users').update(userData).eq('Email', email).select().single();
       if (error) throwSb(error);
-      return { Email: email, ...userData };
+      return data;
     }
     const { data, error } = await supabase.functions.invoke('admin-users', {
       body: { action: 'update', email, user: userData },

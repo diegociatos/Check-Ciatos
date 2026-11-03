@@ -2,6 +2,7 @@
 // Operações privilegiadas de usuários (criar/editar/reset/bloquear/excluir) com service role.
 // Autoriza pelo JWT do chamador: precisa ser Admin ou Gestor.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { canManageRole, validateUserUpdate, emailPattern } from './policy.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -73,14 +74,14 @@ Deno.serve(async (req) => {
   if (!me?.user?.email) return json({ error: 'Não autenticado' }, 401);
 
   const admin = createClient(url, service);
-  const { data: caller } = await admin.from('users').select('"Role", empresa_id').ilike('Email', me.user.email).maybeSingle();
+  const { data: caller } = await admin.from('users').select('"Role", empresa_id').ilike('Email', emailPattern(me.user.email)).maybeSingle();
   const role = String((caller as any)?.Role ?? '').toLowerCase();
   const callerEmpresa = (caller as any)?.empresa_id ?? null;
   const isPlataforma = role === 'plataforma';
   if (!['plataforma', 'master', 'admin', 'gestor'].includes(role)) return json({ error: 'Sem permissão' }, 403);
 
   // Empresas que o chamador pode administrar (empresa-casa + vínculos)
-  const { data: vinc } = await admin.from('user_empresas').select('empresa_id').ilike('email', me.user.email);
+  const { data: vinc } = await admin.from('user_empresas').select('empresa_id').ilike('email', emailPattern(me.user.email));
   const acessoSet = new Set<string>([callerEmpresa, ...((vinc as any[]) ?? []).map(v => v.empresa_id)].filter(Boolean));
   const podeEmpresa = (emp?: string | null) => isPlataforma || (!!emp && acessoSet.has(emp));
 
@@ -89,16 +90,20 @@ Deno.serve(async (req) => {
   const { action, email, user } = payload ?? {};
 
   // Fora a plataforma, ações sobre um usuário existente só valem dentro da própria empresa.
-  if (!isPlataforma && ['update', 'reset-password', 'toggle-status', 'delete', 'change-email'].includes(action)) {
-    const { data: alvo } = await admin.from('users').select('empresa_id').ilike('Email', email).maybeSingle();
+  if (!isPlataforma && ['update', 'reset-password', 'toggle-status', 'delete', 'change-email', 'set-empresas'].includes(action)) {
+    const { data: alvo } = await admin.from('users').select('empresa_id, Role').ilike('Email', emailPattern(email)).maybeSingle();
     if (!alvo || (alvo as any).empresa_id !== callerEmpresa) {
       return json({ error: 'Usuário de outra empresa' }, 403);
     }
+    if (!canManageRole(role, (alvo as any).Role)) return json({ error: 'Papel do usuário não permitido' }, 403);
   }
 
   try {
+    if (action === 'set-empresas' && role === 'gestor') return json({ error: 'Sem permissão para conceder acessos' }, 403);
     if (action === 'create') {
       // Reforço no servidor: gestor só cadastra COLABORADOR (não pode criar admin/master).
+      if (!user || typeof user !== 'object' || Array.isArray(user)) return json({ error: 'Cadastro inválido' }, 400);
+      if (!canManageRole(role, user.Role ?? 'Colaborador')) return json({ error: 'Papel não permitido' }, 403);
       const papelSolicitado = String(user.Role ?? 'Colaborador').toLowerCase();
       if (role === 'gestor' && papelSolicitado !== 'colaborador') {
         return json({ error: 'Gestor só pode cadastrar colaboradores' }, 403);
@@ -110,8 +115,9 @@ Deno.serve(async (req) => {
 
       // Idempotente: se o e-mail já existe (ex.: mesmo master em outro cliente),
       // não recria — apenas adiciona o vínculo com a nova empresa.
-      const { data: existente } = await admin.from('users').select('*').ilike('Email', user.Email).maybeSingle();
+      const { data: existente } = await admin.from('users').select('*').ilike('Email', emailPattern(user.Email)).maybeSingle();
       if (existente) {
+        if (!canManageRole(role, (existente as any).Role)) return json({ error: 'Papel do usuário não permitido' }, 403);
         await admin.from('user_empresas').upsert(
           { email: user.Email, empresa_id: empresaAlvo, papel: (user.Role ?? (existente as any).Role) },
           { onConflict: 'email,empresa_id' }
@@ -126,7 +132,7 @@ Deno.serve(async (req) => {
       if (e1) throw e1;
       const row = {
         Email: user.Email, Nome: user.Nome, Role: user.Role ?? 'Colaborador',
-        Status: 'Ativo', Time: user.Time ?? null, Gestor: user.Gestor ?? null,
+        Status: 'Ativo', Time: user.Time ?? null, Gestor: role === 'gestor' ? me.user.email : (user.Gestor ?? null),
         SenhaProvisoria: true, user_id: created.user?.id, empresa_id: empresaAlvo,
       };
       const { data: inserted, error: e2 } = await admin.from('users').insert(row).select().single();
@@ -149,7 +155,7 @@ Deno.serve(async (req) => {
       const administraveis = [...acessoSet];
       // remove vínculos do usuário só entre as empresas que o chamador administra
       if (administraveis.length) {
-        await admin.from('user_empresas').delete().ilike('email', email).in('empresa_id', administraveis);
+        await admin.from('user_empresas').delete().ilike('email', emailPattern(email)).in('empresa_id', administraveis);
       }
       if (alvo.length) {
         await admin.from('user_empresas').upsert(
@@ -160,29 +166,29 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update') {
-      const { data: updated, error } = await admin.from('users').update(user).ilike('Email', email).select().single();
+      const { data: updated, error } = await admin.from('users').update(validateUserUpdate(user, role)).ilike('Email', emailPattern(email)).select().single();
       if (error) throw error;
       return json({ user: updated });
     }
 
     if (action === 'reset-password') {
-      const { data: row } = await admin.from('users').select('user_id, "Nome"').ilike('Email', email).maybeSingle();
+      const { data: row } = await admin.from('users').select('user_id, "Nome"').ilike('Email', emailPattern(email)).maybeSingle();
       // Invalida a senha atual com uma aleatória e envia um novo link de definição de senha.
       if ((row as any)?.user_id) {
         const { error } = await admin.auth.admin.updateUserById((row as any).user_id, { password: senhaAleatoria() });
         if (error) throw error;
       }
       await admin.from('users').update({ SenhaProvisoria: true, Status: 'Ativo', TentativasFalhadas: 0 })
-        .ilike('Email', email);
+        .ilike('Email', emailPattern(email));
       const link = await gerarLinkConvite(admin, email);
       const enviado = link ? await enviarEmailConvite(email, (row as any)?.Nome, link) : false;
       return json({ message: enviado ? 'Convite de nova senha enviado por e-mail' : 'Senha redefinida — envie o link ao usuário', invited: enviado, inviteLink: enviado ? null : link });
     }
 
     if (action === 'toggle-status') {
-      const { data: row } = await admin.from('users').select('"Status"').ilike('Email', email).maybeSingle();
+      const { data: row } = await admin.from('users').select('"Status"').ilike('Email', emailPattern(email)).maybeSingle();
       const novo = (row as any)?.Status === 'Ativo' ? 'Inativo' : 'Ativo';
-      await admin.from('users').update({ Status: novo }).ilike('Email', email);
+      await admin.from('users').update({ Status: novo }).ilike('Email', emailPattern(email));
       return json({ message: `Status alterado para ${novo}`, status: novo });
     }
 
@@ -191,10 +197,10 @@ Deno.serve(async (req) => {
       if (!novoEmail || !novoEmail.includes('@')) return json({ error: 'E-mail inválido' }, 400);
       if (novoEmail === String(email).trim().toLowerCase()) return json({ error: 'O novo e-mail é igual ao atual' }, 400);
 
-      const { data: alvo } = await admin.from('users').select('user_id').ilike('Email', email).maybeSingle();
+      const { data: alvo } = await admin.from('users').select('user_id').ilike('Email', emailPattern(email)).maybeSingle();
       if (!alvo) return json({ error: 'Usuário não encontrado' }, 404);
 
-      const { data: jaExiste } = await admin.from('users').select('Email').ilike('Email', novoEmail).maybeSingle();
+      const { data: jaExiste } = await admin.from('users').select('Email').ilike('Email', emailPattern(novoEmail)).maybeSingle();
       if (jaExiste) return json({ error: 'Este e-mail já está em uso' }, 400);
 
       const userId = (alvo as any).user_id;
@@ -212,8 +218,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
-      const { data: row } = await admin.from('users').select('user_id').ilike('Email', email).maybeSingle();
-      await admin.from('users').delete().ilike('Email', email);
+      const { data: row } = await admin.from('users').select('user_id').ilike('Email', emailPattern(email)).maybeSingle();
+      await admin.from('users').delete().ilike('Email', emailPattern(email));
       if ((row as any)?.user_id) await admin.auth.admin.deleteUser((row as any).user_id);
       return json({ message: 'Usuário excluído' });
     }
@@ -233,16 +239,16 @@ Deno.serve(async (req) => {
       for (const u of (membros as any[]) ?? []) {
         if (String(u.Role).toLowerCase() === 'plataforma') {
           // Nunca apaga a plataforma; só solta o vínculo de empresa-casa.
-          await admin.from('users').update({ empresa_id: null }).ilike('Email', u.Email);
+          await admin.from('users').update({ empresa_id: null }).ilike('Email', emailPattern(u.Email));
           continue;
         }
         const { data: outros } = await admin.from('user_empresas')
-          .select('empresa_id').ilike('email', u.Email).neq('empresa_id', empId);
+          .select('empresa_id').ilike('email', emailPattern(u.Email)).neq('empresa_id', empId);
         const outras = ((outros as any[]) ?? []).map(o => o.empresa_id);
         if (outras.length > 0) {
-          await admin.from('users').update({ empresa_id: outras[0] }).ilike('Email', u.Email);
+          await admin.from('users').update({ empresa_id: outras[0] }).ilike('Email', emailPattern(u.Email));
         } else {
-          await admin.from('users').delete().ilike('Email', u.Email);
+          await admin.from('users').delete().ilike('Email', emailPattern(u.Email));
           if (u.user_id) await admin.auth.admin.deleteUser(u.user_id).catch(() => {});
         }
       }
